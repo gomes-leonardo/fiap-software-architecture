@@ -24,6 +24,7 @@ import { CreateServiceOrderUseCase } from '@application/service-order/create-ser
 import { ChangeServiceOrderStatusUseCase } from '@application/service-order/change-service-order-status.use-case';
 import { FindServiceOrderUseCase } from '@application/service-order/find-service-order.use-case';
 import { AverageExecutionTimeUseCase } from '@application/service-order/average-execution-time.use-case';
+import { OperationalReportUseCase } from '@application/service-order/operational-report.use-case';
 import { CreateServiceOrderDto } from '@application/service-order/dtos/create-service-order.dto';
 import { ChangeStatusDto } from '@application/service-order/dtos/change-status.dto';
 import { ServiceOrderResponseDto } from '@application/service-order/dtos/service-order-response.dto';
@@ -41,6 +42,7 @@ export class ServiceOrderController {
     private readonly changeStatus: ChangeServiceOrderStatusUseCase,
     private readonly findServiceOrder: FindServiceOrderUseCase,
     private readonly averageExecutionTime: AverageExecutionTimeUseCase,
+    private readonly operationalReport: OperationalReportUseCase,
     private readonly serviceOrderRepository: ServiceOrderRepository,
   ) {}
 
@@ -72,6 +74,15 @@ export class ServiceOrderController {
   @ApiResponse({ status: 200 })
   async getAverageExecutionTime() {
     return this.averageExecutionTime.execute();
+  }
+
+  @Get('metrics/operational-report')
+  @ApiOperation({
+    summary: 'Relatorio operacional (OS por status, estoque baixo, tempo medio)',
+  })
+  @ApiResponse({ status: 200 })
+  async getOperationalReport() {
+    return this.operationalReport.execute();
   }
 
   @Get()
