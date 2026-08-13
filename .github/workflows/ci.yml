@@ -19,6 +19,22 @@ jobs:
       - run: npm ci
       - run: npm run lint
 
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      # ESLint and Jest only cover the files they touch; tsc checks every file
+      # under the tsconfig "include" (src + test), catching type errors in code
+      # that has no test yet.
+      - name: TypeScript type check
+        run: npx tsc --noEmit
+
   test-unit:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -33,14 +49,21 @@ jobs:
       - name: Check critical domain coverage
         run: |
           npx jest --selectProjects unit --coverage --coverageReporters=json-summary \
-            --collectCoverageFrom='src/domain/**/*.ts' || true
-          # Fail if domain coverage < 80%
+            --collectCoverageFrom='src/domain/**/*.ts'
+          # No fallback on purpose: a missing summary means the coverage gate
+          # did not run, which must fail the pipeline instead of passing
+          # silently.
           node -e "
-            const c = require('./coverage/coverage-summary.json');
-            const pct = c.total.statements.pct;
+            const fs = require('fs');
+            const summaryPath = './coverage/coverage-summary.json';
+            if (!fs.existsSync(summaryPath)) {
+              console.error('coverage-summary.json was not generated - failing the coverage gate.');
+              process.exit(1);
+            }
+            const pct = require(summaryPath).total.statements.pct;
             console.log('Domain coverage: ' + pct + '%');
             if (pct < 80) { console.error('Coverage below 80%!'); process.exit(1); }
-          " || echo "Coverage check skipped (no summary found)"
+          "
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -82,11 +105,31 @@ jobs:
   build:
     name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: [lint, test-unit]
+    needs: [lint, typecheck, test-unit, test-integration]
     steps:
       - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      # The layer cache lives in the GitHub Actions cache, so unchanged layers
+      # (including the "npm ci" that runs inside the image) are not rebuilt on
+      # every run. The image is exported as a tarball instead of pushed, so the
+      # security job can reuse it instead of running docker build a second time.
+      # TODO(#14): once /health exists (#9), add a container smoke test here.
       - name: Build image
-        run: docker build -t soat-tech-challenge:latest .
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          tags: soat-tech-challenge:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          outputs: type=docker,dest=${{ runner.temp }}/soat-tech-challenge.tar
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: ${{ runner.temp }}/soat-tech-challenge.tar
+          retention-days: 1
+          if-no-files-found: error
 
   security:
     name: Security Scan
@@ -101,8 +144,13 @@ jobs:
       - run: npm ci
       - name: NPM Audit
         run: npm audit --audit-level=high || true
-      - name: Build image for Trivy
-        run: docker build -t soat-tech-challenge:latest .
+      - name: Download the image built by the build job
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+          path: ${{ runner.temp }}
+      - name: Load image into the Docker daemon
+        run: docker load --input ${{ runner.temp }}/soat-tech-challenge.tar
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
