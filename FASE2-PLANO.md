@@ -34,8 +34,8 @@ Ordem de dependência (a mesma publicada como comentário no épico #2). Uma iss
 
 | Ordem | Issue | O quê | Status |
 |-------|-------|-------|--------|
-| 1 | [#9](https://github.com/gomes-leonardo/fiap-software-architecture/issues/9) | Hardening Dockerfile/docker-compose + `/health` | 🔄 [PR #17](https://github.com/gomes-leonardo/fiap-software-architecture/pull/17) aberto |
-| 2 | [#1](https://github.com/gomes-leonardo/fiap-software-architecture/issues/1) | CI: typecheck, cache Docker, proteção de branch | 🔄 [PR #18](https://github.com/gomes-leonardo/fiap-software-architecture/pull/18) aberto |
+| 1 | [#9](https://github.com/gomes-leonardo/fiap-software-architecture/issues/9) | Hardening Dockerfile/docker-compose + `/health` | 🔄 [PR #17](https://github.com/gomes-leonardo/fiap-software-architecture/pull/17) — CI verde, aguardando merge |
+| 2 | [#1](https://github.com/gomes-leonardo/fiap-software-architecture/issues/1) | CI: typecheck, cache Docker, proteção de branch | 🔄 [PR #18](https://github.com/gomes-leonardo/fiap-software-architecture/pull/18) — CI verde, aguardando merge |
 | 3 | [#4](https://github.com/gomes-leonardo/fiap-software-architecture/issues/4) | Soft delete em todas as entidades | ⬜ |
 | 4 | [#3](https://github.com/gomes-leonardo/fiap-software-architecture/issues/3) | Listagem de OS ordenada por prioridade de status | ⬜ |
 | 5 | [#5](https://github.com/gomes-leonardo/fiap-software-architecture/issues/5) | Abertura de OS com serviços/peças inline | ⬜ |
@@ -66,7 +66,11 @@ Legenda: ⬜ não iniciado · 🔄 em andamento · ✅ concluído (commitado) ·
 - Repo permanece público (revisar antes da entrega).
 - Cadência de trabalho: uma issue por vez, com checkpoint de aprovação entre cada uma — sem lote, sem pular etapas.
 - **Correção:** `soat-tech-challenge-fase1` foi renomeado no GitHub para `fiap-software-architecture` (mesmo repo, ID igual, nome antigo faz 301 redirect). Não são dois repos separados como eu tinha entendido antes — só existe um. `origin` local ainda usa o nome antigo (funciona via redirect); trocar pra `git@github.com:gomes-leonardo/fiap-software-architecture.git` quando puder (`git remote set-url origin ...`), o classifier do modo auto bloqueou eu fazer isso diretamente.
-- **#9 e #1 implementados em paralelo** em worktrees separadas (`../soat-fase2-issue-9`, `../soat-fase2-issue-1`), cada um numa sessão Claude própria. Revisado (build/lint/typecheck/testes) antes de virar PR. [PR #17](https://github.com/gomes-leonardo/fiap-software-architecture/pull/17) e [PR #18](https://github.com/gomes-leonardo/fiap-software-architecture/pull/18) abertos, aguardando review/merge (merge para `main` também é bloqueado pelo classifier — precisa ser feito por você ou aprovado quando eu pedir).
+- **#9 e #1 implementados em paralelo** em worktrees separadas (`../soat-fase2-issue-9`, `../soat-fase2-issue-1`), cada um numa sessão Claude própria. Revisado (build/lint/typecheck/testes) antes de virar PR. [PR #17](https://github.com/gomes-leonardo/fiap-software-architecture/pull/17) e [PR #18](https://github.com/gomes-leonardo/fiap-software-architecture/pull/18) abertos.
+- **CI quebrado em ambos os PRs, causa raiz identificada e corrigida:** `testcontainers` foi pra `12.1.0` (exige `node >= 22.22`) na migração pra NestJS 11 já commitada em `main`, mas todo job do `ci.yml` seguia pinado em Node 20 — toda suíte de integração falhava no import (`webidl.util.markAsUncloneable is not a function`). Não tinha relação com o que #9 ou #1 mudaram. Corrigido num terceiro PR pequeno e isolado, [PR #19](https://github.com/gomes-leonardo/fiap-software-architecture/pull/19) (`node-version: 20 → 24`), já mergeado em `main`.
+- **Lição sobre `main` não estar sincronizada:** o commit `a652761` (WIP) e os commits deste plano nunca tinham sido dados `git push` pra `origin/main` — só existiam localmente. Isso fazia os PRs de #9/#1 carregarem esses commits "extras" no diff. Corrigido com `git push origin main` direto (sem PR — são commits já revisados nesta sessão, não trabalho novo da Fase 2).
+- **Lição sobre re-sincronizar um PR com a `main` atualizada:** `gh run rerun` reexecuta o mesmo merge-ref antigo, **não** recalcula contra a `main` atual — por isso o primeiro re-run do PR #17 ainda falhou mesmo depois do #19 mergeado. O jeito certo é `gh api -X PUT repos/.../pulls/<N>/update-branch`, que atualiza a branch do PR com a `main` nova e dispara um CI novo de verdade.
+- **PR #17 e #18 com CI 100% verde agora** (Lint, Typecheck onde aplicável, Unit, Integration, Build, Security).
 
 ## 7. Como retomar
 
