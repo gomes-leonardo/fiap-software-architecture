@@ -34,8 +34,8 @@ Ordem de dependência (a mesma publicada como comentário no épico #2). Uma iss
 
 | Ordem | Issue | O quê | Status |
 |-------|-------|-------|--------|
-| 1 | [#9](https://github.com/gomes-leonardo/fiap-software-architecture/issues/9) | Hardening Dockerfile/docker-compose + `/health` | ⬜ |
-| 2 | [#1](https://github.com/gomes-leonardo/fiap-software-architecture/issues/1) | CI: typecheck, cache Docker, proteção de branch | ⬜ |
+| 1 | [#9](https://github.com/gomes-leonardo/fiap-software-architecture/issues/9) | Hardening Dockerfile/docker-compose + `/health` | 🔄 [PR #17](https://github.com/gomes-leonardo/fiap-software-architecture/pull/17) aberto |
+| 2 | [#1](https://github.com/gomes-leonardo/fiap-software-architecture/issues/1) | CI: typecheck, cache Docker, proteção de branch | 🔄 [PR #18](https://github.com/gomes-leonardo/fiap-software-architecture/pull/18) aberto |
 | 3 | [#4](https://github.com/gomes-leonardo/fiap-software-architecture/issues/4) | Soft delete em todas as entidades | ⬜ |
 | 4 | [#3](https://github.com/gomes-leonardo/fiap-software-architecture/issues/3) | Listagem de OS ordenada por prioridade de status | ⬜ |
 | 5 | [#5](https://github.com/gomes-leonardo/fiap-software-architecture/issues/5) | Abertura de OS com serviços/peças inline | ⬜ |
@@ -65,6 +65,8 @@ Legenda: ⬜ não iniciado · 🔄 em andamento · ✅ concluído (commitado) ·
 - Commit `a652761` — WIP pré-existente (upgrade NestJS 10→11 + endpoint de relatório operacional) commitado separadamente antes de iniciar a Fase 2, depois de validar build + 259 testes unitários passando.
 - Repo permanece público (revisar antes da entrega).
 - Cadência de trabalho: uma issue por vez, com checkpoint de aprovação entre cada uma — sem lote, sem pular etapas.
+- **Correção:** `soat-tech-challenge-fase1` foi renomeado no GitHub para `fiap-software-architecture` (mesmo repo, ID igual, nome antigo faz 301 redirect). Não são dois repos separados como eu tinha entendido antes — só existe um. `origin` local ainda usa o nome antigo (funciona via redirect); trocar pra `git@github.com:gomes-leonardo/fiap-software-architecture.git` quando puder (`git remote set-url origin ...`), o classifier do modo auto bloqueou eu fazer isso diretamente.
+- **#9 e #1 implementados em paralelo** em worktrees separadas (`../soat-fase2-issue-9`, `../soat-fase2-issue-1`), cada um numa sessão Claude própria. Revisado (build/lint/typecheck/testes) antes de virar PR. [PR #17](https://github.com/gomes-leonardo/fiap-software-architecture/pull/17) e [PR #18](https://github.com/gomes-leonardo/fiap-software-architecture/pull/18) abertos, aguardando review/merge (merge para `main` também é bloqueado pelo classifier — precisa ser feito por você ou aprovado quando eu pedir).
 
 ## 7. Como retomar
 
