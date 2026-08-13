@@ -1,0 +1,50 @@
+# Dependencias: reinstaladas dentro da imagem via `npm ci`
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build local (a imagem compila do zero no stage builder)
+dist
+*.tsbuildinfo
+
+# Git e CI
+.git
+.gitignore
+.gitattributes
+.github
+
+# Testes e cobertura: tsconfig.build.json ja exclui `test`, entao nada disso
+# participa do `npm run build`
+test
+coverage
+coverage-check
+jest.config.ts
+
+# Documentacao e material de estudo
+*.md
+**/*.md
+CLEAN-ARCH-*
+CONCEITOS-*
+COMPARATIVO-*
+ROTEIRO-*
+assets
+LICENSE
+
+# Segredos: nunca entram no contexto de build
+.env
+.env.*
+
+# Infra (nao e necessaria dentro da imagem e invalida o cache a cada edicao)
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Editores e SO
+.idea
+.vscode
+.claude
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
