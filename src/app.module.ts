@@ -11,6 +11,7 @@ import { ServiceModule } from '@interfaces/http/service/service.module';
 import { VehicleModule } from '@interfaces/http/vehicle/vehicle.module';
 import { BudgetModule } from '@interfaces/http/budget/budget.module';
 import { ConsultModule } from '@interfaces/http/consult/consult.module';
+import { HealthModule } from '@interfaces/http/health/health.module';
 import { DomainExceptionFilter } from '@interfaces/http/filters/domain-exception.filter';
 
 @Module({
@@ -25,6 +26,7 @@ import { DomainExceptionFilter } from '@interfaces/http/filters/domain-exception
     VehicleModule,
     BudgetModule,
     ConsultModule,
+    HealthModule,
   ],
   providers: [
     {

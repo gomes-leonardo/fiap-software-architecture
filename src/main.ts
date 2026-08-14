@@ -6,6 +6,11 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Shutdown gracioso: com o tini encaminhando o SIGTERM (ver Dockerfile), o
+  // Nest fecha o servidor HTTP e o pool do TypeORM antes de sair, em vez de
+  // derrubar conexoes em aberto durante um rolling update do Kubernetes.
+  app.enableShutdownHooks();
+
   // CORS liberado para o MVP (permite o app/cliente consumir a API e a consulta
   // publica de OS). Em producao, restringir `origin` aos dominios confiaveis.
   app.enableCors();
@@ -33,6 +38,7 @@ async function bootstrap() {
     .addTag('service-orders', 'Gerenciamento de ordens de serviço')
     .addTag('budgets', 'Gerenciamento de orçamentos')
     .addTag('consult', 'Consulta pública de OS pelo cliente')
+    .addTag('health', 'Health check da aplicação e do banco')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);

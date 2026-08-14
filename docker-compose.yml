@@ -1,43 +1,83 @@
-version: '3.8'
-
+# Credenciais vem do arquivo .env (use .env.example como template).
+# DB_PASS e JWT_SECRET nao tem default proposital: o compose falha rapido se
+# eles nao estiverem definidos, em vez de subir com uma senha conhecida.
 services:
   db:
     image: postgres:16-alpine
     container_name: soat-db
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: soat_repair_shop
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${DB_NAME:-soat_repair_shop}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:?defina DB_PASS no .env (cp .env.example .env)}
+    # O banco fica publicado apenas em loopback por padrao. Isso preserva o
+    # fluxo local do README (`docker-compose up -d db` + `npm run start:dev`)
+    # sem expor o Postgres para a rede da maquina. Para um cenario
+    # prodution-like em que o banco so deve ser alcancavel pela soat-network,
+    # rode com DB_BIND_ADDRESS apontando para um endereco nao roteavel ou use
+    # os manifestos Kubernetes — este compose e voltado a dev/demo.
     ports:
-      - '5432:5432'
+      - '${DB_BIND_ADDRESS:-127.0.0.1}:5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - soat-network
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-soat_repair_shop}',
+        ]
       interval: 5s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: soat-app
+    restart: unless-stopped
     ports:
       - '3000:3000'
     environment:
+      # DB_HOST/DB_PORT sao topologia interna do compose (nome do servico na
+      # soat-network), nao configuracao de ambiente — por isso ficam fixos aqui
+      # e nao vem do .env, que aponta para localhost no fluxo de dev local.
       DB_HOST: db
       DB_PORT: 5432
-      DB_NAME: soat_repair_shop
-      DB_USER: postgres
-      DB_PASS: postgres
-      JWT_SECRET: docker-secret-change-in-production
-      JWT_EXPIRES_IN: 1h
+      DB_NAME: ${DB_NAME:-soat_repair_shop}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASS: ${DB_PASS:?defina DB_PASS no .env (cp .env.example .env)}
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env (cp .env.example .env)}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
       NODE_ENV: production
       PORT: 3000
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - soat-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
 volumes:
   pgdata:
+
+networks:
+  soat-network:
+    driver: bridge

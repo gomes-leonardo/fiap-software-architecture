@@ -168,10 +168,20 @@ Excecoes:
 ### Com Docker (recomendado)
 
 ```bash
+# 1. Criar o .env a partir do template (obrigatorio: o compose falha se
+#    DB_PASS ou JWT_SECRET nao estiverem definidas)
+cp .env.example .env
+
+# 2. Subir a stack
 docker-compose up -d
 ```
 
 A API estara disponivel em `http://localhost:3000` e o Swagger em `http://localhost:3000/api-docs`.
+
+Health check: `curl http://localhost:3000/health` responde
+`{"status":"ok","database":"connected"}` — e `503` se o banco estiver
+inacessivel. O mesmo endpoint alimenta o `HEALTHCHECK` da imagem e as probes
+de liveness/readiness no Kubernetes.
 
 ### Desenvolvimento local
 
@@ -179,15 +189,30 @@ A API estara disponivel em `http://localhost:3000` e o Swagger em `http://localh
 # 1. Instalar dependencias
 npm install
 
-# 2. Subir apenas o PostgreSQL
-docker-compose up -d db
-
-# 3. Configurar variaveis de ambiente
+# 2. Configurar variaveis de ambiente
 cp .env.example .env
+
+# 3. Subir apenas o PostgreSQL
+docker-compose up -d db
 
 # 4. Rodar em modo desenvolvimento
 npm run start:dev
 ```
+
+> O `.env` precisa existir antes de qualquer `docker-compose up`, inclusive do
+> `up -d db` isolado: as credenciais deixaram de ser hardcoded no compose.
+
+### Exposicao do banco
+
+O Postgres do compose e publicado apenas em `127.0.0.1:5432` (controlado por
+`DB_BIND_ADDRESS` no `.env`). Isso mantem o fluxo de desenvolvimento local
+funcionando — `docker-compose up -d db` + `npm run start:dev` na maquina —
+sem deixar o banco alcancavel pela rede. O app nao usa essa porta publicada:
+ele fala com o servico `db` pela rede interna `soat-network`.
+
+Este compose e voltado a desenvolvimento e demo. Em producao o banco nao sobe
+por aqui — ele fica atras dos manifestos Kubernetes/Terraform, sem porta
+publicada no host.
 
 ### Credenciais de admin (desenvolvimento)
 
@@ -220,7 +245,7 @@ npm test
 npm run test:cov
 ```
 
-271 testes passando (259 unitarios + 12 integracao), cobrindo entidades de dominio, value objects, use cases, guards e fluxos completos de persistencia. Cobertura acima de 80% nos dominios criticos (`src/domain` + `src/application`).
+273 testes passando (261 unitarios + 12 integracao), cobrindo entidades de dominio, value objects, use cases, guards e fluxos completos de persistencia. Cobertura acima de 80% nos dominios criticos (`src/domain` + `src/application`).
 
 ## Seguranca
 
@@ -232,7 +257,11 @@ Medidas implementadas:
 - Senhas hasheadas com bcrypt (salt rounds = 10)
 - ValidationPipe global com whitelist
 - DomainExceptionFilter (sem vazamento de stack traces)
-- Dockerfile com usuario nao-root
+- Dockerfile com usuario nao-root, versao de base fixada e `tini` como PID 1
+- `.dockerignore` mantendo `.git`, `.env`, testes e node_modules fora da imagem
+- Credenciais fora do versionamento (docker-compose le do `.env`, sem defaults
+  para `DB_PASS` e `JWT_SECRET`)
+- Postgres publicado apenas em loopback e servicos isolados na `soat-network`
 - Variaveis de ambiente via ConfigService
 - Rate limiting no endpoint publico de consulta
 
