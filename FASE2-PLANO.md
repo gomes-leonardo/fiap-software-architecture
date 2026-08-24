@@ -37,7 +37,7 @@ Ordem de dependência (a mesma publicada como comentário no épico #2). Uma iss
 | 1 | [#9](https://github.com/gomes-leonardo/fiap-software-architecture/issues/9) | Hardening Dockerfile/docker-compose + `/health` | 🔄 [PR #17](https://github.com/gomes-leonardo/fiap-software-architecture/pull/17) — CI verde, aguardando merge |
 | 2 | [#1](https://github.com/gomes-leonardo/fiap-software-architecture/issues/1) | CI: typecheck, cache Docker, proteção de branch | 🔄 [PR #18](https://github.com/gomes-leonardo/fiap-software-architecture/pull/18) — CI verde, aguardando merge |
 | 3 | [#4](https://github.com/gomes-leonardo/fiap-software-architecture/issues/4) | Soft delete em todas as entidades | ⬜ |
-| 4 | [#3](https://github.com/gomes-leonardo/fiap-software-architecture/issues/3) | Listagem de OS ordenada por prioridade de status | ⬜ |
+| 4 | [#3](https://github.com/gomes-leonardo/fiap-software-architecture/issues/3) | Listagem de OS ordenada por prioridade de status | 🔄 branch `feat/3-service-order-priority-listing` — aguardando PR |
 | 5 | [#5](https://github.com/gomes-leonardo/fiap-software-architecture/issues/5) | Abertura de OS com serviços/peças inline | ⬜ |
 | 6 | [#15](https://github.com/gomes-leonardo/fiap-software-architecture/issues/15) | Aprovação de orçamento via canal externo *(novo)* | ⬜ |
 | 7 | [#6](https://github.com/gomes-leonardo/fiap-software-architecture/issues/6) | Atualização de status da OS via webhook | ⬜ |

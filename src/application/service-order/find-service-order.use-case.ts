@@ -23,8 +23,8 @@ export class FindServiceOrderUseCase {
     return orders.map(ServiceOrderResponseDto.fromDomain);
   }
 
-  async findAll(): Promise<ServiceOrderResponseDto[]> {
-    const orders = await this.serviceOrderRepository.findAll();
+  async findAllActive(): Promise<ServiceOrderResponseDto[]> {
+    const orders = await this.serviceOrderRepository.findAllActive();
     return orders.map(ServiceOrderResponseDto.fromDomain);
   }
 }
