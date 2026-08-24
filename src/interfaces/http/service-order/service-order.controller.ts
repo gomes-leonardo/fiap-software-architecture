@@ -13,13 +13,7 @@ import {
   NotFoundException,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { CreateServiceOrderUseCase } from '@application/service-order/create-service-order.use-case';
 import { ChangeServiceOrderStatusUseCase } from '@application/service-order/change-service-order-status.use-case';
 import { FindServiceOrderUseCase } from '@application/service-order/find-service-order.use-case';
@@ -86,7 +80,15 @@ export class ServiceOrderController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar ordens de serviço' })
+  @ApiOperation({
+    summary: 'Listar ordens de serviço',
+    description:
+      'Sem filtro, lista apenas as OS ativas (exclui FINALIZADA, ENTREGUE e ' +
+      'ENCERRADA_SEM_EXECUCAO), ordenadas por prioridade de status ' +
+      '(EM_EXECUCAO > AGUARDANDO_APROVACAO > EM_DIAGNOSTICO > RECEBIDA > PAUSADO) e, ' +
+      'dentro do mesmo status, da mais antiga para a mais recente. Os filtros ' +
+      '`status` e `clientId` ignoram essa regra e retornam as OS correspondentes.',
+  })
   @ApiQuery({ name: 'status', required: false, enum: ServiceOrderStatus })
   @ApiQuery({ name: 'clientId', required: false })
   async findAll(
@@ -95,7 +97,7 @@ export class ServiceOrderController {
   ): Promise<ServiceOrderResponseDto[]> {
     if (status) return this.findServiceOrder.findByStatus(status);
     if (clientId) return this.findServiceOrder.findByClientId(clientId);
-    return this.findServiceOrder.findAll();
+    return this.findServiceOrder.findAllActive();
   }
 
   @Get(':id')

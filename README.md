@@ -99,16 +99,18 @@ Todos os endpoints (exceto `/auth` e `/consult`) requerem autenticacao JWT via h
 
 ### Ordens de Servico
 
-| Metodo | Rota                                             | Descricao                                      |
-| ------ | ------------------------------------------------ | ---------------------------------------------- |
-| POST   | `/service-orders`                                | Criar OS                                       |
-| GET    | `/service-orders`                                | Listar (filtro por `?status=` ou `?clientId=`) |
-| GET    | `/service-orders/:id`                            | Buscar por ID                                  |
-| PATCH  | `/service-orders/:id/status`                     | Alterar status                                 |
-| PUT    | `/service-orders/:id`                            | Atualizar descricao                            |
-| DELETE | `/service-orders/:id`                            | Remover OS                                     |
-| GET    | `/service-orders/metrics/average-execution-time` | Tempo medio de execucao                        |
-| GET    | `/service-orders/metrics/operational-report`     | Relatorio operacional                          |
+| Metodo | Rota                                             | Descricao                                                |
+| ------ | ------------------------------------------------ | -------------------------------------------------------- |
+| POST   | `/service-orders`                                | Criar OS                                                 |
+| GET    | `/service-orders`                                | Listar OS ativas (filtro por `?status=` ou `?clientId=`) |
+| GET    | `/service-orders/:id`                            | Buscar por ID                                            |
+| PATCH  | `/service-orders/:id/status`                     | Alterar status                                           |
+| PUT    | `/service-orders/:id`                            | Atualizar descricao                                      |
+| DELETE | `/service-orders/:id`                            | Remover OS                                               |
+| GET    | `/service-orders/metrics/average-execution-time` | Tempo medio de execucao                                  |
+| GET    | `/service-orders/metrics/operational-report`     | Relatorio operacional                                    |
+
+Sem filtro, `GET /service-orders` retorna somente as OS ativas — as terminais (`FINALIZADA`, `ENTREGUE`, `ENCERRADA_SEM_EXECUCAO`) ficam de fora. A ordenacao segue a prioridade de status `EM_EXECUCAO` > `AGUARDANDO_APROVACAO` > `EM_DIAGNOSTICO` > `RECEBIDA` > `PAUSADO` e, dentro do mesmo status, da OS mais antiga para a mais recente. Os filtros `?status=` e `?clientId=` nao aplicam essa regra.
 
 ### Orcamentos
 
