@@ -46,7 +46,7 @@ Alternativas consideradas:
 
 ## Endpoints da API
 
-Todos os endpoints (exceto `/auth` e `/consult`) requerem autenticacao JWT via header `Authorization: Bearer <token>`.
+Todos os endpoints (exceto `/auth`, `/consult` e `/webhooks`) requerem autenticacao JWT via header `Authorization: Bearer <token>`.
 
 ### Autenticacao
 
@@ -130,6 +130,29 @@ Sem filtro, `GET /service-orders` retorna somente as OS ativas — as terminais 
 | GET    | `/consult/:clientId?cpf=` | Consultar OS do cliente (valida CPF) |
 
 > Protegido por **rate limiting** (fixed-window, 20 req/min por `clientId`) para mitigar abuso/forca-bruta no par `clientId` + CPF/CNPJ. Excedido o limite, responde `429 Too Many Requests` com header `Retry-After`.
+
+### Webhook de Integracao (sem login de usuario)
+
+| Metodo | Rota                                     | Descricao                                       |
+| ------ | ---------------------------------------- | ----------------------------------------------- |
+| POST   | `/webhooks/service-orders/:id/status`    | Atualizar status da OS a partir de sistema externo |
+
+Porta para sistemas que nao tem usuario no sistema — gateway de email, sistema de pagamento. A autenticacao e por segredo pre-compartilhado, na variavel `WEBHOOK_SECRET`:
+
+```bash
+curl -X POST http://localhost:3000/webhooks/service-orders/<id>/status \
+  -H "Authorization: Bearer $WEBHOOK_SECRET" \
+  -H 'Content-Type: application/json' \
+  -d '{"status":"EM_DIAGNOSTICO","changedBy":"gateway-email"}'
+```
+
+O segredo tambem pode ir no campo `token` do corpo, para integracoes que nao permitem customizar cabecalhos — mas prefira o header: corpo de requisicao costuma acabar em log de acesso e em dump de erro.
+
+Tres pontos que valem saber:
+
+- **Sem `WEBHOOK_SECRET` definida, o endpoint recusa toda chamada.** Falha fechada de proposito: comparar direto com a variavel de ambiente faria `undefined === undefined` liberar geral numa instalacao mal configurada.
+- **A comparacao e de tempo constante**, sobre os digests SHA-256 dos dois lados. Comparar com `===` permitiria descobrir o segredo caractere a caractere pelo tempo de resposta.
+- **A matriz de transicao continua valendo.** O webhook usa o mesmo `ChangeServiceOrderStatusUseCase` do endpoint autenticado: vir de fora nao compra o direito de pular etapa. Transicao ilegal responde `400`.
 
 ### Relatorio Operacional
 

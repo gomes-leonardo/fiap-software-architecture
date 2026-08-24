@@ -59,6 +59,10 @@ services:
       DB_PASS: ${DB_PASS:?defina DB_PASS no .env (cp .env.example .env)}
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env (cp .env.example .env)}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
+      # Obrigatoria, como os demais segredos: sem ela o endpoint de webhook
+      # recusa toda chamada, e um servico subindo calado nesse estado e pior
+      # do que um compose que falha na hora.
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:?defina WEBHOOK_SECRET no .env (cp .env.example .env)}
       NODE_ENV: production
       PORT: 3000
     depends_on:
