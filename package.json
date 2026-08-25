@@ -26,7 +26,10 @@
     "audit": "npm audit --audit-level=high",
     "security:audit": "npm audit --audit-level=high",
     "security:sast": "npx semgrep --config auto src/",
-    "security:container": "trivy image soat-tech-challenge:latest"
+    "security:container": "trivy image soat-tech-challenge:latest",
+    "docs:swagger": "ts-node -r tsconfig-paths/register scripts/export-swagger.ts",
+    "docs:postman": "ts-node -r tsconfig-paths/register scripts/generate-postman-collection.ts",
+    "docs:api": "npm run docs:swagger && npm run docs:postman"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.29",
