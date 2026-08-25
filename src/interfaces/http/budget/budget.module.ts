@@ -30,6 +30,8 @@ import { PartModule } from '@interfaces/http/part/part.module';
       useClass: BudgetTypeOrmRepository,
     },
   ],
-  exports: [BudgetRepository],
+  // Os dois casos de uso saem do modulo para o `WebhookModule`: o canal externo
+  // do cliente precisa da mesma baixa de estoque e do mesmo vinculo com a OS.
+  exports: [BudgetRepository, ApproveBudgetUseCase, RefuseBudgetUseCase],
 })
 export class BudgetModule {}
