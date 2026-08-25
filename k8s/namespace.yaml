@@ -1,0 +1,10 @@
+# Todo o ambiente da Fase 2 vive em um namespace proprio. Isso permite
+# derrubar a stack inteira com um `kubectl delete namespace soat` e evita
+# colisao de nomes com outras aplicacoes no mesmo cluster.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: soat
+  labels:
+    app.kubernetes.io/part-of: soat-tech-challenge
+    name: soat

@@ -1,0 +1,45 @@
+# Dois Services para o banco, com papeis diferentes.
+#
+# `soat-db` (ClusterIP) e o endereco que o app usa — e o valor de DB_HOST no
+# ConfigMap. `soat-db-headless` existe porque um StatefulSet exige um Service
+# governante headless para dar nome DNS estavel a cada pod
+# (soat-db-0.soat-db-headless.soat.svc.cluster.local). Nenhum dos dois e
+# exposto fora do cluster: o Postgres so precisa ser alcancavel pelos pods do
+# app.
+apiVersion: v1
+kind: Service
+metadata:
+  name: soat-db
+  namespace: soat
+  labels:
+    app.kubernetes.io/name: soat-db
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: soat-tech-challenge
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: soat-db
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: soat-db-headless
+  namespace: soat
+  labels:
+    app.kubernetes.io/name: soat-db
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: soat-tech-challenge
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: soat-db
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+      protocol: TCP
