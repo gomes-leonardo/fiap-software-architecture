@@ -14,7 +14,7 @@ seja reproduzível e revisável.
 
 | Regra | Valor | Motivo |
 |-------|-------|--------|
-| Required status checks | `Lint`, `Typecheck`, `Unit Tests`, `Integration Tests`, `Build Docker Image` | Impede merge sem CI verde |
+| Required status checks | `Lint`, `Typecheck`, `Unit Tests`, `Integration Tests`, `Smoke Tests`, `Build Docker Image` | Impede merge sem CI verde |
 | Require branches to be up to date (`strict`) | `true` | Evita merge semântico quebrado: a branch precisa estar rebaseada na `main` antes do merge |
 | Required pull request reviews | 1 aprovação, `dismiss_stale_reviews: true` | Fecha o push direto na `main`; aprovação some se novos commits chegarem |
 | Required conversation resolution | `true` | Nenhum comentário de review fica pendente |
@@ -25,15 +25,20 @@ seja reproduzível e revisável.
 ### Sobre os nomes dos status checks
 
 O GitHub casa os required status checks pelo **nome de exibição do job** (o campo `name:`
-em `.github/workflows/ci.yml`), não pelo id do job. Por isso a lista é
-`Lint` / `Typecheck` / `Unit Tests` / `Integration Tests` / `Build Docker Image`,
-e não `lint` / `typecheck` / `test-unit` / `test-integration` / `build`.
+em `.github/workflows/ci-cd.yml`), não pelo id do job. Por isso a lista é
+`Lint` / `Typecheck` / `Unit Tests` / `Integration Tests` / `Smoke Tests` / `Build Docker Image`,
+e não `lint` / `typecheck` / `test-unit` / `test-integration` / `test-smoke` / `build`.
 
-**Se algum `name:` do `ci.yml` mudar, esta lista precisa mudar junto** — um check exigido
+**Se algum `name:` do `ci-cd.yml` mudar, esta lista precisa mudar junto** — um check exigido
 que nunca reporta deixa o PR travado para sempre em "Expected".
 
 `Security Scan` fica **fora** da lista de propósito: ele roda com `exit-code: '0'`
 (relatório informativo), então exigi-lo não agregaria gate nenhum.
+
+`Publish Image` e `Deploy to Kubernetes` também ficam fora, por um motivo mais duro: eles
+carregam `if: github.ref == 'refs/heads/main'` e **nunca reportam em pull request**. Exigir
+um check que não roda no PR trava o merge em `Expected` para sempre. Ver
+[`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
 ## Como aplicar — via `gh` (recomendado)
 
@@ -44,7 +49,7 @@ cat > /tmp/protection.json <<'EOF'
 {
   "required_status_checks": {
     "strict": true,
-    "contexts": ["Lint", "Typecheck", "Unit Tests", "Integration Tests", "Build Docker Image"]
+    "contexts": ["Lint", "Typecheck", "Unit Tests", "Integration Tests", "Smoke Tests", "Build Docker Image"]
   },
   "enforce_admins": false,
   "required_pull_request_reviews": {
@@ -81,7 +86,7 @@ gh api repos/gomes-leonardo/fiap-software-architecture/branches/main/protection 
 1. Branch name pattern: `main`
 2. ☑ Require a pull request before merging → Required approvals: **1** → ☑ Dismiss stale pull request approvals when new commits are pushed
 3. ☑ Require status checks to pass before merging → ☑ Require branches to be up to date before merging
-   → buscar e marcar: `Lint`, `Typecheck`, `Unit Tests`, `Integration Tests`, `Build Docker Image`
+   → buscar e marcar: `Lint`, `Typecheck`, `Unit Tests`, `Integration Tests`, `Smoke Tests`, `Build Docker Image`
 4. ☑ Require conversation resolution before merging
 5. Deixar **desmarcados**: Allow force pushes, Allow deletions
 

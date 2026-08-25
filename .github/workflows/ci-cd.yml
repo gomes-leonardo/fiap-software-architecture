@@ -1,10 +1,15 @@
-name: CI
+name: CI/CD
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+
+# Leitura por padrao. Os dois unicos jobs que precisam de mais (publish grava
+# no GHCR) sobem o escopo localmente.
+permissions:
+  contents: read
 
 # Node 24 everywhere: testcontainers 12.x (test-integration) requires
 # node >= 22.22, and CI was still pinned to 20 when that dependency was
@@ -107,10 +112,32 @@ jobs:
           DB_USER: postgres
           DB_PASS: postgres
 
+  test-smoke:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    # Ultimo gate de codigo antes do build: sobe o AppModule real e bate nos
+    # endpoints criticos por HTTP. Roda depois das suites rapidas de proposito
+    # — e o job mais caro (~2-3 min so de boot) e nao vale queimar runner se
+    # um teste unitario ja quebrou.
+    needs: [test-unit, test-integration]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm ci
+      # Sem `services:` e sem env de banco de proposito: o teste sobe o
+      # postgres:16-alpine sozinho via Testcontainers e se autoconfigura. O
+      # unico requisito e o Docker do runner, que ubuntu-latest ja tem.
+      - name: Smoke tests (Testcontainers)
+        run: npm run test:smoke
+        timeout-minutes: 15
+
   build:
     name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, test-unit, test-integration]
+    needs: [lint, typecheck, test-unit, test-integration, test-smoke]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Docker Buildx
@@ -119,7 +146,11 @@ jobs:
       # (including the "npm ci" that runs inside the image) are not rebuilt on
       # every run. The image is exported as a tarball instead of pushed, so the
       # security job can reuse it instead of running docker build a second time.
-      # TODO(#14): once /health exists (#9), add a container smoke test here.
+      #
+      # O push para o registry NAO acontece aqui: o job `publish` carrega este
+      # mesmo tarball e empurra os bytes que o Trivy ja escaneou. Buildar duas
+      # vezes (uma para escanear, outra para publicar) publicaria uma imagem
+      # que ninguem inspecionou.
       - name: Build image
         uses: docker/build-push-action@v6
         with:
@@ -170,3 +201,340 @@ jobs:
           name: security-scan-results
           path: |
             trivy-results.txt
+
+  publish:
+    name: Publish Image
+    runs-on: ubuntu-latest
+    needs: [build, security]
+    # Registry so recebe o que ja esta na main. PR nao publica nada: um fork
+    # nao tem (e nao deve ter) permissao de escrita no GHCR do repositorio.
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+      repository: ${{ steps.meta.outputs.repository }}
+    steps:
+      # GHCR, e nao ECR nem Docker Hub: o GITHUB_TOKEN que a Action ja tem
+      # autentica com `packages: write`, entao nao ha credencial de nuvem nem
+      # infraestrutura extra so para guardar imagem (o Terraform da #8 nao
+      # provisiona ECR).
+      - name: Calcular a referencia da imagem
+        id: meta
+        run: |
+          set -euo pipefail
+          # GHCR exige o caminho em minusculas; GITHUB_REPOSITORY preserva o
+          # case que o dono digitou.
+          repository="ghcr.io/${GITHUB_REPOSITORY,,}"
+          tag="sha-${GITHUB_SHA::7}"
+          {
+            echo "repository=${repository}"
+            echo "tag=${tag}"
+            echo "image=${repository}:${tag}"
+          } >> "$GITHUB_OUTPUT"
+          echo "Imagem: ${repository}:${tag}"
+
+      - name: Baixar a imagem construida pelo job de build
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+          path: ${{ runner.temp }}
+
+      - name: Carregar a imagem no daemon do Docker
+        run: docker load --input ${{ runner.temp }}/soat-tech-challenge.tar
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Duas tags para o mesmo digest:
+      #   sha-<short> -> imutavel, e o que o deploy referencia. Como o
+      #                  Deployment usa imagePullPolicy: IfNotPresent, so uma
+      #                  tag nova por commit garante que o kubelet realmente
+      #                  puxe a versao nova em vez de reaproveitar o cache.
+      #   latest      -> conveniencia para `docker pull` manual e demo.
+      - name: Publicar no GHCR
+        env:
+          IMAGE: ${{ steps.meta.outputs.image }}
+          REPOSITORY: ${{ steps.meta.outputs.repository }}
+        run: |
+          set -euo pipefail
+          docker tag soat-tech-challenge:latest "${IMAGE}"
+          docker tag soat-tech-challenge:latest "${REPOSITORY}:latest"
+          docker push "${IMAGE}"
+          docker push "${REPOSITORY}:latest"
+          {
+            echo "### Imagem publicada"
+            echo
+            echo '```'
+            echo "${IMAGE}"
+            echo "${REPOSITORY}:latest"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: [publish]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    permissions:
+      contents: read
+      # O GITHUB_TOKEN vira a credencial do imagePullSecret entregue ao
+      # kubelet; sem packages:read o pull da imagem no GHCR volta 403.
+      packages: read
+    # Dois deploys concorrentes no mesmo cluster disputariam o mesmo
+    # Deployment. cancel-in-progress fica false de proposito: matar um deploy
+    # no meio do rollout deixa o cluster em estado misto.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    env:
+      NAMESPACE: soat
+      IMAGE: ${{ needs.publish.outputs.image }}
+      ROLLOUT_TIMEOUT: 300s
+    steps:
+      - uses: actions/checkout@v4
+
+      # O repositorio e uma entrega academica: quem clona e roda o CI nao tem
+      # cluster nenhum. Sem credencial, o job registra o que falta e termina
+      # verde, em vez de pintar a main de vermelho por configuracao ausente.
+      # Um deploy que falha por falta de secret nao e um bug do codigo.
+      - name: Preflight — credenciais do cluster
+        id: preflight
+        env:
+          KUBECONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KUBECONFIG_BASE64}" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Deploy pulado::secret KUBECONFIG_BASE64 nao configurado"
+            {
+              echo "### Deploy pulado"
+              echo
+              echo "O secret \`KUBECONFIG_BASE64\` nao esta configurado neste repositorio,"
+              echo "entao nao ha cluster para onde publicar. O CI passou e a imagem"
+              echo "\`${IMAGE}\` esta no GHCR."
+              echo
+              echo "Para habilitar o deploy, veja \`.github/DEPLOYMENT.md\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Instalar kubectl
+        if: steps.preflight.outputs.skip == 'false'
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.31.0
+
+      - name: Escrever o kubeconfig
+        if: steps.preflight.outputs.skip == 'false'
+        env:
+          KUBECONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64 }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.kube"
+          if ! printf '%s' "${KUBECONFIG_BASE64}" | base64 -d > "$HOME/.kube/config"; then
+            echo "::error title=kubeconfig invalido::KUBECONFIG_BASE64 nao e base64 valido. Gere com: base64 -w0 ~/.kube/config"
+            exit 1
+          fi
+          chmod 600 "$HOME/.kube/config"
+          echo "Contexto: $(kubectl config current-context)"
+          kubectl cluster-info
+
+      # A ordem abaixo repete a de k8s/apply-all.sh sem chamar o script, e a
+      # razao esta no passo "Aplicar a aplicacao": o script aplica
+      # app-deployment.yaml literal, com a tag soat-tech-challenge:latest que
+      # so existe num node carregado a mao (`kind load`). No CD a imagem vem do
+      # GHCR, e chamar o script reverteria a imagem a cada deploy. Enquanto
+      # apply-all.sh nao aceitar um override de imagem, os dois caminhos
+      # precisam conviver.
+      - name: Namespace, Secret e ConfigMap
+        if: steps.preflight.outputs.skip == 'false'
+        run: |
+          set -euo pipefail
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/app-secret.yaml
+          kubectl apply -f k8s/app-configmap.yaml
+
+      # k8s/app-secret.yaml esta versionado com valores `change-me-*`. Os
+      # secrets do GitHub sobrescrevem antes de qualquer workload subir.
+      # Atencao: o Postgres so le DB_PASS no initdb do primeiro boot. Trocar o
+      # secret depois exige ALTER USER no banco ou apagar o PVC.
+      - name: Sobrescrever os segredos versionados
+        if: steps.preflight.outputs.skip == 'false'
+        env:
+          DB_PASS: ${{ secrets.DB_PASS }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+        run: |
+          set -euo pipefail
+          patch_key() {
+            local key="$1" value="$2"
+            if [ -z "${value}" ]; then
+              echo "  ${key}: secret nao configurado — mantendo o valor de k8s/app-secret.yaml"
+              return
+            fi
+            # jq monta o JSON para que aspas ou barras no valor nao quebrem o
+            # patch; --patch-file mantem o segredo fora da linha de comando.
+            jq -n --arg k "${key}" --arg v "${value}" '{stringData: {($k): $v}}' > secret-patch.json
+            kubectl patch secret soat-app-secret -n "${NAMESPACE}" --type merge --patch-file secret-patch.json
+            rm -f secret-patch.json
+            echo "  ${key}: sobrescrito pelo secret do GitHub"
+          }
+          patch_key DB_PASS "${DB_PASS}"
+          patch_key JWT_SECRET "${JWT_SECRET}"
+          patch_key WEBHOOK_SECRET "${WEBHOOK_SECRET}"
+
+      - name: Banco de dados (PostgreSQL)
+        if: steps.preflight.outputs.skip == 'false'
+        run: |
+          set -euo pipefail
+          kubectl apply -f k8s/db-service.yaml
+          kubectl apply -f k8s/db-deployment.yaml
+          # O app so sobe util depois que o Postgres aceita conexao; sem este
+          # gate o rollout do app passaria por CrashLoopBackOff antes de
+          # estabilizar.
+          kubectl rollout status statefulset/soat-db -n "${NAMESPACE}" --timeout="${ROLLOUT_TIMEOUT}"
+
+      # O pacote no GHCR nasce privado. O token expira no fim do job, entao
+      # esta credencial cobre o pull do rollout — o suficiente para o deploy,
+      # mas nao para um pod reagendado dias depois. Deixar o pacote publico
+      # e o caminho recomendado; ver .github/DEPLOYMENT.md.
+      - name: Credencial de pull do GHCR
+        if: steps.preflight.outputs.skip == 'false'
+        env:
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          kubectl create secret docker-registry ghcr-pull \
+            --namespace "${NAMESPACE}" \
+            --docker-server=ghcr.io \
+            --docker-username="${GHCR_USER}" \
+            --docker-password="${GHCR_TOKEN}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+          kubectl patch serviceaccount default -n "${NAMESPACE}" \
+            -p '{"imagePullSecrets":[{"name":"ghcr-pull"}]}'
+
+      # A imagem entra no manifesto ANTES do apply, nao via `kubectl set image`
+      # depois. Aplicar o YAML literal criaria uma revisao com
+      # soat-tech-challenge:latest — que o node nao tem — e o rollback
+      # automatico voltaria exatamente para essa revisao quebrada.
+      - name: Aplicar a aplicacao com a imagem do commit
+        if: steps.preflight.outputs.skip == 'false'
+        run: |
+          set -euo pipefail
+          kubectl apply -f k8s/app-service.yaml
+
+          placeholder='image: soat-tech-challenge:latest'
+          if ! grep -q "${placeholder}" k8s/app-deployment.yaml; then
+            echo "::error title=Manifesto divergente::k8s/app-deployment.yaml nao contem '${placeholder}'. A substituicao de imagem do deploy precisa ser atualizada."
+            exit 1
+          fi
+          sed "s#${placeholder}#image: ${IMAGE}#" k8s/app-deployment.yaml | kubectl apply -f -
+
+      - name: Aguardar o rollout
+        if: steps.preflight.outputs.skip == 'false'
+        run: |
+          set -euo pipefail
+          kubectl rollout status deployment/soat-app -n "${NAMESPACE}" --timeout="${ROLLOUT_TIMEOUT}"
+          deployed=$(kubectl get deployment soat-app -n "${NAMESPACE}" \
+            -o jsonpath='{.spec.template.spec.containers[?(@.name=="app")].image}')
+          if [ "${deployed}" != "${IMAGE}" ]; then
+            echo "::error title=Imagem inesperada::o cluster esta rodando '${deployed}', esperado '${IMAGE}'"
+            exit 1
+          fi
+          echo "soat-app rodando ${deployed}"
+
+      # O HPA por ultimo, como em k8s/apply-all.sh: so ha o que escalar depois
+      # que o Deployment existe e os pods reportam metrica.
+      - name: Autoscaler (HPA)
+        if: steps.preflight.outputs.skip == 'false'
+        run: kubectl apply -f k8s/app-hpa.yaml
+
+      # O Service e ClusterIP por decisao da #7 (LoadBalancer fica <pending>
+      # em kind/minikube), entao nao existe URL publica para dar curl. O
+      # port-forward e o caminho de acesso suportado — o mesmo que o
+      # k8s/README.md documenta para humanos.
+      - name: Smoke test pos-deploy
+        if: steps.preflight.outputs.skip == 'false'
+        run: |
+          set -euo pipefail
+          kubectl port-forward -n "${NAMESPACE}" svc/soat-app 3000:3000 &
+          pf_pid=$!
+          trap 'kill "${pf_pid}" 2>/dev/null || true' EXIT
+
+          ok=false
+          for _ in $(seq 1 30); do
+            if curl -fsS --max-time 5 http://127.0.0.1:3000/health -o health.json; then
+              ok=true
+              break
+            fi
+            sleep 2
+          done
+
+          if [ "${ok}" != "true" ]; then
+            echo "::error title=Smoke test falhou::/health nao respondeu em ~60s via port-forward"
+            exit 1
+          fi
+
+          cat health.json
+          echo
+          if ! grep -q '"status":"ok"' health.json; then
+            echo "::error title=Smoke test falhou::/health respondeu, mas sem status ok"
+            exit 1
+          fi
+          echo "Smoke test pos-deploy: OK"
+
+      - name: Diagnostico da falha
+        if: failure() && steps.preflight.outputs.skip == 'false'
+        run: |
+          kubectl get pods -n "${NAMESPACE}" -o wide || true
+          kubectl get events -n "${NAMESPACE}" --sort-by=.lastTimestamp | tail -30 || true
+          kubectl describe deployment/soat-app -n "${NAMESPACE}" | tail -40 || true
+          kubectl logs -n "${NAMESPACE}" -l app.kubernetes.io/name=soat-app \
+            --tail=100 --all-containers || true
+
+      # Roda depois do diagnostico de proposito: os logs precisam ser os da
+      # revisao quebrada, nao os da revisao restaurada.
+      - name: Rollback automatico
+        if: failure() && steps.preflight.outputs.skip == 'false'
+        run: |
+          set -uo pipefail
+          if ! kubectl get deployment soat-app -n "${NAMESPACE}" >/dev/null 2>&1; then
+            echo "::warning title=Sem rollback::o Deployment soat-app nao existe; nada a reverter."
+            exit 0
+          fi
+          revisions=$(kubectl rollout history deployment/soat-app -n "${NAMESPACE}" \
+            | grep -c '^[0-9]' || true)
+          if [ "${revisions}" -lt 2 ]; then
+            echo "::warning title=Sem rollback::primeiro deploy, nao ha revisao anterior para restaurar."
+            exit 0
+          fi
+          echo "::warning title=Rollback::revertendo soat-app para a revisao anterior."
+          kubectl rollout undo deployment/soat-app -n "${NAMESPACE}"
+          kubectl rollout status deployment/soat-app -n "${NAMESPACE}" --timeout="${ROLLOUT_TIMEOUT}"
+          kubectl get deployment soat-app -n "${NAMESPACE}" \
+            -o jsonpath='{.spec.template.spec.containers[?(@.name=="app")].image}{"\n"}'
+
+      - name: Resumo do deploy
+        if: success() && steps.preflight.outputs.skip == 'false'
+        run: |
+          {
+            echo "### Deploy concluido"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Imagem | \`${IMAGE}\` |"
+            echo "| Namespace | \`${NAMESPACE}\` |"
+            echo "| Contexto | \`$(kubectl config current-context)\` |"
+            echo
+            echo '```'
+            kubectl get deployment,statefulset,hpa -n "${NAMESPACE}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
