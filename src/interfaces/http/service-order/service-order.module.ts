@@ -9,11 +9,21 @@ import { OperationalReportUseCase } from '@application/service-order/operational
 import { ServiceOrderRepository } from '@domain/service-order/service-order-repository.port';
 import { ServiceOrderTypeOrmRepository } from '@infrastructure/database/typeorm/repositories/service-order.typeorm-repository';
 import { ServiceOrderOrmEntity } from '@infrastructure/database/typeorm/entities/service-order.orm-entity';
+import { BudgetOrmEntity } from '@infrastructure/database/typeorm/entities/budget.orm-entity';
+import { BudgetRepository } from '@domain/budget/budget-repository.port';
+import { BudgetTypeOrmRepository } from '@infrastructure/database/typeorm/repositories/budget.typeorm-repository';
+import { BudgetLineResolver } from '@application/budget/budget-line-resolver';
 import { ClientModule } from '../client/client.module';
 import { PartModule } from '../part/part.module';
+import { ServiceModule } from '../service/service.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ServiceOrderOrmEntity]), ClientModule, PartModule],
+  imports: [
+    TypeOrmModule.forFeature([ServiceOrderOrmEntity, BudgetOrmEntity]),
+    ClientModule,
+    PartModule,
+    ServiceModule,
+  ],
   controllers: [ServiceOrderController],
   providers: [
     CreateServiceOrderUseCase,
@@ -21,9 +31,16 @@ import { PartModule } from '../part/part.module';
     FindServiceOrderUseCase,
     AverageExecutionTimeUseCase,
     OperationalReportUseCase,
+    BudgetLineResolver,
     {
       provide: ServiceOrderRepository,
       useClass: ServiceOrderTypeOrmRepository,
+    },
+    // BudgetModule importa ServiceOrderModule; importar de volta faria ciclo.
+    // O adaptador nao tem estado, entao declarar o binding aqui e barato.
+    {
+      provide: BudgetRepository,
+      useClass: BudgetTypeOrmRepository,
     },
   ],
   exports: [ServiceOrderRepository, FindServiceOrderUseCase, ChangeServiceOrderStatusUseCase],

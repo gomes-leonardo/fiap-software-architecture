@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BudgetController } from './budget.controller';
 import { CreateBudgetUseCase } from '@application/budget/create-budget.use-case';
+import { BudgetLineResolver } from '@application/budget/budget-line-resolver';
 import { ApproveBudgetUseCase } from '@application/budget/approve-budget.use-case';
 import { RefuseBudgetUseCase } from '@application/budget/refuse-budget.use-case';
 import { BudgetRepository } from '@domain/budget/budget-repository.port';
@@ -20,6 +21,7 @@ import { PartModule } from '@interfaces/http/part/part.module';
   ],
   controllers: [BudgetController],
   providers: [
+    BudgetLineResolver,
     CreateBudgetUseCase,
     ApproveBudgetUseCase,
     RefuseBudgetUseCase,

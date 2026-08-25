@@ -1,3 +1,4 @@
+import { BudgetLineResolver } from '@application/budget/budget-line-resolver';
 import { CreateBudgetUseCase } from '@application/budget/create-budget.use-case';
 import { BudgetRepository } from '@domain/budget/budget-repository.port';
 import { ServiceRepository } from '@domain/service/service-repository.port';
@@ -55,7 +56,13 @@ describe('CreateBudgetUseCase', () => {
       findById: jest.fn().mockResolvedValue(serviceOrder),
     } as any;
 
-    useCase = new CreateBudgetUseCase(mockRepo, mockServiceRepo, mockPartRepo, mockSORepo);
+    // O resolver e real de proposito: ele e quem busca no catalogo e congela
+    // o preco, que e justamente o que estes testes provam.
+    useCase = new CreateBudgetUseCase(
+      mockRepo,
+      mockSORepo,
+      new BudgetLineResolver(mockServiceRepo, mockPartRepo),
+    );
   });
 
   it('should generate a budget from the catalog (frozen prices)', async () => {

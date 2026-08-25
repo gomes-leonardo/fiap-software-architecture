@@ -101,7 +101,7 @@ Todos os endpoints (exceto `/auth`, `/consult` e `/webhooks`) requerem autentica
 
 | Metodo | Rota                                             | Descricao                                                |
 | ------ | ------------------------------------------------ | -------------------------------------------------------- |
-| POST   | `/service-orders`                                | Criar OS                                                 |
+| POST   | `/service-orders`                                | Criar OS (aceita `services` e `parts` inline)            |
 | GET    | `/service-orders`                                | Listar OS ativas (filtro por `?status=` ou `?clientId=`) |
 | GET    | `/service-orders/:id`                            | Buscar por ID                                            |
 | PATCH  | `/service-orders/:id/status`                     | Alterar status                                           |
@@ -111,6 +111,30 @@ Todos os endpoints (exceto `/auth`, `/consult` e `/webhooks`) requerem autentica
 | GET    | `/service-orders/metrics/operational-report`     | Relatorio operacional                                    |
 
 Sem filtro, `GET /service-orders` retorna somente as OS ativas — as terminais (`FINALIZADA`, `ENTREGUE`, `ENCERRADA_SEM_EXECUCAO`) ficam de fora. A ordenacao segue a prioridade de status `EM_EXECUCAO` > `AGUARDANDO_APROVACAO` > `EM_DIAGNOSTICO` > `RECEBIDA` > `PAUSADO` e, dentro do mesmo status, da OS mais antiga para a mais recente. Os filtros `?status=` e `?clientId=` nao aplicam essa regra.
+
+#### Abertura com servicos e pecas inline
+
+`POST /service-orders` aceita `services` e `parts` opcionais, cada item com `referenceId` e `quantity`:
+
+```json
+{
+  "clientId": "...",
+  "description": "Revisao completa",
+  "services": [{ "referenceId": "<id do servico>", "quantity": 1 }],
+  "parts": [{ "referenceId": "<id da peca>", "quantity": 2 }]
+}
+```
+
+Informando qualquer um deles, a OS nasce com um orcamento `PENDENTE` e ja em `AGUARDANDO_APROVACAO` — o mesmo estado a que se chega criando a OS e chamando `POST /budgets` em seguida. Sem itens, nada muda: OS em `RECEBIDA`, sem orcamento.
+
+Preco e descricao **nunca** vem da requisicao: sao lidos do catalogo (`Service.basePrice` / `Part.unitPrice`) e congelados no orcamento. E o que impede um preco arbitrario de entrar e o que garante que o valor combinado nao muda depois se o catalogo mudar.
+
+Dois campos na resposta merecem atencao:
+
+- **`createdBudgetId`** — o orcamento que acabou de nascer. Nao confundir com **`budgetId`**, que continua `null`: aquele significa "orcamento APROVADO" e e o que destranca a transicao para `EM_EXECUCAO`. Quem o preenche e o `ApproveBudgetUseCase`, depois de dar baixa no estoque. Se a abertura o preenchesse, qualquer um abriria uma OS com pecas e iria direto para execucao, sem aprovacao e sem reserva.
+- **`stockWarnings`** — peca com estoque insuficiente **nao** bloqueia a abertura. O estoque so e decrementado na aprovacao, e e la que a falta barra o fluxo; o aviso existe para o admin descobrir enquanto ainda da tempo de repor.
+
+`referenceId` inexistente no catalogo responde `400` e **nao** cria nada — a resolucao acontece antes de qualquer escrita.
 
 ### Orcamentos
 
