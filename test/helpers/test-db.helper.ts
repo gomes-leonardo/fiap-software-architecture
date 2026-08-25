@@ -24,7 +24,7 @@
  *   (faster but can mask transaction-related bugs)
  */
 import { DataSource } from 'typeorm';
-import { GenericContainer, StartedTestContainer } from 'testcontainers';
+import { GenericContainer, StartedTestContainer, Wait } from 'testcontainers';
 import { AdminOrmEntity } from '@infrastructure/database/typeorm/entities/admin.orm-entity';
 import { ClientOrmEntity } from '@infrastructure/database/typeorm/entities/client.orm-entity';
 import { VehicleOrmEntity } from '@infrastructure/database/typeorm/entities/vehicle.orm-entity';
@@ -37,6 +37,20 @@ const POSTGRES_IMAGE = 'postgres:16-alpine';
 const POSTGRES_DB = 'test_db';
 const POSTGRES_USER = 'test';
 const POSTGRES_PASSWORD = 'test';
+
+/**
+ * O entrypoint da imagem sobe um servidor temporario para rodar o `initdb` e o
+ * derruba antes de subir o definitivo, entao a linha aparece DUAS vezes:
+ *
+ *   LOG:  database system is ready to accept connections   <- servidor do initdb
+ *   LOG:  shutting down
+ *   PostgreSQL init process complete; ready for start up.
+ *   LOG:  database system is ready to accept connections   <- servidor definitivo
+ *
+ * Esperar a primeira ocorrencia devolveria um banco que esta prestes a fechar.
+ */
+const POSTGRES_READY_LOG = /database system is ready to accept connections/;
+const POSTGRES_READY_LOG_OCCURRENCES = 2;
 
 let container: StartedTestContainer;
 let dataSource: DataSource;
@@ -60,6 +74,11 @@ export interface TestPostgres {
  * O smoke test, por outro lado, sobe o `AppModule` real e deixa o proprio
  * TypeORM da aplicacao abrir a conexao — ele so precisa saber para onde
  * apontar as variaveis `DB_*`.
+ *
+ * A wait strategy nao e opcional: sem ela o Testcontainers so espera a porta
+ * 5432 abrir, e o Postgres abre a porta durante o `initdb`, antes de aceitar
+ * conexao. O teste conectava cedo demais e falhava intermitentemente com
+ * "the database system is starting up", em suites diferentes a cada rodada.
  */
 export async function startPostgresContainer(): Promise<TestPostgres> {
   const started = await new GenericContainer(POSTGRES_IMAGE)
@@ -69,6 +88,7 @@ export async function startPostgresContainer(): Promise<TestPostgres> {
       POSTGRES_PASSWORD,
     })
     .withExposedPorts(5432)
+    .withWaitStrategy(Wait.forLogMessage(POSTGRES_READY_LOG, POSTGRES_READY_LOG_OCCURRENCES))
     .start();
 
   return {
