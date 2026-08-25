@@ -6,4 +6,5 @@ export abstract class ServiceRepository {
   abstract findByName(name: string): Promise<Service | null>;
   abstract findAll(): Promise<Service[]>;
   abstract delete(id: string): Promise<void>;
+  abstract restore(id: string): Promise<void>;
 }

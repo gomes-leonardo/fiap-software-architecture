@@ -44,7 +44,11 @@ export class BudgetTypeOrmRepository extends BudgetRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await this.ormRepo.delete(id);
+    await this.ormRepo.softDelete(id);
+  }
+
+  async restore(id: string): Promise<void> {
+    await this.ormRepo.restore(id);
   }
 
   private toOrmEntity(budget: Budget): BudgetOrmEntity {
