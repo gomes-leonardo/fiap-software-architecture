@@ -1,20 +1,29 @@
 locals {
-  common_labels = {
-    "app.kubernetes.io/part-of"    = var.project
-    "app.kubernetes.io/managed-by" = "terraform"
-    "soat.io/project"              = var.project
-    "soat.io/environment"          = var.environment
+  # Iguais aos labels de k8s/namespace.yaml, para que o apply dos manifestos
+  # sobre o namespace criado aqui nao gere drift no plan seguinte.
+  namespace_labels = {
+    "app.kubernetes.io/part-of" = var.project
+    "name"                      = var.namespace
   }
 
-  postgres_labels = merge(local.common_labels, {
-    "app.kubernetes.io/name"      = "postgres"
+  # Mesmos labels de k8s/db-service.yaml e k8s/db-deployment.yaml: com
+  # enable_postgres = true o banco do Terraform precisa ser indistinguivel do
+  # banco dos manifestos para os Services e o ConfigMap continuarem valendo.
+  db_labels = {
+    "app.kubernetes.io/name"      = var.db_service_name
     "app.kubernetes.io/component" = "database"
-  })
+    "app.kubernetes.io/part-of"   = var.project
+  }
 }
 
 # ---------------------------------------------------------------------------
-# Cluster Kind. Control-plane com mapeamento de porta para a maquina host e
-# workers para o HPA ter onde espalhar replicas.
+# Cluster Kind.
+#
+# Sem extraPortMappings: o Service da aplicacao em k8s/app-service.yaml e
+# ClusterIP na porta 3000, sem NodePort — escolha deliberada dos manifestos,
+# porque um Service LoadBalancer fica <pending> para sempre em Kind. Mapear
+# porta do host para uma NodePort que nao existe seria configuracao morta. O
+# acesso e por `kubectl port-forward` (ver output app_port_forward_command).
 # ---------------------------------------------------------------------------
 
 resource "kind_cluster" "this" {
@@ -29,14 +38,6 @@ resource "kind_cluster" "this" {
 
     node {
       role = "control-plane"
-
-      # Unica porta de entrada: o NodePort do Service da aplicacao sai em
-      # http://localhost:<host_http_port> sem precisar de port-forward.
-      extra_port_mappings {
-        container_port = var.node_port
-        host_port      = var.host_http_port
-        protocol       = "TCP"
-      }
     }
 
     dynamic "node" {
@@ -58,10 +59,14 @@ resource "kubernetes_namespace" "app" {
 
   metadata {
     name   = var.namespace
-    labels = local.common_labels
+    labels = local.namespace_labels
   }
 
   depends_on = [kind_cluster.this]
+}
+
+locals {
+  namespace = var.create_namespace ? kubernetes_namespace.app[0].metadata[0].name : var.namespace
 }
 
 # ---------------------------------------------------------------------------
@@ -93,9 +98,14 @@ resource "helm_release" "metrics_server" {
 }
 
 # ---------------------------------------------------------------------------
-# PostgreSQL dentro do cluster. Substitui o RDS no caminho local; as chaves do
-# Secret sao as mesmas que o modulo database grava no Secrets Manager, para que
-# os manifestos da aplicacao nao precisem mudar entre os dois ambientes.
+# PostgreSQL pelo Terraform — desligado por padrao (enable_postgres = false).
+#
+# Os recursos abaixo sao um substituto drop-in de k8s/db-deployment.yaml,
+# k8s/db-service.yaml e k8s/app-secret.yaml: mesmos nomes, mesmos labels,
+# mesmo Secret. O ganho sobre os manifestos e um so — `wait_for_rollout` faz o
+# apply so devolver o controle com o banco aceitando conexao. A perda tambem e
+# uma: Deployment + PVC em vez de StatefulSet + volumeClaimTemplates, que e o
+# motivo de os manifestos serem o caminho padrao.
 # ---------------------------------------------------------------------------
 
 resource "random_password" "db" {
@@ -105,25 +115,41 @@ resource "random_password" "db" {
   special = false
 }
 
-locals {
-  namespace = var.create_namespace ? kubernetes_namespace.app[0].metadata[0].name : var.namespace
+resource "random_password" "jwt" {
+  count = var.enable_postgres ? 1 : 0
+
+  length  = 48
+  special = false
 }
 
-resource "kubernetes_secret" "db" {
+resource "random_password" "webhook" {
+  count = var.enable_postgres ? 1 : 0
+
+  length  = 48
+  special = false
+}
+
+# As quatro chaves sao exatamente as de k8s/app-secret.yaml. DB_HOST, DB_PORT e
+# DB_NAME nao entram aqui de proposito: eles vivem no ConfigMap
+# soat-app-config, que nao e segredo e continua vindo dos manifestos.
+resource "kubernetes_secret" "app" {
   count = var.enable_postgres ? 1 : 0
 
   metadata {
-    name      = var.db_secret_name
+    name      = var.app_secret_name
     namespace = local.namespace
-    labels    = local.postgres_labels
+
+    labels = {
+      "app.kubernetes.io/name"    = "soat-app"
+      "app.kubernetes.io/part-of" = var.project
+    }
   }
 
   data = {
-    DB_HOST = "postgres.${local.namespace}.svc.cluster.local"
-    DB_PORT = "5432"
-    DB_NAME = var.db_name
-    DB_USER = var.db_username
-    DB_PASS = random_password.db[0].result
+    DB_USER        = var.db_username
+    DB_PASS        = random_password.db[0].result
+    JWT_SECRET     = random_password.jwt[0].result
+    WEBHOOK_SECRET = random_password.webhook[0].result
   }
 
   type = "Opaque"
@@ -133,9 +159,9 @@ resource "kubernetes_persistent_volume_claim" "db" {
   count = var.enable_postgres ? 1 : 0
 
   metadata {
-    name      = "postgres-data"
+    name      = "${var.db_service_name}-pgdata"
     namespace = local.namespace
-    labels    = local.postgres_labels
+    labels    = local.db_labels
   }
 
   spec {
@@ -157,9 +183,9 @@ resource "kubernetes_deployment" "db" {
   count = var.enable_postgres ? 1 : 0
 
   metadata {
-    name      = "postgres"
+    name      = var.db_service_name
     namespace = local.namespace
-    labels    = local.postgres_labels
+    labels    = local.db_labels
   }
 
   spec {
@@ -173,19 +199,30 @@ resource "kubernetes_deployment" "db" {
 
     selector {
       match_labels = {
-        "app.kubernetes.io/name" = "postgres"
+        "app.kubernetes.io/name" = var.db_service_name
       }
     }
 
     template {
       metadata {
-        labels = local.postgres_labels
+        labels = local.db_labels
       }
 
       spec {
+        security_context {
+          # 70 e o uid/gid do usuario postgres na imagem postgres:16-alpine.
+          # fsGroup faz o kubelet ajustar o dono do volume montado — sem isso o
+          # initdb falha por permissao.
+          run_as_user     = 70
+          run_as_group    = 70
+          fs_group        = 70
+          run_as_non_root = true
+        }
+
         container {
-          name  = "postgres"
-          image = var.postgres_image
+          name              = "postgres"
+          image             = var.postgres_image
+          image_pull_policy = "IfNotPresent"
 
           port {
             name           = "postgres"
@@ -198,8 +235,14 @@ resource "kubernetes_deployment" "db" {
           }
 
           env {
-            name  = "POSTGRES_USER"
-            value = var.db_username
+            name = "POSTGRES_USER"
+
+            value_from {
+              secret_key_ref {
+                name = kubernetes_secret.app[0].metadata[0].name
+                key  = "DB_USER"
+              }
+            }
           }
 
           env {
@@ -207,46 +250,49 @@ resource "kubernetes_deployment" "db" {
 
             value_from {
               secret_key_ref {
-                name = kubernetes_secret.db[0].metadata[0].name
+                name = kubernetes_secret.app[0].metadata[0].name
                 key  = "DB_PASS"
               }
             }
           }
 
-          # A imagem oficial monta o volume em /var/lib/postgresql/data; apontar
-          # PGDATA para um subdiretorio evita o erro de "diretorio nao vazio"
-          # quando o volume tem lost+found.
+          # O initdb exige diretorio vazio, e alguns provisionadores criam
+          # lost+found na raiz do volume. Dados num subdiretorio resolvem.
           env {
             name  = "PGDATA"
             value = "/var/lib/postgresql/data/pgdata"
           }
 
           volume_mount {
-            name       = "data"
+            name       = "pgdata"
             mount_path = "/var/lib/postgresql/data"
           }
 
           readiness_probe {
             exec {
-              command = ["pg_isready", "-U", var.db_username, "-d", var.db_name]
+              command = ["sh", "-c", "exec pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -h 127.0.0.1"]
             }
 
             initial_delay_seconds = 5
             period_seconds        = 5
+            timeout_seconds       = 3
+            failure_threshold     = 6
           }
 
           liveness_probe {
             exec {
-              command = ["pg_isready", "-U", var.db_username, "-d", var.db_name]
+              command = ["sh", "-c", "exec pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -h 127.0.0.1"]
             }
 
             initial_delay_seconds = 30
-            period_seconds        = 10
+            period_seconds        = 20
+            timeout_seconds       = 5
+            failure_threshold     = 6
           }
 
           resources {
             requests = {
-              cpu    = "100m"
+              cpu    = "250m"
               memory = "256Mi"
             }
 
@@ -255,15 +301,31 @@ resource "kubernetes_deployment" "db" {
               memory = "512Mi"
             }
           }
+
+          security_context {
+            allow_privilege_escalation = false
+
+            capabilities {
+              drop = ["ALL"]
+            }
+
+            # O Postgres escreve o socket unix em /var/run/postgresql e
+            # temporarios de sort em /tmp: rootfs somente leitura exigiria
+            # emptyDir nos dois caminhos.
+            read_only_root_filesystem = false
+          }
         }
 
         volume {
-          name = "data"
+          name = "pgdata"
 
           persistent_volume_claim {
             claim_name = kubernetes_persistent_volume_claim.db[0].metadata[0].name
           }
         }
+
+        # 30s (default) e curto para um shutdown limpo do Postgres sob carga.
+        termination_grace_period_seconds = 60
       }
     }
   }
@@ -277,22 +339,22 @@ resource "kubernetes_service" "db" {
   count = var.enable_postgres ? 1 : 0
 
   metadata {
-    name      = "postgres"
+    name      = var.db_service_name
     namespace = local.namespace
-    labels    = local.postgres_labels
+    labels    = local.db_labels
   }
 
   spec {
     type = "ClusterIP"
 
     selector = {
-      "app.kubernetes.io/name" = "postgres"
+      "app.kubernetes.io/name" = var.db_service_name
     }
 
     port {
       name        = "postgres"
       port        = 5432
-      target_port = 5432
+      target_port = "postgres"
     }
   }
 }

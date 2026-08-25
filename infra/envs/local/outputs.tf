@@ -25,23 +25,38 @@ output "kubeconfig" {
 }
 
 output "namespace" {
-  description = "Namespace onde a aplicacao deve ser instalada."
+  description = "Namespace onde os manifestos de k8s/ devem ser aplicados."
   value       = local.namespace
 }
 
-output "db_endpoint" {
-  description = "Endereco do PostgreSQL dentro do cluster, no formato host:porta."
-  value       = var.enable_postgres ? "postgres.${local.namespace}.svc.cluster.local:5432" : null
+output "load_image_command" {
+  description = "Carrega a imagem da aplicacao no cluster. O Kind nao enxerga o daemon Docker local, e o Deployment usa imagePullPolicy IfNotPresent."
+  value       = "kind load docker-image ${var.app_image} --name ${kind_cluster.this.name}"
 }
 
-output "db_secret_name" {
-  description = "Secret do Kubernetes com DB_HOST, DB_PORT, DB_NAME, DB_USER e DB_PASS."
-  value       = var.enable_postgres ? kubernetes_secret.db[0].metadata[0].name : null
+output "app_port_forward_command" {
+  description = "Publica a API na maquina. O Service da aplicacao e ClusterIP: nao ha NodePort nem LoadBalancer, entao este e o caminho de acesso."
+  value       = "kubectl port-forward -n ${local.namespace} svc/${var.app_service_name} ${var.app_port}:${var.app_port}"
 }
 
 output "app_url" {
-  description = "URL da aplicacao na maquina host, uma vez que o Service NodePort esteja publicado."
-  value       = "http://localhost:${var.host_http_port}"
+  description = "URL da API enquanto o port-forward estiver ativo."
+  value       = "http://localhost:${var.app_port}"
+}
+
+output "postgres_managed_by" {
+  description = "Quem cria o PostgreSQL neste ambiente: os manifestos em k8s/ (padrao) ou o Terraform."
+  value       = var.enable_postgres ? "terraform" : "k8s-manifests"
+}
+
+output "db_endpoint" {
+  description = "Endereco do PostgreSQL dentro do cluster. Preenchido so quando o Terraform e quem sobe o banco; com os manifestos o valor equivalente e DB_HOST do ConfigMap soat-app-config."
+  value       = var.enable_postgres ? "${var.db_service_name}.${local.namespace}.svc.cluster.local:5432" : null
+}
+
+output "app_secret_name" {
+  description = "Secret lido via envFrom pelo Deployment da aplicacao. Preenchido so quando o Terraform e quem o cria; caso contrario vem de k8s/app-secret.yaml."
+  value       = var.enable_postgres ? kubernetes_secret.app[0].metadata[0].name : null
 }
 
 output "access_instructions" {
@@ -49,20 +64,23 @@ output "access_instructions" {
   value       = <<-EOT
     1. Aponte o kubectl para o cluster:
          kubectl config use-context kind-${kind_cluster.this.name}
-
-    2. Confira os nodes:
          kubectl get nodes
 
-    3. Carregue a imagem da aplicacao no cluster (o Kind nao ve o registry
-       local do Docker por conta propria):
-         docker build -t soat-app:local .
-         kind load docker-image soat-app:local --name ${kind_cluster.this.name}
+    2. Confirme que o metrics-server respondeu (o HPA depende dele):
+         kubectl top nodes
 
-    4. Aplique os manifestos do Kubernetes no namespace ${local.namespace}.
-       O Service da aplicacao precisa ser NodePort ${var.node_port} para o
-       mapeamento http://localhost:${var.host_http_port} funcionar.
+    3. Construa a imagem da aplicacao e carregue no cluster:
+         docker build -t ${var.app_image} .
+         kind load docker-image ${var.app_image} --name ${kind_cluster.this.name}
+
+    4. Aplique os manifestos${var.enable_postgres ? " (sem os de banco: o Terraform ja subiu o Postgres e o Secret)" : ""}:
+         ${var.enable_postgres ? "kubectl apply -n ${local.namespace} -f k8s/app-configmap.yaml -f k8s/app-deployment.yaml -f k8s/app-service.yaml -f k8s/app-hpa.yaml" : "./k8s/apply-all.sh"}
 
     5. Verifique se o HPA esta lendo metrica (nao pode ficar em <unknown>):
          kubectl -n ${local.namespace} get hpa -w
+
+    6. Publique a API na maquina:
+         kubectl port-forward -n ${local.namespace} svc/${var.app_service_name} ${var.app_port}:${var.app_port}
+         curl http://localhost:${var.app_port}/health
   EOT
 }

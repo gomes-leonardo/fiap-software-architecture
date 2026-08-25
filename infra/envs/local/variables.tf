@@ -1,11 +1,11 @@
 variable "project" {
-  description = "Nome do projeto. Vira a tag/label Project."
+  description = "Nome do projeto. Vira o label Project."
   type        = string
   default     = "soat-tech-challenge"
 }
 
 variable "environment" {
-  description = "Ambiente. Vira a tag/label Environment."
+  description = "Ambiente. Vira o label Environment."
   type        = string
   default     = "dev"
 }
@@ -29,7 +29,7 @@ variable "node_image" {
 }
 
 variable "worker_count" {
-  description = "Nodes worker alem do control-plane. Dois deixam o HPA distribuir replicas entre nodes."
+  description = "Nodes worker alem do control-plane. Dois deixam o HPA distribuir replicas entre nodes — o podAntiAffinity dos manifestos e `preferred`, entao ele aproveita mais de um node quando existe."
   type        = number
   default     = 2
 
@@ -39,73 +39,26 @@ variable "worker_count" {
   }
 }
 
-variable "host_http_port" {
-  description = "Porta da maquina mapeada para o NodePort de entrada do cluster. A aplicacao fica em http://localhost:<host_http_port>."
-  type        = number
-  default     = 8080
-}
-
-variable "node_port" {
-  description = "NodePort dentro do cluster que recebe o trafego mapeado de host_http_port. Precisa bater com o NodePort do Service da aplicacao."
-  type        = number
-  default     = 30080
-
-  validation {
-    condition     = var.node_port >= 30000 && var.node_port <= 32767
-    error_message = "NodePort precisa estar na faixa 30000-32767."
-  }
-}
-
 variable "namespace" {
-  description = "Namespace da aplicacao. Precisa ser o mesmo usado pelos manifestos K8s."
+  description = "Namespace da aplicacao. Precisa ser o mesmo dos manifestos em k8s/."
   type        = string
   default     = "soat"
 }
 
 variable "create_namespace" {
-  description = "Cria o namespace pelo Terraform. Deixe true na primeira vez; nao ha conflito se os manifestos tambem declararem o namespace, mas quem apaga passa a ser o `terraform destroy`."
+  description = "Cria o namespace pelo Terraform, com os mesmos labels de k8s/namespace.yaml — o apply dos manifestos vira no-op. Deixe true para o `terraform destroy` levar a stack inteira junto; false se preferir que so o kubectl mexa no namespace."
   type        = bool
   default     = true
 }
 
-variable "enable_postgres" {
-  description = "Sobe o PostgreSQL dentro do cluster. Desligue se os manifestos K8s ja trouxerem o proprio banco, para nao ter dois."
-  type        = bool
-  default     = true
-}
-
-variable "postgres_image" {
-  description = "Imagem do PostgreSQL. Mesma tag do docker-compose."
-  type        = string
-  default     = "postgres:16-alpine"
-}
-
-variable "postgres_storage" {
-  description = "Tamanho do PersistentVolumeClaim do banco."
-  type        = string
-  default     = "2Gi"
-}
-
-variable "db_name" {
-  description = "Nome do banco. Valor de DB_NAME."
-  type        = string
-  default     = "soat_repair_shop"
-}
-
-variable "db_username" {
-  description = "Usuario do banco. Valor de DB_USER."
-  type        = string
-  default     = "soat_app"
-}
-
-variable "db_secret_name" {
-  description = "Nome do Secret do Kubernetes com as credenciais do banco. Precisa bater com o que os manifestos da aplicacao consomem."
-  type        = string
-  default     = "soat-db-credentials"
-}
+# ---------------------------------------------------------------------------
+# metrics-server. Nao existe nos manifestos por ser infraestrutura de cluster,
+# e o Kind nao o inclui. Sem ele o HPA de k8s/app-hpa.yaml fica em
+# <unknown>/70% e nunca escala.
+# ---------------------------------------------------------------------------
 
 variable "enable_metrics_server" {
-  description = "Instala o metrics-server. O Kind nao traz metrics-server, e sem ele o HPA fica preso em <unknown> e nunca escala."
+  description = "Instala o metrics-server. Pre-requisito do HPA — deixe ligado."
   type        = bool
   default     = true
 }
@@ -114,4 +67,73 @@ variable "metrics_server_chart_version" {
   description = "Versao do chart Helm do metrics-server."
   type        = string
   default     = "3.12.2"
+}
+
+# ---------------------------------------------------------------------------
+# PostgreSQL pelo Terraform: caminho alternativo, desligado por padrao.
+#
+# A origem normal do banco no ambiente local sao os manifestos: k8s/ traz um
+# StatefulSet `soat-db` com volumeClaimTemplates, ja validado em cluster real.
+# Ligar isto sobe um segundo Postgres no mesmo namespace, entao so faz sentido
+# deixando os manifestos de banco fora do apply (ver infra/README.md).
+# ---------------------------------------------------------------------------
+
+variable "enable_postgres" {
+  description = "Sobe o PostgreSQL pelo Terraform em vez dos manifestos. Desligado por padrao: k8s/db-deployment.yaml e a origem normal do banco. Ligando, e obrigatorio deixar db-deployment.yaml, db-service.yaml e app-secret.yaml fora do apply dos manifestos."
+  type        = bool
+  default     = false
+}
+
+variable "postgres_image" {
+  description = "Imagem do PostgreSQL. Mesma tag do docker-compose e dos manifestos."
+  type        = string
+  default     = "postgres:16-alpine"
+}
+
+variable "postgres_storage" {
+  description = "Tamanho do PersistentVolumeClaim do banco. Igual ao volumeClaimTemplates dos manifestos."
+  type        = string
+  default     = "2Gi"
+}
+
+variable "db_service_name" {
+  description = "Nome do Service ClusterIP do banco. Precisa ser o valor de DB_HOST no ConfigMap soat-app-config, senao a aplicacao nao resolve o banco."
+  type        = string
+  default     = "soat-db"
+}
+
+variable "db_name" {
+  description = "Nome do banco. Precisa bater com DB_NAME do ConfigMap soat-app-config."
+  type        = string
+  default     = "soat_repair_shop"
+}
+
+variable "db_username" {
+  description = "Usuario do banco. Vira a chave DB_USER do Secret."
+  type        = string
+  default     = "postgres"
+}
+
+variable "app_secret_name" {
+  description = "Nome do Secret lido via envFrom pelo Deployment da aplicacao. Fonte unica: as mesmas credenciais alimentam app e banco."
+  type        = string
+  default     = "soat-app-secret"
+}
+
+variable "app_service_name" {
+  description = "Nome do Service ClusterIP da aplicacao, usado para montar o comando de port-forward."
+  type        = string
+  default     = "soat-app"
+}
+
+variable "app_port" {
+  description = "Porta do Service da aplicacao. Mesma porta do ConfigMap soat-app-config."
+  type        = number
+  default     = 3000
+}
+
+variable "app_image" {
+  description = "Tag da imagem da aplicacao que precisa ser carregada no cluster com `kind load docker-image`. Mesma tag do Deployment em k8s/app-deployment.yaml."
+  type        = string
+  default     = "soat-tech-challenge:latest"
 }
