@@ -1,0 +1,31 @@
+# ClusterIP e o default deliberado.
+#
+# LoadBalancer so entrega IP em cloud (ou com metallb/`minikube tunnel`); em
+# kind ou minikube puro o Service ficaria <pending> para sempre e o apply
+# pareceria quebrado. Para acessar a API de fora:
+#
+#   kubectl port-forward -n soat svc/soat-app 3000:3000
+#
+# Em cluster cloud (EKS, ver #8), trocar `type` para LoadBalancer — ou colocar
+# um Ingress na frente deste Service, que e o caminho normal quando houver
+# mais de uma rota publica.
+apiVersion: v1
+kind: Service
+metadata:
+  name: soat-app
+  namespace: soat
+  labels:
+    app.kubernetes.io/name: soat-app
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: soat-tech-challenge
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: soat-app
+  ports:
+    - name: http
+      port: 3000
+      # Aponta para a porta nomeada do container: se a porta da app mudar,
+      # muda em um lugar so (o Deployment).
+      targetPort: http
+      protocol: TCP

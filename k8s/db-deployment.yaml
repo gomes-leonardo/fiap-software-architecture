@@ -1,0 +1,139 @@
+# PostgreSQL como StatefulSet, nao Deployment.
+#
+# Por que: o banco tem estado e precisa de um PersistentVolume. Um Deployment
+# com um PVC ReadWriteOnce trava no proprio rolling update — o pod novo tenta
+# montar o volume que o pod antigo ainda segura, e o rollout fica preso ate
+# alguem deletar o pod na mao (o contorno seria `strategy: Recreate`, que troca
+# o deadlock por downtime). O StatefulSet resolve os dois problemas de origem:
+# `volumeClaimTemplates` amarra o PVC a identidade do pod, a substituicao e
+# ordenada (derruba antes de subir) e o nome DNS `soat-db-0` e estavel.
+#
+# Este e um banco de demonstracao: uma replica, sem replicacao e sem backup.
+# Para producao, o caminho e um Postgres gerenciado (RDS/Cloud SQL) — ver #8 —
+# ou um operator (CloudNativePG, Zalando) que cuide de failover e PITR.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: soat-db
+  namespace: soat
+  labels:
+    app.kubernetes.io/name: soat-db
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: soat-tech-challenge
+spec:
+  # O Service headless que da nome DNS estavel a cada pod (db-service.yaml).
+  serviceName: soat-db-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: soat-db
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: soat-db
+        app.kubernetes.io/component: database
+        app.kubernetes.io/part-of: soat-tech-challenge
+    spec:
+      securityContext:
+        # 70 e o uid/gid do usuario `postgres` na imagem postgres:16-alpine
+        # (na variante Debian seria 999). fsGroup faz o kubelet ajustar o dono
+        # do volume montado — sem isso o initdb falha por permissao.
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
+        runAsNonRoot: true
+      containers:
+        - name: postgres
+          # Mesma versao do docker-compose, com tag fixa: `postgres:16` flutua
+          # de patch entre dois deploys do mesmo commit.
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            # Credenciais vem do mesmo Secret/ConfigMap que o app consome —
+            # fonte unica, senao os dois lados divergem.
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: soat-app-secret
+                  key: DB_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: soat-app-secret
+                  key: DB_PASS
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: soat-app-config
+                  key: DB_NAME
+            # O initdb exige um diretorio vazio. Alguns provisionadores criam
+            # `lost+found` na raiz do volume, o que faz o initdb abortar; por
+            # isso os dados ficam num subdiretorio do ponto de montagem.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          resources:
+            # Espelha os limites ja usados no docker-compose (0.25/256Mi de
+            # reserva, 1 CPU/512Mi de teto), que sustentam a suite de
+            # integracao. shared_buffers default do Postgres e 128MB, entao
+            # 256Mi de request cobre o processo com folga; o teto de 512Mi da
+            # espaco para picos de conexoes concorrentes sem deixar o banco
+            # canibalizar o node.
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: '1'
+              memory: 512Mi
+          # pg_isready responde se o servidor aceita conexoes — mais preciso do
+          # que um TCP check, que passa enquanto o Postgres ainda esta em
+          # recovery e recusa queries.
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - exec pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" -h 127.0.0.1
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - exec pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" -h 127.0.0.1
+            # Tolerancia bem maior que a readiness: sair do balanceamento e
+            # barato, reiniciar um banco no meio de um checkpoint nao e.
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ['ALL']
+            # Diferente do app, aqui o rootfs continua gravavel: o Postgres
+            # escreve o socket unix em /var/run/postgresql e arquivos temporarios
+            # de sort em /tmp. Deixar readOnly exigiria emptyDirs nos dois
+            # caminhos, complexidade que nao se paga num banco de demo.
+            readOnlyRootFilesystem: false
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+      # 30s (default) e curto para um shutdown limpo do Postgres sob carga.
+      terminationGracePeriodSeconds: 60
+  volumeClaimTemplates:
+    - metadata:
+        name: pgdata
+      spec:
+        accessModes: ['ReadWriteOnce']
+        # Sem `storageClassName`: usa a StorageClass default do cluster
+        # (standard no minikube, local-path no kind, gp2/gp3 no EKS). Fixar um
+        # nome aqui quebraria o apply em metade dos clusters.
+        resources:
+          requests:
+            storage: 2Gi

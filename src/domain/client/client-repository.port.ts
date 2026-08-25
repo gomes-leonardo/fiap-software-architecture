@@ -7,4 +7,5 @@ export abstract class ClientRepository {
   abstract findAll(): Promise<Client[]>;
   abstract existsByCpfCnpj(cpfCnpj: string): Promise<boolean>;
   abstract delete(id: string): Promise<void>;
+  abstract restore(id: string): Promise<void>;
 }

@@ -37,7 +37,11 @@ export class ServiceTypeOrmRepository extends ServiceRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await this.ormRepo.delete(id);
+    await this.ormRepo.softDelete(id);
+  }
+
+  async restore(id: string): Promise<void> {
+    await this.ormRepo.restore(id);
   }
 
   private toOrmEntity(service: Service): ServiceOrmEntity {
@@ -50,11 +54,6 @@ export class ServiceTypeOrmRepository extends ServiceRepository {
   }
 
   private toDomainEntity(orm: ServiceOrmEntity): Service {
-    return Service.reconstitute(
-      orm.id,
-      orm.name,
-      Number(orm.basePrice),
-      orm.estimatedMinutes,
-    );
+    return Service.reconstitute(orm.id, orm.name, Number(orm.basePrice), orm.estimatedMinutes);
   }
 }

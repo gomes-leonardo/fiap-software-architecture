@@ -4,6 +4,7 @@ import {
   PrimaryColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
 } from 'typeorm';
 import { ServiceOrderStatus } from '@domain/service-order/service-order-status.enum';
 
@@ -35,4 +36,7 @@ export class ServiceOrderOrmEntity {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamp', nullable: true })
+  deletedAt!: Date | null;
 }
