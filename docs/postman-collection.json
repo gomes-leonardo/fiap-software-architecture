@@ -38,7 +38,7 @@
       "description": "Autenticação de administradores",
       "item": [
         {
-          "name": "Registrar novo administrador",
+          "name": "Registrar novo administrador (requer admin autenticado)",
           "request": {
             "method": "POST",
             "header": [
@@ -56,9 +56,6 @@
                 "auth",
                 "register"
               ]
-            },
-            "auth": {
-              "type": "noauth"
             },
             "body": {
               "mode": "raw",
@@ -90,9 +87,6 @@
                     "auth",
                     "register"
                   ]
-                },
-                "auth": {
-                  "type": "noauth"
                 },
                 "body": {
                   "mode": "raw",
@@ -135,9 +129,6 @@
                     "register"
                   ]
                 },
-                "auth": {
-                  "type": "noauth"
-                },
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
@@ -150,6 +141,42 @@
               },
               "status": "Bad Request",
               "code": 400,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "name": "Token ausente ou inválido",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/register",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
               "header": [],
               "body": "",
               "_postman_previewlanguage": "text"
@@ -3156,6 +3183,434 @@
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"status\": \"EM_EXECUCAO\",\n  \"changedBy\": \"gateway-email\",\n  \"token\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Aprovar orçamento a partir de um canal externo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{webhook_secret}}",
+                "description": "Bearer <WEBHOOK_SECRET>. Forma preferida de apresentar o segredo."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/webhooks/budgets/:id/approve",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhooks",
+                "budgets",
+                ":id",
+                "approve"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            },
+            "description": "Canal de integracao externa: e por aqui que a decisao do cliente final chega, sem login. O equivalente interno e `PATCH /budgets/{id}/{acao}`, usado pelo funcionario da oficina e protegido por JWT. Os dois caem no mesmo caso de uso — muda so quem prova identidade: aqui, o segredo pre-compartilhado `WEBHOOK_SECRET`, enviado em `Authorization: Bearer <segredo>` ou, como alternativa, no campo `token` do corpo. A aprovacao da baixa no estoque das pecas do orcamento e vincula o orcamento a OS. Estoque insuficiente bloqueia a aprovacao inteira, sem decrementar nada.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{webhook_secret}}",
+                    "description": "Bearer <WEBHOOK_SECRET>. Forma preferida de apresentar o segredo."
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/webhooks/budgets/:id/approve",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "webhooks",
+                    "budgets",
+                    ":id",
+                    "approve"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "description": "Canal de integracao externa: e por aqui que a decisao do cliente final chega, sem login. O equivalente interno e `PATCH /budgets/{id}/{acao}`, usado pelo funcionario da oficina e protegido por JWT. Os dois caem no mesmo caso de uso — muda so quem prova identidade: aqui, o segredo pre-compartilhado `WEBHOOK_SECRET`, enviado em `Authorization: Bearer <segredo>` ou, como alternativa, no campo `token` do corpo. A aprovacao da baixa no estoque das pecas do orcamento e vincula o orcamento a OS. Estoque insuficiente bloqueia a aprovacao inteira, sem decrementar nada.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"serviceOrderId\": \"string\",\n  \"lines\": [\n    \"string\"\n  ],\n  \"status\": \"string\",\n  \"version\": 0,\n  \"total\": 0,\n  \"frozenAt\": \"2026-01-01T00:00:00.000Z\"\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Orçamento inexistente, já aprovado/recusado (só um orçamento PENDENTE aceita decisão) ou estoque insuficiente para alguma peça",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{webhook_secret}}",
+                    "description": "Bearer <WEBHOOK_SECRET>. Forma preferida de apresentar o segredo."
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/webhooks/budgets/:id/approve",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "webhooks",
+                    "budgets",
+                    ":id",
+                    "approve"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "description": "Canal de integracao externa: e por aqui que a decisao do cliente final chega, sem login. O equivalente interno e `PATCH /budgets/{id}/{acao}`, usado pelo funcionario da oficina e protegido por JWT. Os dois caem no mesmo caso de uso — muda so quem prova identidade: aqui, o segredo pre-compartilhado `WEBHOOK_SECRET`, enviado em `Authorization: Bearer <segredo>` ou, como alternativa, no campo `token` do corpo. A aprovacao da baixa no estoque das pecas do orcamento e vincula o orcamento a OS. Estoque insuficiente bloqueia a aprovacao inteira, sem decrementar nada.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "name": "Segredo do webhook ausente ou inválido",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{webhook_secret}}",
+                    "description": "Bearer <WEBHOOK_SECRET>. Forma preferida de apresentar o segredo."
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/webhooks/budgets/:id/approve",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "webhooks",
+                    "budgets",
+                    ":id",
+                    "approve"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "description": "Canal de integracao externa: e por aqui que a decisao do cliente final chega, sem login. O equivalente interno e `PATCH /budgets/{id}/{acao}`, usado pelo funcionario da oficina e protegido por JWT. Os dois caem no mesmo caso de uso — muda so quem prova identidade: aqui, o segredo pre-compartilhado `WEBHOOK_SECRET`, enviado em `Authorization: Bearer <segredo>` ou, como alternativa, no campo `token` do corpo. A aprovacao da baixa no estoque das pecas do orcamento e vincula o orcamento a OS. Estoque insuficiente bloqueia a aprovacao inteira, sem decrementar nada.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Recusar orçamento a partir de um canal externo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{webhook_secret}}",
+                "description": "Bearer <WEBHOOK_SECRET>. Forma preferida de apresentar o segredo."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/webhooks/budgets/:id/refuse",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhooks",
+                "budgets",
+                ":id",
+                "refuse"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            },
+            "description": "Canal de integracao externa: e por aqui que a decisao do cliente final chega, sem login. O equivalente interno e `PATCH /budgets/{id}/{acao}`, usado pelo funcionario da oficina e protegido por JWT. Os dois caem no mesmo caso de uso — muda so quem prova identidade: aqui, o segredo pre-compartilhado `WEBHOOK_SECRET`, enviado em `Authorization: Bearer <segredo>` ou, como alternativa, no campo `token` do corpo. A recusa encerra a OS sem execucao quando ela estiver AGUARDANDO_APROVACAO.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{webhook_secret}}",
+                    "description": "Bearer <WEBHOOK_SECRET>. Forma preferida de apresentar o segredo."
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/webhooks/budgets/:id/refuse",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "webhooks",
+                    "budgets",
+                    ":id",
+                    "refuse"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "description": "Canal de integracao externa: e por aqui que a decisao do cliente final chega, sem login. O equivalente interno e `PATCH /budgets/{id}/{acao}`, usado pelo funcionario da oficina e protegido por JWT. Os dois caem no mesmo caso de uso — muda so quem prova identidade: aqui, o segredo pre-compartilhado `WEBHOOK_SECRET`, enviado em `Authorization: Bearer <segredo>` ou, como alternativa, no campo `token` do corpo. A recusa encerra a OS sem execucao quando ela estiver AGUARDANDO_APROVACAO.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"serviceOrderId\": \"string\",\n  \"lines\": [\n    \"string\"\n  ],\n  \"status\": \"string\",\n  \"version\": 0,\n  \"total\": 0,\n  \"frozenAt\": \"2026-01-01T00:00:00.000Z\"\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Orçamento inexistente ou já aprovado/recusado (só um orçamento PENDENTE aceita decisão)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{webhook_secret}}",
+                    "description": "Bearer <WEBHOOK_SECRET>. Forma preferida de apresentar o segredo."
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/webhooks/budgets/:id/refuse",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "webhooks",
+                    "budgets",
+                    ":id",
+                    "refuse"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "description": "Canal de integracao externa: e por aqui que a decisao do cliente final chega, sem login. O equivalente interno e `PATCH /budgets/{id}/{acao}`, usado pelo funcionario da oficina e protegido por JWT. Os dois caem no mesmo caso de uso — muda so quem prova identidade: aqui, o segredo pre-compartilhado `WEBHOOK_SECRET`, enviado em `Authorization: Bearer <segredo>` ou, como alternativa, no campo `token` do corpo. A recusa encerra a OS sem execucao quando ela estiver AGUARDANDO_APROVACAO.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "name": "Segredo do webhook ausente ou inválido",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{webhook_secret}}",
+                    "description": "Bearer <WEBHOOK_SECRET>. Forma preferida de apresentar o segredo."
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/webhooks/budgets/:id/refuse",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "webhooks",
+                    "budgets",
+                    ":id",
+                    "refuse"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "description": "Canal de integracao externa: e por aqui que a decisao do cliente final chega, sem login. O equivalente interno e `PATCH /budgets/{id}/{acao}`, usado pelo funcionario da oficina e protegido por JWT. Os dois caem no mesmo caso de uso — muda so quem prova identidade: aqui, o segredo pre-compartilhado `WEBHOOK_SECRET`, enviado em `Authorization: Bearer <segredo>` ou, como alternativa, no campo `token` do corpo. A recusa encerra a OS sem execucao quando ela estiver AGUARDANDO_APROVACAO.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"

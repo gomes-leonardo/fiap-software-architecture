@@ -9,6 +9,20 @@ import { getTypeOrmConfig } from '@infrastructure/database/typeorm/config/typeor
 const OUTPUT_PATH = join(__dirname, '..', 'docs', 'swagger.json');
 
 /**
+ * O `AppModule` faz fail-fast quando `JWT_SECRET` nao esta definida, para nao
+ * subir assinando token com segredo default. Aqui nao ha requisicao para
+ * assinar: o script so le metadados de controller para gerar o spec. Um valor
+ * efemero satisfaz a validacao sem enfraquece-la — quem define a variavel de
+ * verdade continua mandando, e um boot real sem ela continua morrendo.
+ */
+function ensureDocGenerationEnv(): void {
+  process.env.JWT_SECRET ??= 'swagger-export-only-not-a-real-secret';
+  process.env.WEBHOOK_SECRET ??= 'swagger-export-only-not-a-real-secret';
+}
+
+ensureDocGenerationEnv();
+
+/**
  * Copia da configuracao de `src/main.ts`. As duas precisam andar juntas: se
  * divergirem, o spec exportado descreve uma API que nao e a que o `/api-docs`
  * serve em runtime. Ao mexer no DocumentBuilder do `main.ts`, replique aqui.
