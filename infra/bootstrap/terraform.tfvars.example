@@ -1,0 +1,12 @@
+# Copie para terraform.tfvars e ajuste se precisar.
+#
+#   cp terraform.tfvars.example terraform.tfvars
+
+project = "soat-tech-challenge"
+region  = "us-east-1"
+
+# Deixe comentado para o nome sair como <project>-tfstate-<account_id>, que ja
+# e globalmente unico. Nome de bucket S3 e global em toda a AWS.
+# state_bucket_name = "soat-tech-challenge-tfstate-123456789012"
+
+lock_table_name = "soat-tech-challenge-tfstate-lock"

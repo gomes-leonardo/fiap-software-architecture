@@ -1,0 +1,36 @@
+# Copie para terraform.tfvars e ajuste. terraform.tfvars esta no .gitignore.
+#
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# Os defaults ja funcionam: `terraform apply` sem tfvars sobe o cluster.
+# A senha do banco e gerada por random_password — nao ha segredo aqui.
+
+project     = "soat-tech-challenge"
+environment = "dev"
+
+cluster_name = "soat-local"
+node_image   = "kindest/node:v1.31.0"
+
+# Dois workers deixam o HPA distribuir replicas entre nodes. Em maquina
+# apertada, 1 tambem serve.
+worker_count = 2
+
+# http://localhost:8080 -> NodePort 30080 do cluster.
+# node_port precisa bater com o NodePort do Service da aplicacao.
+host_http_port = 8080
+node_port      = 30080
+
+namespace        = "soat"
+create_namespace = true
+
+# Desligue se os manifestos K8s ja trouxerem o proprio PostgreSQL.
+enable_postgres  = true
+postgres_image   = "postgres:16-alpine"
+postgres_storage = "2Gi"
+
+db_name        = "soat_repair_shop"
+db_username    = "soat_app"
+db_secret_name = "soat-db-credentials"
+
+# Sem metrics-server o HPA fica em <unknown> e nao escala.
+enable_metrics_server = true
