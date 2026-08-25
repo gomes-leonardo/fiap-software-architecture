@@ -1,0 +1,22 @@
+# Variaveis NAO sensiveis do app. Tudo que e segredo esta em app-secret.yaml.
+# A fonte da verdade das variaveis e o `.env.example` na raiz do repositorio:
+# o que estiver la e nao estiver aqui ou no Secret nao chega ao container.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: soat-app-config
+  namespace: soat
+  labels:
+    app.kubernetes.io/name: soat-app
+    app.kubernetes.io/part-of: soat-tech-challenge
+data:
+  NODE_ENV: 'production'
+  PORT: '3000'
+  # DB_HOST e o nome do Service ClusterIP do Postgres (db-service.yaml).
+  # O nome curto resolve porque app e banco estao no mesmo namespace.
+  DB_HOST: 'soat-db'
+  DB_PORT: '5432'
+  DB_NAME: 'soat_repair_shop'
+  # Tempo de vida do token JWT. Nao e segredo — o segredo e a chave de
+  # assinatura, que fica no Secret.
+  JWT_EXPIRES_IN: '1h'
