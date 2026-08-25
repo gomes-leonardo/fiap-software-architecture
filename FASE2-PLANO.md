@@ -28,29 +28,34 @@ As 14 issues originais do Leo (#1, #3–#14, épico #2) cobrem quase todo o enun
 - **Issue #14** (smoke tests) não aparecia na tabela de prioridade original do épico. Reposicionada logo antes de #10 (o pipeline de deploy precisa do gate de smoke test já existindo).
 - `assets/` (guia de estudo, roteiro de vídeo da Fase 1, documento de entrega da Fase 1) está no working tree mas **não commitado** — são materiais de referência do curso, não necessariamente pra ir num repo público. Deixados de fora por enquanto.
 
-## 4. Ordem de execução
+## 4. Estado: concluído
 
-Ordem de dependência (a mesma publicada como comentário no épico #2). Uma issue por vez — implemento, mostro o diff, você aprova, seguimos pra próxima.
+Todas as 15 linhas do backlog foram implementadas, revisadas e mergeadas na `main`.
+As issues técnicas estão fechadas; só o épico [#2](https://github.com/gomes-leonardo/fiap-software-architecture/issues/2) segue aberto.
 
-| Ordem | Issue | O quê | Status |
-|-------|-------|-------|--------|
-| 1 | [#9](https://github.com/gomes-leonardo/fiap-software-architecture/issues/9) | Hardening Dockerfile/docker-compose + `/health` | 🔄 [PR #17](https://github.com/gomes-leonardo/fiap-software-architecture/pull/17) — CI verde, aguardando merge |
-| 2 | [#1](https://github.com/gomes-leonardo/fiap-software-architecture/issues/1) | CI: typecheck, cache Docker, proteção de branch | 🔄 [PR #18](https://github.com/gomes-leonardo/fiap-software-architecture/pull/18) — CI verde, aguardando merge |
-| 3 | [#4](https://github.com/gomes-leonardo/fiap-software-architecture/issues/4) | Soft delete em todas as entidades | ⬜ |
-| 4 | [#3](https://github.com/gomes-leonardo/fiap-software-architecture/issues/3) | Listagem de OS ordenada por prioridade de status | ✅ [PR #20](https://github.com/gomes-leonardo/fiap-software-architecture/pull/20) — merged |
-| 5 | [#5](https://github.com/gomes-leonardo/fiap-software-architecture/issues/5) | Abertura de OS com serviços/peças inline | ⬜ |
-| 6 | [#15](https://github.com/gomes-leonardo/fiap-software-architecture/issues/15) | Aprovação de orçamento via canal externo *(novo)* | ⬜ |
-| 7 | [#6](https://github.com/gomes-leonardo/fiap-software-architecture/issues/6) | Atualização de status da OS via webhook | 🔄 [PR #21](https://github.com/gomes-leonardo/fiap-software-architecture/pull/21) — aguardando merge |
-| 8 | [#8](https://github.com/gomes-leonardo/fiap-software-architecture/issues/8) | Terraform: cluster K8s + banco | ⬜ |
-| 9 | [#7](https://github.com/gomes-leonardo/fiap-software-architecture/issues/7) | Manifestos Kubernetes (Deploy/Service/ConfigMap/Secret/HPA) | ⬜ |
-| 10 | [#14](https://github.com/gomes-leonardo/fiap-software-architecture/issues/14) | Smoke tests integrados ao pipeline | ⬜ |
-| 11 | [#10](https://github.com/gomes-leonardo/fiap-software-architecture/issues/10) | CI/CD completo com deploy em Kubernetes | ⬜ |
-| 12 | [#13](https://github.com/gomes-leonardo/fiap-software-architecture/issues/13) | SECURITY.md aprofundado | ⬜ |
-| 13 | [#12](https://github.com/gomes-leonardo/fiap-software-architecture/issues/12) | Collection de API exportada | ⬜ |
-| 14 | [#11](https://github.com/gomes-leonardo/fiap-software-architecture/issues/11) | README Fase 2 (diagrama + instruções K8s/Terraform) | ⬜ |
-| 15 | [#16](https://github.com/gomes-leonardo/fiap-software-architecture/issues/16) | Checklist de submissão (vídeo, PDF, demo de escalabilidade) *(novo)* | ⬜ |
+| Issue | O quê | PR |
+|-------|-------|----|
+| #9 | Hardening Dockerfile/docker-compose + `/health` | #17 |
+| #1 | CI: typecheck, cache Docker, proteção de branch | #18 |
+| #3 | Listagem de OS ordenada por prioridade de status | #20 |
+| #6 | Atualização de status da OS via webhook | #21 |
+| #5 | Abertura de OS com serviços/peças inline | #22 |
+| #15 | Aprovação de orçamento via canal externo | #23 |
+| #14 | Smoke tests (+ correção do flake do Testcontainers) | #24 |
+| #4 | Soft delete em todas as entidades | #25 |
+| #8 | Terraform: EKS + RDS e Kind local | #26 |
+| #7 | Manifestos Kubernetes | #27 |
+| #13 | SECURITY.md aprofundado | #28 |
+| #12 | Collection de API exportada | #29 |
+| #10 | CI/CD completo com deploy em Kubernetes | #30 |
+| #11 | README Fase 2 com diagramas | #31 |
+| #16 | Checklist de submissão | #33 |
 
-Legenda: ⬜ não iniciado · 🔄 em andamento · ✅ concluído (commitado) · ⏸️ bloqueado
+Fora do backlog: **PR #32**, correção das três falhas de autenticação que a auditoria do #28 encontrou
+(`POST /auth/register` sem guard, `JWT_SECRET` com default hardcoded, seed de admin rodando em produção).
+
+O que resta é trabalho humano, não código — está detalhado em `docs/ENTREGA-FASE2.md`:
+cadastrar os secrets no GitHub, gravar o vídeo, montar o PDF e submeter no portal.
 
 ## 5. Por que essa ordem
 
