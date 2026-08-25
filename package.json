@@ -15,6 +15,7 @@
     "test": "jest --config jest.config.ts",
     "test:unit": "jest --config jest.config.ts --selectProjects unit",
     "test:integration": "jest --config jest.config.ts --selectProjects integration",
+    "test:smoke": "jest --config jest.config.ts --selectProjects smoke --runInBand",
     "test:e2e": "jest --config jest.config.ts --selectProjects e2e",
     "test:watch": "jest --config jest.config.ts --watch",
     "test:cov": "jest --config jest.config.ts --coverage",
@@ -26,7 +27,10 @@
     "audit": "npm audit --audit-level=high",
     "security:audit": "npm audit --audit-level=high",
     "security:sast": "npx semgrep --config auto src/",
-    "security:container": "trivy image soat-tech-challenge:latest"
+    "security:container": "trivy image soat-tech-challenge:latest",
+    "docs:swagger": "ts-node -r tsconfig-paths/register scripts/export-swagger.ts",
+    "docs:postman": "ts-node -r tsconfig-paths/register scripts/generate-postman-collection.ts",
+    "docs:api": "npm run docs:swagger && npm run docs:postman"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.29",

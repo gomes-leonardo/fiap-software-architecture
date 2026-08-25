@@ -47,7 +47,11 @@ export class VehicleTypeOrmRepository extends VehicleRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await this.ormRepo.delete(id);
+    await this.ormRepo.softDelete(id);
+  }
+
+  async restore(id: string): Promise<void> {
+    await this.ormRepo.restore(id);
   }
 
   private toOrmEntity(vehicle: Vehicle): VehicleOrmEntity {
