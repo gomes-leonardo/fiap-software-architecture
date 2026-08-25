@@ -26,6 +26,6 @@ import { PartModule } from '../part/part.module';
       useClass: ServiceOrderTypeOrmRepository,
     },
   ],
-  exports: [ServiceOrderRepository, FindServiceOrderUseCase],
+  exports: [ServiceOrderRepository, FindServiceOrderUseCase, ChangeServiceOrderStatusUseCase],
 })
 export class ServiceOrderModule {}

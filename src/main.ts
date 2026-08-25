@@ -39,6 +39,7 @@ async function bootstrap() {
     .addTag('budgets', 'Gerenciamento de orçamentos')
     .addTag('consult', 'Consulta pública de OS pelo cliente')
     .addTag('health', 'Health check da aplicação e do banco')
+    .addTag('webhooks', 'Integração com sistemas externos (sem login)')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
