@@ -15,6 +15,7 @@
     "test": "jest --config jest.config.ts",
     "test:unit": "jest --config jest.config.ts --selectProjects unit",
     "test:integration": "jest --config jest.config.ts --selectProjects integration",
+    "test:smoke": "jest --config jest.config.ts --selectProjects smoke --runInBand",
     "test:e2e": "jest --config jest.config.ts --selectProjects e2e",
     "test:watch": "jest --config jest.config.ts --watch",
     "test:cov": "jest --config jest.config.ts --coverage",

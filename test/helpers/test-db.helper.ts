@@ -33,29 +33,65 @@ import { ServiceOrderOrmEntity } from '@infrastructure/database/typeorm/entities
 import { PartOrmEntity } from '@infrastructure/database/typeorm/entities/part.orm-entity';
 import { BudgetOrmEntity } from '@infrastructure/database/typeorm/entities/budget.orm-entity';
 
+const POSTGRES_IMAGE = 'postgres:16-alpine';
+const POSTGRES_DB = 'test_db';
+const POSTGRES_USER = 'test';
+const POSTGRES_PASSWORD = 'test';
+
 let container: StartedTestContainer;
 let dataSource: DataSource;
 
-export async function setupTestDb(): Promise<DataSource> {
-  container = await new GenericContainer('postgres:16-alpine')
+/**
+ * Credenciais e endereco de um Postgres efemero ja no ar.
+ */
+export interface TestPostgres {
+  container: StartedTestContainer;
+  host: string;
+  port: number;
+  database: string;
+  username: string;
+  password: string;
+}
+
+/**
+ * Sobe apenas o container do Postgres, sem abrir um DataSource.
+ *
+ * Os testes de integracao falam direto com o banco pelo `setupTestDb` abaixo.
+ * O smoke test, por outro lado, sobe o `AppModule` real e deixa o proprio
+ * TypeORM da aplicacao abrir a conexao — ele so precisa saber para onde
+ * apontar as variaveis `DB_*`.
+ */
+export async function startPostgresContainer(): Promise<TestPostgres> {
+  const started = await new GenericContainer(POSTGRES_IMAGE)
     .withEnvironment({
-      POSTGRES_DB: 'test_db',
-      POSTGRES_USER: 'test',
-      POSTGRES_PASSWORD: 'test',
+      POSTGRES_DB,
+      POSTGRES_USER,
+      POSTGRES_PASSWORD,
     })
     .withExposedPorts(5432)
     .start();
 
-  const port = container.getMappedPort(5432);
-  const host = container.getHost();
+  return {
+    container: started,
+    host: started.getHost(),
+    port: started.getMappedPort(5432),
+    database: POSTGRES_DB,
+    username: POSTGRES_USER,
+    password: POSTGRES_PASSWORD,
+  };
+}
+
+export async function setupTestDb(): Promise<DataSource> {
+  const postgres = await startPostgresContainer();
+  container = postgres.container;
 
   dataSource = new DataSource({
     type: 'postgres',
-    host,
-    port,
-    username: 'test',
-    password: 'test',
-    database: 'test_db',
+    host: postgres.host,
+    port: postgres.port,
+    username: postgres.username,
+    password: postgres.password,
+    database: postgres.database,
     entities: [
       AdminOrmEntity,
       ClientOrmEntity,
