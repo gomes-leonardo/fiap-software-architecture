@@ -1,13 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Budget } from '@domain/budget/budget.entity';
 import { BudgetRepository } from '@domain/budget/budget-repository.port';
-import { ServiceRepository } from '@domain/service/service-repository.port';
-import { PartRepository } from '@domain/part/part-repository.port';
 import { ServiceOrderRepository } from '@domain/service-order/service-order-repository.port';
 import { ServiceOrderStatus } from '@domain/service-order/service-order-status.enum';
 import { ServiceOrder } from '@domain/service-order/service-order.entity';
 import { DomainException } from '@domain/shared';
 import { BudgetResponseDto } from './dtos/budget-response.dto';
+import { BudgetLineResolver } from './budget-line-resolver';
 
 export interface CreateBudgetInput {
   serviceOrderId: string;
@@ -16,14 +15,6 @@ export interface CreateBudgetInput {
     referenceId: string;
     quantity: number;
   }>;
-}
-
-interface ResolvedLine {
-  type: 'SERVICE' | 'PART';
-  referenceId: string;
-  description: string;
-  quantity: number;
-  frozenUnitPrice: number;
 }
 
 /**
@@ -41,9 +32,8 @@ interface ResolvedLine {
 export class CreateBudgetUseCase {
   constructor(
     private readonly budgetRepository: BudgetRepository,
-    private readonly serviceRepository: ServiceRepository,
-    private readonly partRepository: PartRepository,
     private readonly serviceOrderRepository: ServiceOrderRepository,
+    private readonly lineResolver: BudgetLineResolver,
   ) {}
 
   async execute(input: CreateBudgetInput): Promise<BudgetResponseDto> {
@@ -56,7 +46,7 @@ export class CreateBudgetUseCase {
       throw DomainException.of('At least one budget line is required');
     }
 
-    const resolvedLines = await this.resolveLines(input.lines);
+    const resolvedLines = await this.lineResolver.resolve(input.lines);
 
     const existing = await this.budgetRepository.findLatestByServiceOrderId(input.serviceOrderId);
 
@@ -70,39 +60,6 @@ export class CreateBudgetUseCase {
     await this.serviceOrderRepository.save(serviceOrder);
 
     return BudgetResponseDto.fromDomain(budget);
-  }
-
-  /** Busca preco/descricao do catalogo e congela o preco no momento da geracao. */
-  private async resolveLines(lines: CreateBudgetInput['lines']): Promise<ResolvedLine[]> {
-    return Promise.all(
-      lines.map(async (line) => {
-        if (line.type === 'SERVICE') {
-          const service = await this.serviceRepository.findById(line.referenceId);
-          if (!service) {
-            throw DomainException.of(`Service '${line.referenceId}' not found`);
-          }
-          return {
-            type: 'SERVICE' as const,
-            referenceId: line.referenceId,
-            description: service.name,
-            quantity: line.quantity,
-            frozenUnitPrice: Number(service.basePrice),
-          };
-        }
-
-        const part = await this.partRepository.findById(line.referenceId);
-        if (!part) {
-          throw DomainException.of(`Part '${line.referenceId}' not found`);
-        }
-        return {
-          type: 'PART' as const,
-          referenceId: line.referenceId,
-          description: part.name,
-          quantity: line.quantity,
-          frozenUnitPrice: Number(part.unitPrice),
-        };
-      }),
-    );
   }
 
   /**

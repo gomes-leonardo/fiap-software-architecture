@@ -22,6 +22,7 @@ import { OperationalReportUseCase } from '@application/service-order/operational
 import { CreateServiceOrderDto } from '@application/service-order/dtos/create-service-order.dto';
 import { ChangeStatusDto } from '@application/service-order/dtos/change-status.dto';
 import { ServiceOrderResponseDto } from '@application/service-order/dtos/service-order-response.dto';
+import { CreateServiceOrderResponseDto } from '@application/service-order/dtos/create-service-order-response.dto';
 import { ServiceOrderStatus } from '@domain/service-order/service-order-status.enum';
 import { ServiceOrderRepository } from '@domain/service-order/service-order-repository.port';
 import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard';
@@ -42,9 +43,17 @@ export class ServiceOrderController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Criar nova ordem de serviço' })
-  @ApiResponse({ status: 201, type: ServiceOrderResponseDto })
-  async create(@Body() dto: CreateServiceOrderDto): Promise<ServiceOrderResponseDto> {
+  @ApiOperation({
+    summary: 'Criar nova ordem de serviço',
+    description:
+      'Aceita `services` e `parts` opcionais. Informando qualquer um deles, a OS nasce com um ' +
+      'orcamento PENDENTE (precos congelados do catalogo) e ja em AGUARDANDO_APROVACAO; o id ' +
+      'vem em `createdBudgetId`. Sem itens, o comportamento e o de sempre: OS em RECEBIDA, sem ' +
+      'orcamento. Estoque insuficiente nao bloqueia — vira aviso em `stockWarnings`.',
+  })
+  @ApiResponse({ status: 201, type: CreateServiceOrderResponseDto })
+  @ApiResponse({ status: 400, description: 'Cliente, servico ou peca inexistente' })
+  async create(@Body() dto: CreateServiceOrderDto): Promise<CreateServiceOrderResponseDto> {
     return this.createServiceOrder.execute(dto);
   }
 
