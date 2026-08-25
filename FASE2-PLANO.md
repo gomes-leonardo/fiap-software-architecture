@@ -40,7 +40,7 @@ Ordem de dependência (a mesma publicada como comentário no épico #2). Uma iss
 | 4 | [#3](https://github.com/gomes-leonardo/fiap-software-architecture/issues/3) | Listagem de OS ordenada por prioridade de status | ✅ [PR #20](https://github.com/gomes-leonardo/fiap-software-architecture/pull/20) — merged |
 | 5 | [#5](https://github.com/gomes-leonardo/fiap-software-architecture/issues/5) | Abertura de OS com serviços/peças inline | ⬜ |
 | 6 | [#15](https://github.com/gomes-leonardo/fiap-software-architecture/issues/15) | Aprovação de orçamento via canal externo *(novo)* | ⬜ |
-| 7 | [#6](https://github.com/gomes-leonardo/fiap-software-architecture/issues/6) | Atualização de status da OS via webhook | 🔄 branch `feat/6-webhook-status` — aguardando PR |
+| 7 | [#6](https://github.com/gomes-leonardo/fiap-software-architecture/issues/6) | Atualização de status da OS via webhook | 🔄 [PR #21](https://github.com/gomes-leonardo/fiap-software-architecture/pull/21) — aguardando merge |
 | 8 | [#8](https://github.com/gomes-leonardo/fiap-software-architecture/issues/8) | Terraform: cluster K8s + banco | ⬜ |
 | 9 | [#7](https://github.com/gomes-leonardo/fiap-software-architecture/issues/7) | Manifestos Kubernetes (Deploy/Service/ConfigMap/Secret/HPA) | ⬜ |
 | 10 | [#14](https://github.com/gomes-leonardo/fiap-software-architecture/issues/14) | Smoke tests integrados ao pipeline | ⬜ |
