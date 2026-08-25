@@ -28,3 +28,24 @@ yarn-error.log*
 
 # TypeORM
 *.sqlite
+
+# Terraform / OpenTofu
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+crash.log
+crash.*.log
+*.tfvars
+!*.tfvars.example
+backend.hcl
+!backend.hcl.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+# Gerado localmente: os hashes ficam presos ao registry (HashiCorp x OpenTofu)
+# de quem rodou o init, e um lock do registry errado quebra o init do outro.
+.terraform.lock.hcl

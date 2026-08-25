@@ -1,0 +1,49 @@
+# Copie para terraform.tfvars e ajuste. terraform.tfvars esta no .gitignore.
+#
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# Os defaults ja funcionam: `terraform apply` sem tfvars sobe o cluster com o
+# metrics-server, pronto para receber os manifestos de k8s/.
+
+project     = "soat-tech-challenge"
+environment = "dev"
+
+cluster_name = "soat-local"
+node_image   = "kindest/node:v1.31.0"
+
+# Dois workers deixam o HPA distribuir replicas entre nodes. Em maquina
+# apertada, 1 tambem serve — o podAntiAffinity dos manifestos e `preferred`.
+worker_count = 2
+
+# Mesmo namespace de k8s/namespace.yaml.
+namespace        = "soat"
+create_namespace = true
+
+# Sem metrics-server o HPA fica em <unknown>/70% e nao escala.
+enable_metrics_server = true
+
+# ---------------------------------------------------------------------------
+# Banco.
+#
+# false (padrao) = o PostgreSQL vem do StatefulSet em k8s/db-deployment.yaml.
+# true            = o Terraform sobe o banco e o Secret; nesse caso e
+#                   obrigatorio deixar db-deployment.yaml, db-service.yaml e
+#                   app-secret.yaml fora do apply dos manifestos, senao ficam
+#                   dois Postgres no mesmo namespace.
+# ---------------------------------------------------------------------------
+
+enable_postgres = false
+
+# Valem apenas com enable_postgres = true. Os nomes espelham os manifestos:
+# db_service_name precisa ser o DB_HOST do ConfigMap soat-app-config.
+# postgres_image   = "postgres:16-alpine"
+# postgres_storage = "2Gi"
+# db_service_name  = "soat-db"
+# db_name          = "soat_repair_shop"
+# db_username      = "postgres"
+# app_secret_name  = "soat-app-secret"
+
+# Usados para montar os comandos dos outputs.
+# app_service_name = "soat-app"
+# app_port         = 3000
+# app_image        = "soat-tech-challenge:latest"
