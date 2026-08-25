@@ -24,7 +24,7 @@
  *   (faster but can mask transaction-related bugs)
  */
 import { DataSource } from 'typeorm';
-import { GenericContainer, StartedTestContainer } from 'testcontainers';
+import { GenericContainer, StartedTestContainer, Wait } from 'testcontainers';
 import { AdminOrmEntity } from '@infrastructure/database/typeorm/entities/admin.orm-entity';
 import { ClientOrmEntity } from '@infrastructure/database/typeorm/entities/client.orm-entity';
 import { VehicleOrmEntity } from '@infrastructure/database/typeorm/entities/vehicle.orm-entity';
@@ -33,29 +33,85 @@ import { ServiceOrderOrmEntity } from '@infrastructure/database/typeorm/entities
 import { PartOrmEntity } from '@infrastructure/database/typeorm/entities/part.orm-entity';
 import { BudgetOrmEntity } from '@infrastructure/database/typeorm/entities/budget.orm-entity';
 
+const POSTGRES_IMAGE = 'postgres:16-alpine';
+const POSTGRES_DB = 'test_db';
+const POSTGRES_USER = 'test';
+const POSTGRES_PASSWORD = 'test';
+
+/**
+ * O entrypoint da imagem sobe um servidor temporario para rodar o `initdb` e o
+ * derruba antes de subir o definitivo, entao a linha aparece DUAS vezes:
+ *
+ *   LOG:  database system is ready to accept connections   <- servidor do initdb
+ *   LOG:  shutting down
+ *   PostgreSQL init process complete; ready for start up.
+ *   LOG:  database system is ready to accept connections   <- servidor definitivo
+ *
+ * Esperar a primeira ocorrencia devolveria um banco que esta prestes a fechar.
+ */
+const POSTGRES_READY_LOG = /database system is ready to accept connections/;
+const POSTGRES_READY_LOG_OCCURRENCES = 2;
+
 let container: StartedTestContainer;
 let dataSource: DataSource;
 
-export async function setupTestDb(): Promise<DataSource> {
-  container = await new GenericContainer('postgres:16-alpine')
+/**
+ * Credenciais e endereco de um Postgres efemero ja no ar.
+ */
+export interface TestPostgres {
+  container: StartedTestContainer;
+  host: string;
+  port: number;
+  database: string;
+  username: string;
+  password: string;
+}
+
+/**
+ * Sobe apenas o container do Postgres, sem abrir um DataSource.
+ *
+ * Os testes de integracao falam direto com o banco pelo `setupTestDb` abaixo.
+ * O smoke test, por outro lado, sobe o `AppModule` real e deixa o proprio
+ * TypeORM da aplicacao abrir a conexao — ele so precisa saber para onde
+ * apontar as variaveis `DB_*`.
+ *
+ * A wait strategy nao e opcional: sem ela o Testcontainers so espera a porta
+ * 5432 abrir, e o Postgres abre a porta durante o `initdb`, antes de aceitar
+ * conexao. O teste conectava cedo demais e falhava intermitentemente com
+ * "the database system is starting up", em suites diferentes a cada rodada.
+ */
+export async function startPostgresContainer(): Promise<TestPostgres> {
+  const started = await new GenericContainer(POSTGRES_IMAGE)
     .withEnvironment({
-      POSTGRES_DB: 'test_db',
-      POSTGRES_USER: 'test',
-      POSTGRES_PASSWORD: 'test',
+      POSTGRES_DB,
+      POSTGRES_USER,
+      POSTGRES_PASSWORD,
     })
     .withExposedPorts(5432)
+    .withWaitStrategy(Wait.forLogMessage(POSTGRES_READY_LOG, POSTGRES_READY_LOG_OCCURRENCES))
     .start();
 
-  const port = container.getMappedPort(5432);
-  const host = container.getHost();
+  return {
+    container: started,
+    host: started.getHost(),
+    port: started.getMappedPort(5432),
+    database: POSTGRES_DB,
+    username: POSTGRES_USER,
+    password: POSTGRES_PASSWORD,
+  };
+}
+
+export async function setupTestDb(): Promise<DataSource> {
+  const postgres = await startPostgresContainer();
+  container = postgres.container;
 
   dataSource = new DataSource({
     type: 'postgres',
-    host,
-    port,
-    username: 'test',
-    password: 'test',
-    database: 'test_db',
+    host: postgres.host,
+    port: postgres.port,
+    username: postgres.username,
+    password: postgres.password,
+    database: postgres.database,
     entities: [
       AdminOrmEntity,
       ClientOrmEntity,
