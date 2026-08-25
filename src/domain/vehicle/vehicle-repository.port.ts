@@ -8,4 +8,5 @@ export abstract class VehicleRepository {
   abstract findAll(): Promise<Vehicle[]>;
   abstract existsByPlate(plate: string): Promise<boolean>;
   abstract delete(id: string): Promise<void>;
+  abstract restore(id: string): Promise<void>;
 }

@@ -1,0 +1,3265 @@
+{
+  "info": {
+    "_postman_id": "6f0f4a4e-3f2c-4d1b-9a55-7c1e2b0f9d41",
+    "name": "Auto Repair Shop OS Management API",
+    "description": "API para gerenciamento de ordens de serviço de uma oficina mecânica. Sistema completo com gestão de clientes, veículos, peças, orçamentos e ordens de serviço.\n\nGerado a partir de docs/swagger.json por scripts/generate-postman-collection.ts. Nao edite a mao.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "webhook_secret",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Autenticação de administradores",
+      "item": [
+        {
+          "name": "Registrar novo administrador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Admin registrado",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/register",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"email\": \"string\"\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Dados inválidos ou email já existe",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/register",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Autenticar administrador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "JWT token retornado",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/login",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Credenciais inválidas",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/login",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Clients",
+      "description": "Gerenciamento de clientes",
+      "item": [
+        {
+          "name": "Listar todos os clientes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/clients?cpfCnpj=string",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients"
+              ],
+              "query": [
+                {
+                  "key": "cpfCnpj",
+                  "value": "string",
+                  "description": "Filtrar por CPF/CNPJ",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/clients?cpfCnpj=string",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "clients"
+                  ],
+                  "query": [
+                    {
+                      "key": "cpfCnpj",
+                      "value": "string",
+                      "description": "Filtrar por CPF/CNPJ",
+                      "disabled": true
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"string\",\n    \"name\": \"string\",\n    \"cpfCnpj\": \"string\",\n    \"email\": {},\n    \"phone\": {},\n    \"vehicleIds\": [\n      \"string\"\n    ]\n  }\n]",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Registrar novo cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clients",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"João da Silva\",\n  \"cpfCnpj\": \"529.982.247-25\",\n  \"email\": \"joao@email.com\",\n  \"phone\": \"(11) 99999-0000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cliente registrado com sucesso",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/clients",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "clients"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"João da Silva\",\n  \"cpfCnpj\": \"529.982.247-25\",\n  \"email\": \"joao@email.com\",\n  \"phone\": \"(11) 99999-0000\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Dados inválidos ou CPF/CNPJ duplicado",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/clients",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "clients"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"João da Silva\",\n  \"cpfCnpj\": \"529.982.247-25\",\n  \"email\": \"joao@email.com\",\n  \"phone\": \"(11) 99999-0000\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Buscar cliente por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/clients/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/clients/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "clients",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Cliente não encontrado",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/clients/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "clients",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Atualizar cliente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clients/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao@email.com\",\n  \"phone\": \"11999998888\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/clients/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "clients",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao@email.com\",\n  \"phone\": \"11999998888\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Cliente não encontrado",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/clients/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "clients",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao@email.com\",\n  \"phone\": \"11999998888\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Remover cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/clients/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 204",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/clients/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "clients",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "name": "Cliente não encontrado",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/clients/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "clients",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Vehicles",
+      "description": "Gerenciamento de veículos",
+      "item": [
+        {
+          "name": "Listar todos os veículos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/vehicles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "vehicles"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/vehicles",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "vehicles"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"string\",\n    \"plate\": \"string\",\n    \"brand\": \"string\",\n    \"model\": \"string\",\n    \"year\": 0,\n    \"ownerClientId\": \"string\"\n  }\n]",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Registrar novo veículo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/vehicles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "vehicles"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plate\": \"ABC-1234\",\n  \"brand\": \"Toyota\",\n  \"model\": \"Corolla\",\n  \"year\": 2022,\n  \"ownerClientId\": \"uuid-do-cliente\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 201",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/vehicles",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "vehicles"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"plate\": \"ABC-1234\",\n  \"brand\": \"Toyota\",\n  \"model\": \"Corolla\",\n  \"year\": 2022,\n  \"ownerClientId\": \"uuid-do-cliente\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"plate\": \"string\",\n  \"brand\": \"string\",\n  \"model\": \"string\",\n  \"year\": 0,\n  \"ownerClientId\": \"string\"\n}",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Buscar veículo por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/vehicles/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "vehicles",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/vehicles/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "vehicles",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"plate\": \"string\",\n  \"brand\": \"string\",\n  \"model\": \"string\",\n  \"year\": 0,\n  \"ownerClientId\": \"string\"\n}",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Atualizar veículo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/vehicles/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "vehicles",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"brand\": \"Honda\",\n  \"model\": \"Civic\",\n  \"year\": 2023\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/vehicles/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "vehicles",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"brand\": \"Honda\",\n  \"model\": \"Civic\",\n  \"year\": 2023\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"plate\": \"string\",\n  \"brand\": \"string\",\n  \"model\": \"string\",\n  \"year\": 0,\n  \"ownerClientId\": \"string\"\n}",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Remover veículo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/vehicles/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "vehicles",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 204",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/vehicles/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "vehicles",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Buscar veículos por cliente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/vehicles/client/:clientId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "vehicles",
+                "client",
+                ":clientId"
+              ],
+              "variable": [
+                {
+                  "key": "clientId",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/vehicles/client/:clientId",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "vehicles",
+                    "client",
+                    ":clientId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "clientId",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"string\",\n    \"plate\": \"string\",\n    \"brand\": \"string\",\n    \"model\": \"string\",\n    \"year\": 0,\n    \"ownerClientId\": \"string\"\n  }\n]",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Parts",
+      "description": "Gerenciamento de peças e estoque",
+      "item": [
+        {
+          "name": "Listar todas as peças",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/parts",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "parts"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/parts",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "parts"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"string\",\n    \"name\": \"string\",\n    \"sku\": \"string\",\n    \"unitPrice\": 0,\n    \"stockQuantity\": 0\n  }\n]",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Registrar nova peça",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/parts",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "parts"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Filtro de óleo\",\n  \"sku\": \"FLT-OL-001\",\n  \"unitPrice\": 35.9,\n  \"stockQuantity\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 201",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/parts",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "parts"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Filtro de óleo\",\n  \"sku\": \"FLT-OL-001\",\n  \"unitPrice\": 35.9,\n  \"stockQuantity\": 100\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"sku\": \"string\",\n  \"unitPrice\": 0,\n  \"stockQuantity\": 0\n}",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Buscar peça por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/parts/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "parts",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/parts/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "parts",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"sku\": \"string\",\n  \"unitPrice\": 0,\n  \"stockQuantity\": 0\n}",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Atualizar peça (nome, preço)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/parts/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "parts",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Filtro de óleo premium\",\n  \"unitPrice\": 45.9\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/parts/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "parts",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Filtro de óleo premium\",\n  \"unitPrice\": 45.9\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"sku\": \"string\",\n  \"unitPrice\": 0,\n  \"stockQuantity\": 0\n}",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Remover peça",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/parts/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "parts",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 204",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/parts/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "parts",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Ajustar estoque (positivo = entrada, negativo = saída)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/parts/:id/stock",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "parts",
+                ":id",
+                "stock"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/parts/:id/stock",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "parts",
+                    ":id",
+                    "stock"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"sku\": \"string\",\n  \"unitPrice\": 0,\n  \"stockQuantity\": 0\n}",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Services",
+      "item": [
+        {
+          "name": "Listar todos os serviços",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/services",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "services"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/services",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "services"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"string\",\n    \"name\": \"string\",\n    \"basePrice\": 0,\n    \"estimatedMinutes\": 0\n  }\n]",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Registrar novo serviço",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/services",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "services"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Troca de óleo\",\n  \"basePrice\": 150,\n  \"estimatedMinutes\": 30\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 201",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/services",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "services"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Troca de óleo\",\n  \"basePrice\": 150,\n  \"estimatedMinutes\": 30\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"basePrice\": 0,\n  \"estimatedMinutes\": 0\n}",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Buscar serviço por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/services/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "services",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/services/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "services",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"basePrice\": 0,\n  \"estimatedMinutes\": 0\n}",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Atualizar serviço",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/services/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "services",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Troca de óleo sintético\",\n  \"basePrice\": 180,\n  \"estimatedMinutes\": 45\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/services/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "services",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Troca de óleo sintético\",\n  \"basePrice\": 180,\n  \"estimatedMinutes\": 45\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"basePrice\": 0,\n  \"estimatedMinutes\": 0\n}",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Remover serviço",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/services/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "services",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 204",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/services/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "services",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Service Orders",
+      "description": "Gerenciamento de ordens de serviço",
+      "item": [
+        {
+          "name": "Listar ordens de serviço",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/service-orders?status=RECEBIDA&clientId=00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "service-orders"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "RECEBIDA",
+                  "disabled": true
+                },
+                {
+                  "key": "clientId",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Sem filtro, lista apenas as OS ativas (exclui FINALIZADA, ENTREGUE e ENCERRADA_SEM_EXECUCAO), ordenadas por prioridade de status (EM_EXECUCAO > AGUARDANDO_APROVACAO > EM_DIAGNOSTICO > RECEBIDA > PAUSADO) e, dentro do mesmo status, da mais antiga para a mais recente. Os filtros `status` e `clientId` ignoram essa regra e retornam as OS correspondentes."
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/service-orders?status=RECEBIDA&clientId=00000000-0000-0000-0000-000000000000",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "service-orders"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "RECEBIDA",
+                      "disabled": true
+                    },
+                    {
+                      "key": "clientId",
+                      "value": "00000000-0000-0000-0000-000000000000",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "description": "Sem filtro, lista apenas as OS ativas (exclui FINALIZADA, ENTREGUE e ENCERRADA_SEM_EXECUCAO), ordenadas por prioridade de status (EM_EXECUCAO > AGUARDANDO_APROVACAO > EM_DIAGNOSTICO > RECEBIDA > PAUSADO) e, dentro do mesmo status, da mais antiga para a mais recente. Os filtros `status` e `clientId` ignoram essa regra e retornam as OS correspondentes."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Criar nova ordem de serviço",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/service-orders",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "service-orders"
+              ]
+            },
+            "description": "Aceita `services` e `parts` opcionais. Informando qualquer um deles, a OS nasce com um orcamento PENDENTE (precos congelados do catalogo) e ja em AGUARDANDO_APROVACAO; o id vem em `createdBudgetId`. Sem itens, o comportamento e o de sempre: OS em RECEBIDA, sem orcamento. Estoque insuficiente nao bloqueia — vira aviso em `stockWarnings`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"string\",\n  \"vehicleId\": \"string\",\n  \"description\": \"Troca de óleo e filtro\",\n  \"services\": [\n    {\n      \"referenceId\": \"string\",\n      \"quantity\": 1\n    }\n  ],\n  \"parts\": [\n    {\n      \"referenceId\": \"string\",\n      \"quantity\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 201",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/service-orders",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "service-orders"
+                  ]
+                },
+                "description": "Aceita `services` e `parts` opcionais. Informando qualquer um deles, a OS nasce com um orcamento PENDENTE (precos congelados do catalogo) e ja em AGUARDANDO_APROVACAO; o id vem em `createdBudgetId`. Sem itens, o comportamento e o de sempre: OS em RECEBIDA, sem orcamento. Estoque insuficiente nao bloqueia — vira aviso em `stockWarnings`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"clientId\": \"string\",\n  \"vehicleId\": \"string\",\n  \"description\": \"Troca de óleo e filtro\",\n  \"services\": [\n    {\n      \"referenceId\": \"string\",\n      \"quantity\": 1\n    }\n  ],\n  \"parts\": [\n    {\n      \"referenceId\": \"string\",\n      \"quantity\": 1\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"clientId\": \"string\",\n  \"vehicleId\": {},\n  \"description\": \"string\",\n  \"status\": \"RECEBIDA\",\n  \"budgetId\": {},\n  \"statusHistory\": [],\n  \"createdBudgetId\": {},\n  \"stockWarnings\": []\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Cliente, servico ou peca inexistente",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/service-orders",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "service-orders"
+                  ]
+                },
+                "description": "Aceita `services` e `parts` opcionais. Informando qualquer um deles, a OS nasce com um orcamento PENDENTE (precos congelados do catalogo) e ja em AGUARDANDO_APROVACAO; o id vem em `createdBudgetId`. Sem itens, o comportamento e o de sempre: OS em RECEBIDA, sem orcamento. Estoque insuficiente nao bloqueia — vira aviso em `stockWarnings`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"clientId\": \"string\",\n  \"vehicleId\": \"string\",\n  \"description\": \"Troca de óleo e filtro\",\n  \"services\": [\n    {\n      \"referenceId\": \"string\",\n      \"quantity\": 1\n    }\n  ],\n  \"parts\": [\n    {\n      \"referenceId\": \"string\",\n      \"quantity\": 1\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Alterar status da ordem de serviço",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/service-orders/:id/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "service-orders",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"EM_DIAGNOSTICO\",\n  \"changedBy\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/service-orders/:id/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "service-orders",
+                    ":id",
+                    "status"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"EM_DIAGNOSTICO\",\n  \"changedBy\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"clientId\": \"string\",\n  \"vehicleId\": {},\n  \"description\": \"string\",\n  \"status\": \"RECEBIDA\",\n  \"budgetId\": {},\n  \"statusHistory\": []\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Transição de status inválida",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/service-orders/:id/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "service-orders",
+                    ":id",
+                    "status"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"EM_DIAGNOSTICO\",\n  \"changedBy\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Tempo medio de execucao dos servicos (em minutos)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/service-orders/metrics/average-execution-time",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "service-orders",
+                "metrics",
+                "average-execution-time"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/service-orders/metrics/average-execution-time",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "service-orders",
+                    "metrics",
+                    "average-execution-time"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Relatorio operacional (OS por status, estoque baixo, tempo medio)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/service-orders/metrics/operational-report",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "service-orders",
+                "metrics",
+                "operational-report"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/service-orders/metrics/operational-report",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "service-orders",
+                    "metrics",
+                    "operational-report"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Buscar ordem de serviço por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/service-orders/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "service-orders",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/service-orders/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "service-orders",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"clientId\": \"string\",\n  \"vehicleId\": {},\n  \"description\": \"string\",\n  \"status\": \"RECEBIDA\",\n  \"budgetId\": {},\n  \"statusHistory\": []\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "HTTP 404",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/service-orders/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "service-orders",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Atualizar descrição da ordem de serviço",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/service-orders/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "service-orders",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/service-orders/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "service-orders",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"clientId\": \"string\",\n  \"vehicleId\": {},\n  \"description\": \"string\",\n  \"status\": \"RECEBIDA\",\n  \"budgetId\": {},\n  \"statusHistory\": []\n}",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Remover ordem de serviço",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/service-orders/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "service-orders",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 204",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/service-orders/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "service-orders",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Budgets",
+      "description": "Gerenciamento de orçamentos",
+      "item": [
+        {
+          "name": "Criar orçamento para uma ordem de serviço",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/budgets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "budgets"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceOrderId\": \"uuid-da-ordem-de-servico\",\n  \"lines\": [\n    {\n      \"type\": \"SERVICE\",\n      \"referenceId\": \"uuid-da-peca-ou-servico\",\n      \"quantity\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 201",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/budgets",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "budgets"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"serviceOrderId\": \"uuid-da-ordem-de-servico\",\n  \"lines\": [\n    {\n      \"type\": \"SERVICE\",\n      \"referenceId\": \"uuid-da-peca-ou-servico\",\n      \"quantity\": 1\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"serviceOrderId\": \"string\",\n  \"lines\": [\n    \"string\"\n  ],\n  \"status\": \"string\",\n  \"version\": 0,\n  \"total\": 0,\n  \"frozenAt\": \"2026-01-01T00:00:00.000Z\"\n}",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Buscar orçamento por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/budgets/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "budgets",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/budgets/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "budgets",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"serviceOrderId\": \"string\",\n  \"lines\": [\n    \"string\"\n  ],\n  \"status\": \"string\",\n  \"version\": 0,\n  \"total\": 0,\n  \"frozenAt\": \"2026-01-01T00:00:00.000Z\"\n}",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Remover orçamento",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/budgets/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "budgets",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 204",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/budgets/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "budgets",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Listar orçamentos de uma ordem de serviço",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/budgets/service-order/:serviceOrderId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "budgets",
+                "service-order",
+                ":serviceOrderId"
+              ],
+              "variable": [
+                {
+                  "key": "serviceOrderId",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/budgets/service-order/:serviceOrderId",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "budgets",
+                    "service-order",
+                    ":serviceOrderId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "serviceOrderId",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"string\",\n    \"serviceOrderId\": \"string\",\n    \"lines\": [\n      \"string\"\n    ],\n    \"status\": \"string\",\n    \"version\": 0,\n    \"total\": 0,\n    \"frozenAt\": \"2026-01-01T00:00:00.000Z\"\n  }\n]",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Aprovar orçamento",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/budgets/:id/approve",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "budgets",
+                ":id",
+                "approve"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/budgets/:id/approve",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "budgets",
+                    ":id",
+                    "approve"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"serviceOrderId\": \"string\",\n  \"lines\": [\n    \"string\"\n  ],\n  \"status\": \"string\",\n  \"version\": 0,\n  \"total\": 0,\n  \"frozenAt\": \"2026-01-01T00:00:00.000Z\"\n}",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        },
+        {
+          "name": "Recusar orçamento",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/budgets/:id/refuse",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "budgets",
+                ":id",
+                "refuse"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/budgets/:id/refuse",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "budgets",
+                    ":id",
+                    "refuse"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"serviceOrderId\": \"string\",\n  \"lines\": [\n    \"string\"\n  ],\n  \"status\": \"string\",\n  \"version\": 0,\n  \"total\": 0,\n  \"frozenAt\": \"2026-01-01T00:00:00.000Z\"\n}",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Consult",
+      "description": "Consulta pública de OS pelo cliente",
+      "item": [
+        {
+          "name": "Consulta pública de ordens de serviço do cliente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/consult/:clientId?cpf=string",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "consult",
+                ":clientId"
+              ],
+              "variable": [
+                {
+                  "key": "clientId",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ],
+              "query": [
+                {
+                  "key": "cpf",
+                  "value": "string",
+                  "description": "CPF ou CNPJ do cliente (para verificação)",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Endpoint público para o cliente acompanhar o status das suas OS. Requer clientId na URL e CPF/CNPJ como query parameter para verificação de identidade.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/consult/:clientId?cpf=string",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "consult",
+                    ":clientId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "clientId",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ],
+                  "query": [
+                    {
+                      "key": "cpf",
+                      "value": "string",
+                      "description": "CPF ou CNPJ do cliente (para verificação)",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "Endpoint público para o cliente acompanhar o status das suas OS. Requer clientId na URL e CPF/CNPJ como query parameter para verificação de identidade.",
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"string\",\n    \"clientId\": \"string\",\n    \"vehicleId\": {},\n    \"description\": \"string\",\n    \"status\": \"RECEBIDA\",\n    \"budgetId\": {},\n    \"statusHistory\": []\n  }\n]",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "CPF/CNPJ não corresponde ao cliente",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/consult/:clientId?cpf=string",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "consult",
+                    ":clientId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "clientId",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ],
+                  "query": [
+                    {
+                      "key": "cpf",
+                      "value": "string",
+                      "description": "CPF ou CNPJ do cliente (para verificação)",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "Endpoint público para o cliente acompanhar o status das suas OS. Requer clientId na URL e CPF/CNPJ como query parameter para verificação de identidade.",
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "name": "Cliente não encontrado",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/consult/:clientId?cpf=string",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "consult",
+                    ":clientId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "clientId",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ],
+                  "query": [
+                    {
+                      "key": "cpf",
+                      "value": "string",
+                      "description": "CPF ou CNPJ do cliente (para verificação)",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "Endpoint público para o cliente acompanhar o status das suas OS. Requer clientId na URL e CPF/CNPJ como query parameter para verificação de identidade.",
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "description": "Integração com sistemas externos (sem login)",
+      "item": [
+        {
+          "name": "Atualizar status da OS a partir de um sistema externo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{webhook_secret}}",
+                "description": "Bearer <WEBHOOK_SECRET>. Forma preferida de apresentar o segredo."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/webhooks/service-orders/:id/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhooks",
+                "service-orders",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            },
+            "description": "Endpoint de integracao para sistemas sem login (gateway de email, sistema de pagamento). Autentica por segredo pre-compartilhado (`WEBHOOK_SECRET`), enviado em `Authorization: Bearer <segredo>` ou, como alternativa, no campo `token` do corpo. As mesmas regras de transicao do endpoint autenticado se aplicam.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"EM_EXECUCAO\",\n  \"changedBy\": \"gateway-email\",\n  \"token\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{webhook_secret}}",
+                    "description": "Bearer <WEBHOOK_SECRET>. Forma preferida de apresentar o segredo."
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/webhooks/service-orders/:id/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "webhooks",
+                    "service-orders",
+                    ":id",
+                    "status"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "description": "Endpoint de integracao para sistemas sem login (gateway de email, sistema de pagamento). Autentica por segredo pre-compartilhado (`WEBHOOK_SECRET`), enviado em `Authorization: Bearer <segredo>` ou, como alternativa, no campo `token` do corpo. As mesmas regras de transicao do endpoint autenticado se aplicam.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"EM_EXECUCAO\",\n  \"changedBy\": \"gateway-email\",\n  \"token\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"clientId\": \"string\",\n  \"vehicleId\": {},\n  \"description\": \"string\",\n  \"status\": \"RECEBIDA\",\n  \"budgetId\": {},\n  \"statusHistory\": []\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Transição de status inválida ou OS inexistente",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{webhook_secret}}",
+                    "description": "Bearer <WEBHOOK_SECRET>. Forma preferida de apresentar o segredo."
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/webhooks/service-orders/:id/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "webhooks",
+                    "service-orders",
+                    ":id",
+                    "status"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "description": "Endpoint de integracao para sistemas sem login (gateway de email, sistema de pagamento). Autentica por segredo pre-compartilhado (`WEBHOOK_SECRET`), enviado em `Authorization: Bearer <segredo>` ou, como alternativa, no campo `token` do corpo. As mesmas regras de transicao do endpoint autenticado se aplicam.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"EM_EXECUCAO\",\n  \"changedBy\": \"gateway-email\",\n  \"token\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "name": "Segredo do webhook ausente ou inválido",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{webhook_secret}}",
+                    "description": "Bearer <WEBHOOK_SECRET>. Forma preferida de apresentar o segredo."
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/webhooks/service-orders/:id/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "webhooks",
+                    "service-orders",
+                    ":id",
+                    "status"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "description": "Endpoint de integracao para sistemas sem login (gateway de email, sistema de pagamento). Autentica por segredo pre-compartilhado (`WEBHOOK_SECRET`), enviado em `Authorization: Bearer <segredo>` ou, como alternativa, no campo `token` do corpo. As mesmas regras de transicao do endpoint autenticado se aplicam.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"EM_EXECUCAO\",\n  \"changedBy\": \"gateway-email\",\n  \"token\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "description": "Health check da aplicação e do banco",
+      "item": [
+        {
+          "name": "Health check da aplicacao",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Verifica se a API responde e se a conexao com o banco esta ativa. Retorna 503 quando o banco esta inacessivel, para que o orquestrador tire a instancia do balanceamento.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [
+            {
+              "name": "Aplicacao e banco saudaveis",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/health",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "health"
+                  ]
+                },
+                "description": "Verifica se a API responde e se a conexao com o banco esta ativa. Retorna 503 quando o banco esta inacessivel, para que o orquestrador tire a instancia do balanceamento.",
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"ok\",\n  \"database\": \"connected\"\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Banco inacessivel",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/health",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "health"
+                  ]
+                },
+                "description": "Verifica se a API responde e se a conexao com o banco esta ativa. Retorna 503 quando o banco esta inacessivel, para que o orquestrador tire a instancia do balanceamento.",
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "Service Unavailable",
+              "code": 503,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"error\",\n  \"database\": \"disconnected\"\n}",
+              "_postman_previewlanguage": "json"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

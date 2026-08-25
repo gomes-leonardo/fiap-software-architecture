@@ -37,7 +37,11 @@ export class PartTypeOrmRepository extends PartRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await this.ormRepo.delete(id);
+    await this.ormRepo.softDelete(id);
+  }
+
+  async restore(id: string): Promise<void> {
+    await this.ormRepo.restore(id);
   }
 
   private toOrmEntity(part: Part): PartOrmEntity {
@@ -51,12 +55,6 @@ export class PartTypeOrmRepository extends PartRepository {
   }
 
   private toDomainEntity(orm: PartOrmEntity): Part {
-    return Part.reconstitute(
-      orm.id,
-      orm.name,
-      orm.sku,
-      Number(orm.unitPrice),
-      orm.stockQuantity,
-    );
+    return Part.reconstitute(orm.id, orm.name, orm.sku, Number(orm.unitPrice), orm.stockQuantity);
   }
 }
