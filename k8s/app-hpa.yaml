@@ -1,0 +1,52 @@
+# Pre-requisito: metrics-server rodando no cluster. Sem ele o HPA reporta
+# `<unknown>/70%` e nunca escala:
+#
+#   minikube addons enable metrics-server
+#   # kind / cluster generico:
+#   kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+#
+# autoscaling/v2 (nao a v2beta2, removida no 1.26): e a versao estavel desde o
+# Kubernetes 1.23 e a unica que aceita a lista `metrics` e o bloco `behavior`.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: soat-app
+  namespace: soat
+  labels:
+    app.kubernetes.io/name: soat-app
+    app.kubernetes.io/part-of: soat-tech-challenge
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: soat-app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          # 70% da `requests.cpu` do container (250m) = ~175m por pod. O
+          # calculo so existe porque o Deployment declara requests de CPU.
+          averageUtilization: 70
+  behavior:
+    scaleUp:
+      # Sem janela de estabilizacao na subida: a demo de escalabilidade (#16)
+      # precisa que os pods aparecam junto com a carga, e subir cedo demais
+      # custa pouco. Ate 100% de aumento (dobrar) a cada 30s.
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+    scaleDown:
+      # 5 minutos de janela na descida (default do Kubernetes): evita
+      # flapping quando a carga oscila, ao custo de manter pods ociosos por
+      # alguns minutos depois do pico.
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60

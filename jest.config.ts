@@ -53,6 +53,23 @@ const config: Config = {
       moduleFileExtensions: ['ts', 'js', 'json'],
     } as any,
     {
+      displayName: 'smoke',
+      testMatch: ['<rootDir>/test/smoke/**/*.spec.ts'],
+      transform: {
+        '^.+\\.ts$': 'ts-jest',
+      },
+      moduleNameMapper: pathsToModuleNameMapper(
+        {
+          '@domain/*': ['src/domain/*'],
+          '@application/*': ['src/application/*'],
+          '@infrastructure/*': ['src/infrastructure/*'],
+          '@interfaces/*': ['src/interfaces/*'],
+        },
+        { prefix: '<rootDir>/' },
+      ),
+      moduleFileExtensions: ['ts', 'js', 'json'],
+    } as any,
+    {
       displayName: 'e2e',
       testMatch: ['<rootDir>/test/e2e/**/*.spec.ts'],
       transform: {
