@@ -83,7 +83,7 @@ describe('Part Entity', () => {
 
     it('should include part name in error message', () => {
       const part = new Part(validProps);
-      expect(() => part.decrementStock(200)).toThrow("Filtro de óleo");
+      expect(() => part.decrementStock(200)).toThrow('Filtro de óleo');
     });
   });
 

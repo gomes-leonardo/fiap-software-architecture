@@ -52,12 +52,7 @@ export class Admin extends Entity {
     return new Admin(props.name.trim(), props.email.trim().toLowerCase(), hash);
   }
 
-  static reconstitute(
-    id: string,
-    name: string,
-    email: string,
-    passwordHash: string,
-  ): Admin {
+  static reconstitute(id: string, name: string, email: string, passwordHash: string): Admin {
     return new Admin(name, email, passwordHash, id);
   }
 }

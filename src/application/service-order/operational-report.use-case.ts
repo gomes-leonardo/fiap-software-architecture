@@ -52,9 +52,7 @@ export class OperationalReportUseCase {
 
     // Average execution time (reuse logic from AverageExecutionTimeUseCase)
     const completedOrders = allOrders.filter(
-      (o) =>
-        o.status === ServiceOrderStatus.FINALIZADA ||
-        o.status === ServiceOrderStatus.ENTREGUE,
+      (o) => o.status === ServiceOrderStatus.FINALIZADA || o.status === ServiceOrderStatus.ENTREGUE,
     );
 
     let totalMinutes = 0;
@@ -62,12 +60,8 @@ export class OperationalReportUseCase {
 
     for (const order of completedOrders) {
       const entries = order.statusHistory.entries;
-      const startEntry = entries.find(
-        (e) => e.toStatus === ServiceOrderStatus.EM_EXECUCAO,
-      );
-      const endEntry = entries.find(
-        (e) => e.toStatus === ServiceOrderStatus.FINALIZADA,
-      );
+      const startEntry = entries.find((e) => e.toStatus === ServiceOrderStatus.EM_EXECUCAO);
+      const endEntry = entries.find((e) => e.toStatus === ServiceOrderStatus.FINALIZADA);
 
       if (startEntry && endEntry) {
         const startTime = new Date(startEntry.changedAt).getTime();

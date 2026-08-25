@@ -28,9 +28,17 @@
           },
           "400": {
             "description": "Dados inválidos ou email já existe"
+          },
+          "401": {
+            "description": "Token ausente ou inválido"
           }
         },
-        "summary": "Registrar novo administrador",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Registrar novo administrador (requer admin autenticado)",
         "tags": [
           "auth"
         ]
@@ -1488,6 +1496,120 @@
           "webhooks"
         ]
       }
+    },
+    "/webhooks/budgets/{id}/approve": {
+      "post": {
+        "description": "Canal de integracao externa: e por aqui que a decisao do cliente final chega, sem login. O equivalente interno e `PATCH /budgets/{id}/{acao}`, usado pelo funcionario da oficina e protegido por JWT. Os dois caem no mesmo caso de uso — muda so quem prova identidade: aqui, o segredo pre-compartilhado `WEBHOOK_SECRET`, enviado em `Authorization: Bearer <segredo>` ou, como alternativa, no campo `token` do corpo. A aprovacao da baixa no estoque das pecas do orcamento e vincula o orcamento a OS. Estoque insuficiente bloqueia a aprovacao inteira, sem decrementar nada.",
+        "operationId": "BudgetWebhookController_approve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer <WEBHOOK_SECRET>. Forma preferida de apresentar o segredo.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookBudgetDecisionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Orçamento inexistente, já aprovado/recusado (só um orçamento PENDENTE aceita decisão) ou estoque insuficiente para alguma peça"
+          },
+          "401": {
+            "description": "Segredo do webhook ausente ou inválido"
+          }
+        },
+        "summary": "Aprovar orçamento a partir de um canal externo",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/webhooks/budgets/{id}/refuse": {
+      "post": {
+        "description": "Canal de integracao externa: e por aqui que a decisao do cliente final chega, sem login. O equivalente interno e `PATCH /budgets/{id}/{acao}`, usado pelo funcionario da oficina e protegido por JWT. Os dois caem no mesmo caso de uso — muda so quem prova identidade: aqui, o segredo pre-compartilhado `WEBHOOK_SECRET`, enviado em `Authorization: Bearer <segredo>` ou, como alternativa, no campo `token` do corpo. A recusa encerra a OS sem execucao quando ela estiver AGUARDANDO_APROVACAO.",
+        "operationId": "BudgetWebhookController_refuse",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer <WEBHOOK_SECRET>. Forma preferida de apresentar o segredo.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookBudgetDecisionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Orçamento inexistente ou já aprovado/recusado (só um orçamento PENDENTE aceita decisão)"
+          },
+          "401": {
+            "description": "Segredo do webhook ausente ou inválido"
+          }
+        },
+        "summary": "Recusar orçamento a partir de um canal externo",
+        "tags": [
+          "webhooks"
+        ]
+      }
     }
   },
   "info": {
@@ -2208,6 +2330,15 @@
           "status",
           "changedBy"
         ]
+      },
+      "WebhookBudgetDecisionDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Segredo pre-compartilhado. Prefira enviar em `Authorization: Bearer <segredo>` — corpo de requisicao costuma ser registrado em log de acesso e em dump de erro. Este campo existe para integracoes que nao permitem customizar cabecalhos."
+          }
+        }
       }
     }
   }

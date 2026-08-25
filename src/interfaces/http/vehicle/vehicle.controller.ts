@@ -65,7 +65,10 @@ export class VehicleController {
   @Put(':id')
   @ApiOperation({ summary: 'Atualizar veículo' })
   @ApiResponse({ status: 200, type: VehicleResponseDto })
-  async update(@Param('id') id: string, @Body() dto: UpdateVehicleDto): Promise<VehicleResponseDto> {
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateVehicleDto,
+  ): Promise<VehicleResponseDto> {
     const vehicle = await this.vehicleRepository.findById(id);
     if (!vehicle) throw new NotFoundException('Vehicle not found');
 

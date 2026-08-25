@@ -18,9 +18,7 @@ describe('UpdateServiceUseCase', () => {
   });
 
   it('should update service name', async () => {
-    mockRepo.findById.mockResolvedValue(
-      Service.reconstitute('svc-1', 'Troca de óleo', 150, 30),
-    );
+    mockRepo.findById.mockResolvedValue(Service.reconstitute('svc-1', 'Troca de óleo', 150, 30));
 
     const result = await useCase.execute({
       serviceId: 'svc-1',
@@ -32,9 +30,7 @@ describe('UpdateServiceUseCase', () => {
   });
 
   it('should update service price', async () => {
-    mockRepo.findById.mockResolvedValue(
-      Service.reconstitute('svc-1', 'Troca de óleo', 150, 30),
-    );
+    mockRepo.findById.mockResolvedValue(Service.reconstitute('svc-1', 'Troca de óleo', 150, 30));
 
     const result = await useCase.execute({
       serviceId: 'svc-1',
@@ -45,9 +41,7 @@ describe('UpdateServiceUseCase', () => {
   });
 
   it('should update estimated time', async () => {
-    mockRepo.findById.mockResolvedValue(
-      Service.reconstitute('svc-1', 'Troca de óleo', 150, 30),
-    );
+    mockRepo.findById.mockResolvedValue(Service.reconstitute('svc-1', 'Troca de óleo', 150, 30));
 
     const result = await useCase.execute({
       serviceId: 'svc-1',
@@ -58,8 +52,8 @@ describe('UpdateServiceUseCase', () => {
   });
 
   it('should throw when service not found', async () => {
-    await expect(
-      useCase.execute({ serviceId: 'nonexistent', name: 'X' }),
-    ).rejects.toThrow('not found');
+    await expect(useCase.execute({ serviceId: 'nonexistent', name: 'X' })).rejects.toThrow(
+      'not found',
+    );
   });
 });

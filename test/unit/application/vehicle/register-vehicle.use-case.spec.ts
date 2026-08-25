@@ -29,9 +29,11 @@ describe('RegisterVehicleUseCase', () => {
 
     mockClientRepo = {
       save: jest.fn(),
-      findById: jest.fn().mockResolvedValue(
-        Client.reconstitute('client-123', 'João', '52998224725', null, null, []),
-      ),
+      findById: jest
+        .fn()
+        .mockResolvedValue(
+          Client.reconstitute('client-123', 'João', '52998224725', null, null, []),
+        ),
       findByCpfCnpj: jest.fn(),
       findAll: jest.fn(),
       existsByCpfCnpj: jest.fn(),

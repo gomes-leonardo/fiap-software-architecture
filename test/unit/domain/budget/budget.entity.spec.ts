@@ -16,9 +16,27 @@ import { Budget, BudgetStatus } from '@domain/budget/budget.entity';
 
 describe('Budget Entity', () => {
   const sampleLines = [
-    { type: 'PART' as const, referenceId: 'part-1', description: 'Filtro de óleo', quantity: 2, frozenUnitPrice: 35.0 },
-    { type: 'PART' as const, referenceId: 'part-2', description: 'Óleo motor 5W30', quantity: 4, frozenUnitPrice: 25.0 },
-    { type: 'SERVICE' as const, referenceId: 'svc-1', description: 'Mão de obra troca de óleo', quantity: 1, frozenUnitPrice: 80.0 },
+    {
+      type: 'PART' as const,
+      referenceId: 'part-1',
+      description: 'Filtro de óleo',
+      quantity: 2,
+      frozenUnitPrice: 35.0,
+    },
+    {
+      type: 'PART' as const,
+      referenceId: 'part-2',
+      description: 'Óleo motor 5W30',
+      quantity: 4,
+      frozenUnitPrice: 25.0,
+    },
+    {
+      type: 'SERVICE' as const,
+      referenceId: 'svc-1',
+      description: 'Mão de obra troca de óleo',
+      quantity: 1,
+      frozenUnitPrice: 80.0,
+    },
   ];
 
   describe('creation', () => {
@@ -36,15 +54,11 @@ describe('Budget Entity', () => {
     });
 
     it('should throw when serviceOrderId is empty', () => {
-      expect(
-        () => new Budget({ serviceOrderId: '', lines: sampleLines }),
-      ).toThrow();
+      expect(() => new Budget({ serviceOrderId: '', lines: sampleLines })).toThrow();
     });
 
     it('should throw when no lines are provided', () => {
-      expect(
-        () => new Budget({ serviceOrderId: 'so-1', lines: [] }),
-      ).toThrow();
+      expect(() => new Budget({ serviceOrderId: 'so-1', lines: [] })).toThrow();
     });
   });
 
@@ -58,7 +72,15 @@ describe('Budget Entity', () => {
     it('should calculate total for single-line budget', () => {
       const budget = new Budget({
         serviceOrderId: 'so-1',
-        lines: [{ type: 'SERVICE', referenceId: 'svc-1', description: 'Diagnóstico', quantity: 1, frozenUnitPrice: 150.0 }],
+        lines: [
+          {
+            type: 'SERVICE',
+            referenceId: 'svc-1',
+            description: 'Diagnóstico',
+            quantity: 1,
+            frozenUnitPrice: 150.0,
+          },
+        ],
       });
       expect(budget.total).toBe(150.0);
     });
@@ -70,7 +92,13 @@ describe('Budget Entity', () => {
       // The budget captures prices at creation time.
       // Even if the "catalog" price changes later, the budget total stays the same.
       const lines = [
-        { type: 'PART' as const, referenceId: 'part-1', description: 'Filtro', quantity: 1, frozenUnitPrice: 50.0 },
+        {
+          type: 'PART' as const,
+          referenceId: 'part-1',
+          description: 'Filtro',
+          quantity: 1,
+          frozenUnitPrice: 50.0,
+        },
       ];
 
       const budget = new Budget({ serviceOrderId: 'so-1', lines });
@@ -122,7 +150,13 @@ describe('Budget Entity', () => {
     it('should create a new version with incremented version number', () => {
       const v1 = new Budget({ serviceOrderId: 'so-1', lines: sampleLines });
       const newLines = [
-        { type: 'SERVICE' as const, referenceId: 'svc-2', description: 'Serviço adicional', quantity: 1, frozenUnitPrice: 200.0 },
+        {
+          type: 'SERVICE' as const,
+          referenceId: 'svc-2',
+          description: 'Serviço adicional',
+          quantity: 1,
+          frozenUnitPrice: 200.0,
+        },
         ...sampleLines,
       ];
 
@@ -147,7 +181,13 @@ describe('Budget Entity', () => {
       // v1 total = 250
 
       const expensiveLines = [
-        { type: 'SERVICE' as const, referenceId: 'svc-1', description: 'Serviço premium', quantity: 1, frozenUnitPrice: 500.0 },
+        {
+          type: 'SERVICE' as const,
+          referenceId: 'svc-1',
+          description: 'Serviço premium',
+          quantity: 1,
+          frozenUnitPrice: 500.0,
+        },
       ];
       const v2 = Budget.createNewVersion(v1, expensiveLines);
 
