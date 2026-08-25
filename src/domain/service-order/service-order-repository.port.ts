@@ -9,4 +9,5 @@ export abstract class ServiceOrderRepository {
   abstract findAll(): Promise<ServiceOrder[]>;
   abstract findAllActive(): Promise<ServiceOrder[]>;
   abstract delete(id: string): Promise<void>;
+  abstract restore(id: string): Promise<void>;
 }

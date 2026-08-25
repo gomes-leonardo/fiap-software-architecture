@@ -6,4 +6,5 @@ export abstract class PartRepository {
   abstract findBySku(sku: string): Promise<Part | null>;
   abstract findAll(): Promise<Part[]>;
   abstract delete(id: string): Promise<void>;
+  abstract restore(id: string): Promise<void>;
 }
