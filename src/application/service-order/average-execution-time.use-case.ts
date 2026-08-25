@@ -13,12 +13,8 @@ export class AverageExecutionTimeUseCase {
 
   async execute(): Promise<AverageExecutionTimeResult> {
     // Get all finalized or delivered orders (completed flow)
-    const finalized = await this.serviceOrderRepository.findByStatus(
-      ServiceOrderStatus.FINALIZADA,
-    );
-    const delivered = await this.serviceOrderRepository.findByStatus(
-      ServiceOrderStatus.ENTREGUE,
-    );
+    const finalized = await this.serviceOrderRepository.findByStatus(ServiceOrderStatus.FINALIZADA);
+    const delivered = await this.serviceOrderRepository.findByStatus(ServiceOrderStatus.ENTREGUE);
 
     const completedOrders = [...finalized, ...delivered];
 
@@ -33,13 +29,9 @@ export class AverageExecutionTimeUseCase {
       const entries = order.statusHistory.entries;
 
       // Find when execution started (EM_EXECUCAO)
-      const startEntry = entries.find(
-        (e) => e.toStatus === ServiceOrderStatus.EM_EXECUCAO,
-      );
+      const startEntry = entries.find((e) => e.toStatus === ServiceOrderStatus.EM_EXECUCAO);
       // Find when execution finished (FINALIZADA)
-      const endEntry = entries.find(
-        (e) => e.toStatus === ServiceOrderStatus.FINALIZADA,
-      );
+      const endEntry = entries.find((e) => e.toStatus === ServiceOrderStatus.FINALIZADA);
 
       if (startEntry && endEntry) {
         const startTime = new Date(startEntry.changedAt).getTime();

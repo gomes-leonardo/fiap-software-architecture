@@ -36,21 +36,21 @@ describe('AdjustStockUseCase', () => {
   });
 
   it('should reject zero quantity', async () => {
-    await expect(
-      useCase.execute({ partId: samplePart.id, quantity: 0 }),
-    ).rejects.toThrow('cannot be zero');
+    await expect(useCase.execute({ partId: samplePart.id, quantity: 0 })).rejects.toThrow(
+      'cannot be zero',
+    );
   });
 
   it('should reject when part not found', async () => {
     mockRepo.findById.mockResolvedValue(null);
-    await expect(
-      useCase.execute({ partId: 'non-existent', quantity: 5 }),
-    ).rejects.toThrow('not found');
+    await expect(useCase.execute({ partId: 'non-existent', quantity: 5 })).rejects.toThrow(
+      'not found',
+    );
   });
 
   it('should reject when decrement would go negative', async () => {
-    await expect(
-      useCase.execute({ partId: samplePart.id, quantity: -20 }),
-    ).rejects.toThrow('Insufficient stock');
+    await expect(useCase.execute({ partId: samplePart.id, quantity: -20 })).rejects.toThrow(
+      'Insufficient stock',
+    );
   });
 });

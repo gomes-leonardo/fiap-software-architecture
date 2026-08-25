@@ -192,45 +192,45 @@ describe('ServiceOrder Entity', () => {
   describe('illegal transitions', () => {
     it('RECEBIDA → EM_EXECUCAO (skip steps)', () => {
       const so = createSO();
-      expect(() =>
-        so.changeStatus(ServiceOrderStatus.EM_EXECUCAO, 'admin-1'),
-      ).toThrow('Invalid transition');
+      expect(() => so.changeStatus(ServiceOrderStatus.EM_EXECUCAO, 'admin-1')).toThrow(
+        'Invalid transition',
+      );
     });
 
     it('RECEBIDA → FINALIZADA (skip steps)', () => {
       const so = createSO();
-      expect(() =>
-        so.changeStatus(ServiceOrderStatus.FINALIZADA, 'admin-1'),
-      ).toThrow('Invalid transition');
+      expect(() => so.changeStatus(ServiceOrderStatus.FINALIZADA, 'admin-1')).toThrow(
+        'Invalid transition',
+      );
     });
 
     it('RECEBIDA → ENTREGUE (skip steps)', () => {
       const so = createSO();
-      expect(() =>
-        so.changeStatus(ServiceOrderStatus.ENTREGUE, 'admin-1'),
-      ).toThrow('Invalid transition');
+      expect(() => so.changeStatus(ServiceOrderStatus.ENTREGUE, 'admin-1')).toThrow(
+        'Invalid transition',
+      );
     });
 
     it('RECEBIDA → PAUSADO (invalid)', () => {
       const so = createSO();
-      expect(() =>
-        so.changeStatus(ServiceOrderStatus.PAUSADO, 'admin-1'),
-      ).toThrow('Invalid transition');
+      expect(() => so.changeStatus(ServiceOrderStatus.PAUSADO, 'admin-1')).toThrow(
+        'Invalid transition',
+      );
     });
 
     it('RECEBIDA → ENCERRADA_SEM_EXECUCAO (can only refuse from AGUARDANDO)', () => {
       const so = createSO();
-      expect(() =>
-        so.changeStatus(ServiceOrderStatus.ENCERRADA_SEM_EXECUCAO, 'admin-1'),
-      ).toThrow('Invalid transition');
+      expect(() => so.changeStatus(ServiceOrderStatus.ENCERRADA_SEM_EXECUCAO, 'admin-1')).toThrow(
+        'Invalid transition',
+      );
     });
 
     it('EM_DIAGNOSTICO → EM_EXECUCAO (skip AGUARDANDO)', () => {
       const so = createSO();
       so.changeStatus(ServiceOrderStatus.EM_DIAGNOSTICO, 'admin-1');
-      expect(() =>
-        so.changeStatus(ServiceOrderStatus.EM_EXECUCAO, 'admin-1'),
-      ).toThrow('Invalid transition');
+      expect(() => so.changeStatus(ServiceOrderStatus.EM_EXECUCAO, 'admin-1')).toThrow(
+        'Invalid transition',
+      );
     });
 
     it('ENTREGUE → any (terminal state)', () => {
@@ -242,9 +242,9 @@ describe('ServiceOrder Entity', () => {
       so.changeStatus(ServiceOrderStatus.FINALIZADA, 'admin-1');
       so.changeStatus(ServiceOrderStatus.ENTREGUE, 'admin-1');
 
-      expect(() =>
-        so.changeStatus(ServiceOrderStatus.RECEBIDA, 'admin-1'),
-      ).toThrow('Invalid transition');
+      expect(() => so.changeStatus(ServiceOrderStatus.RECEBIDA, 'admin-1')).toThrow(
+        'Invalid transition',
+      );
     });
 
     it('ENCERRADA_SEM_EXECUCAO → any (terminal state)', () => {
@@ -253,9 +253,9 @@ describe('ServiceOrder Entity', () => {
       so.changeStatus(ServiceOrderStatus.AGUARDANDO_APROVACAO, 'admin-1');
       so.changeStatus(ServiceOrderStatus.ENCERRADA_SEM_EXECUCAO, 'admin-1');
 
-      expect(() =>
-        so.changeStatus(ServiceOrderStatus.RECEBIDA, 'admin-1'),
-      ).toThrow('Invalid transition');
+      expect(() => so.changeStatus(ServiceOrderStatus.RECEBIDA, 'admin-1')).toThrow(
+        'Invalid transition',
+      );
     });
 
     it('PAUSADO → FINALIZADA (must resume first)', () => {
@@ -266,9 +266,9 @@ describe('ServiceOrder Entity', () => {
       so.changeStatus(ServiceOrderStatus.EM_EXECUCAO, 'admin-1');
       so.changeStatus(ServiceOrderStatus.PAUSADO, 'admin-1');
 
-      expect(() =>
-        so.changeStatus(ServiceOrderStatus.FINALIZADA, 'admin-1'),
-      ).toThrow('Invalid transition');
+      expect(() => so.changeStatus(ServiceOrderStatus.FINALIZADA, 'admin-1')).toThrow(
+        'Invalid transition',
+      );
     });
 
     it('FINALIZADA → EM_EXECUCAO (cannot go back)', () => {
@@ -279,9 +279,9 @@ describe('ServiceOrder Entity', () => {
       so.changeStatus(ServiceOrderStatus.EM_EXECUCAO, 'admin-1');
       so.changeStatus(ServiceOrderStatus.FINALIZADA, 'admin-1');
 
-      expect(() =>
-        so.changeStatus(ServiceOrderStatus.EM_EXECUCAO, 'admin-1'),
-      ).toThrow('Invalid transition');
+      expect(() => so.changeStatus(ServiceOrderStatus.EM_EXECUCAO, 'admin-1')).toThrow(
+        'Invalid transition',
+      );
     });
   });
 
@@ -292,9 +292,9 @@ describe('ServiceOrder Entity', () => {
       so.changeStatus(ServiceOrderStatus.AGUARDANDO_APROVACAO, 'admin-1');
 
       // No budget set
-      expect(() =>
-        so.changeStatus(ServiceOrderStatus.EM_EXECUCAO, 'admin-1'),
-      ).toThrow('no approved budget');
+      expect(() => so.changeStatus(ServiceOrderStatus.EM_EXECUCAO, 'admin-1')).toThrow(
+        'no approved budget',
+      );
     });
 
     it('should allow EM_EXECUCAO with budget set', () => {

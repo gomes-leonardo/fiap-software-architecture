@@ -45,9 +45,7 @@ describe('Stock Concurrency Integration', () => {
       await repository.save(found);
     };
 
-    const results = await Promise.allSettled(
-      Array.from({ length: 10 }, () => decrementOne()),
-    );
+    const results = await Promise.allSettled(Array.from({ length: 10 }, () => decrementOne()));
 
     const fulfilled = results.filter((r) => r.status === 'fulfilled');
     const rejected = results.filter((r) => r.status === 'rejected');

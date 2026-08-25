@@ -107,9 +107,7 @@ export class ServiceOrder extends Entity {
 
     // Business rule: cannot start execution without approved budget
     if (newStatus === ServiceOrderStatus.EM_EXECUCAO && !this._budgetId) {
-      throw DomainException.of(
-        'Cannot start execution: service order has no approved budget',
-      );
+      throw DomainException.of('Cannot start execution: service order has no approved budget');
     }
 
     const previousStatus = this._status;
