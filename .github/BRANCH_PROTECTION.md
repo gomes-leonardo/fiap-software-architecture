@@ -6,8 +6,11 @@ Proteção de branch não é código versionado — é configuração do reposit
 Este documento registra **exatamente** o que precisa ser aplicado, para que a configuração
 seja reproduzível e revisável.
 
-> **Status: pendente de aplicação.** Só quem tem permissão de _admin_ no repositório
-> (`gomes-leonardo`) consegue aplicar. A tentativa via API a partir de uma conta
+> **Status: aplicada em 27/08/2026** ([#37](https://github.com/gomes-leonardo/fiap-software-architecture/issues/37)).
+> `gh api repos/.../branches/main/protection` retorna `200` com a configuração abaixo;
+> antes retornava `404 Branch not protected`.
+>
+> Aplicar exige permissão de _admin_. A tentativa via API a partir de uma conta
 > colaboradora retorna `403`/`404` (`permissions.admin: false`).
 
 ## Regras a aplicar
