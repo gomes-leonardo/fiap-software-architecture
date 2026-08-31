@@ -20,3 +20,10 @@ data:
   # Tempo de vida do token JWT. Nao e segredo — o segredo e a chave de
   # assinatura, que fica no Secret.
   JWT_EXPIRES_IN: '1h'
+
+  # Sem estas, o AdminSeeder nao cria administrador nenhum quando
+  # NODE_ENV=production (src/infrastructure/auth/admin.seeder.ts) — e como
+  # POST /auth/register exige token, nao haveria como criar o primeiro pela
+  # API. O login ficaria impossivel. A senha correspondente vive no Secret.
+  ADMIN_BOOTSTRAP_EMAIL: 'admin@oficina.com'
+  ADMIN_BOOTSTRAP_NAME: 'Administrador'

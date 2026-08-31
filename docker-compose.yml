@@ -63,6 +63,13 @@ services:
       # recusa toda chamada, e um servico subindo calado nesse estado e pior
       # do que um compose que falha na hora.
       WEBHOOK_SECRET: ${WEBHOOK_SECRET:?defina WEBHOOK_SECRET no .env (cp .env.example .env)}
+      # Com NODE_ENV=production o AdminSeeder nao cria o admin de
+      # desenvolvimento, e POST /auth/register exige token — sem estas duas
+      # variaveis a stack sobe sem nenhuma credencial valida e todo login
+      # responde 401.
+      ADMIN_BOOTSTRAP_EMAIL: ${ADMIN_BOOTSTRAP_EMAIL:-admin@oficina.com}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:?defina ADMIN_BOOTSTRAP_PASSWORD no .env (cp .env.example .env)}
+      ADMIN_BOOTSTRAP_NAME: ${ADMIN_BOOTSTRAP_NAME:-Administrador}
       NODE_ENV: production
       PORT: 3000
     depends_on:
