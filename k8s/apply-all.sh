@@ -30,6 +30,50 @@ kubectl cluster-info >/dev/null 2>&1 ||
 
 info "Cluster: $(kubectl config current-context)"
 
+# Num cluster Kind ou k3s recem-criado, o erro mais provavel nao e de
+# manifesto: e a imagem local nunca ter sido carregada nos nodes. O Docker da
+# maquina e o containerd do node sao registries diferentes, entao a imagem
+# "existe" no `docker images` e mesmo assim falta no cluster. Com
+# imagePullPolicy IfNotPresent o kubelet tenta buscar num registry remoto,
+# nao acha, e o pod fica em ImagePullBackOff — que so aparece 300s depois,
+# quando o rollout estoura. Checar aqui custa um segundo.
+#
+# Para pular (deploy a partir de registry, por exemplo): SKIP_IMAGE_CHECK=1
+check_image_on_nodes() {
+  [ "${SKIP_IMAGE_CHECK:-0}" = '1' ] && return 0
+
+  local image policy context cluster missing=()
+  image="$(awk '/^[[:space:]]*image:/ {print $2; exit}' "${MANIFEST_DIR}/app-deployment.yaml")"
+  policy="$(awk '/^[[:space:]]*imagePullPolicy:/ {print $2; exit}' "${MANIFEST_DIR}/app-deployment.yaml")"
+
+  # So faz sentido quando o kubelet nao vai buscar num registry.
+  case "$policy" in IfNotPresent|Never) ;; *) return 0 ;; esac
+
+  context="$(kubectl config current-context)"
+  case "$context" in kind-*) cluster="${context#kind-}" ;; *) return 0 ;; esac
+
+  command -v docker >/dev/null 2>&1 || return 0
+
+  local node
+  while read -r node; do
+    [ -n "$node" ] || continue
+    docker exec "$node" crictl images 2>/dev/null | grep -q "${image%%:*}" || missing+=("$node")
+  done < <(kubectl get nodes -o name 2>/dev/null | sed 's|node/||')
+
+  [ ${#missing[@]} -eq 0 ] && return 0
+
+  fail "a imagem ${image} nao esta em ${#missing[@]} node(s): ${missing[*]}.
+        O Docker da maquina e o containerd do node sao registries separados —
+        buildar nao basta, e preciso carregar. Rode:
+
+          docker build -t ${image} .
+          kind load docker-image ${image} --name ${cluster}
+
+        E aplique de novo. (Para ignorar esta checagem: SKIP_IMAGE_CHECK=1)"
+}
+
+check_image_on_nodes
+
 info 'Namespace'
 kubectl apply -f "${MANIFEST_DIR}/namespace.yaml"
 
