@@ -46,30 +46,28 @@ Duas observações que evitam erro no PDF:
 
 ### 1.2 Código e infraestrutura
 
-Tudo abaixo está em PR aberto na data deste documento. **Nada disso está na `main`.** O
-vídeo mostra o estado final do projeto, então estes PRs precisam estar mergeados **antes**
-de você buildar a imagem que vai para a gravação.
+**Tudo mergeado na `main`.** As 15 issues do backlog fecharam; os PRs abaixo estão todos
+em `main` e o pipeline roda verde de ponta a ponta.
 
-| Entregável | PR | Estado | Bloqueia qual bloco do vídeo |
-| --- | --- | --- | --- |
-| Manifestos K8s + HPA + `apply-all.sh` | #27 | aberto | 2 e 5 |
-| Terraform (EKS/RDS na AWS, Kind local, `metrics-server`) | #26 | aberto | 1, 2 e 5 |
-| Pipeline CI/CD com deploy (`ci-cd.yml`, GHCR) | #30 | aberto | 3 |
-| Aprovação de orçamento por canal externo (webhook) | #23 | aberto | **4** |
-| Soft delete | #25 | aberto | — |
-| Smoke tests | #24 | aberto | — |
-| Collection de API / OpenAPI | #29 | aberto | 4 (opcional) |
-| Relatório de segurança | #28 | aberto | — |
-| README com diagrama de arquitetura | #11 | **issue aberta, sem PR** | **1 e o PDF** |
+| Entregável | PR | Estado |
+| --- | --- | --- |
+| Manifestos K8s + HPA + `apply-all.sh` | #27 | mergeado |
+| Terraform (EKS/RDS na AWS, Kind local, `metrics-server`) | #26 | mergeado |
+| Pipeline CI/CD com deploy (`ci-cd.yml`, GHCR) | #30 | mergeado |
+| Aprovação de orçamento por canal externo (webhook) | #23 | mergeado |
+| Soft delete | #25 | mergeado |
+| Smoke tests | #24 | mergeado |
+| Collection de API / OpenAPI | #29 | mergeado |
+| Relatório de segurança | #28 | mergeado |
+| README com diagrama de arquitetura | #31 | mergeado |
+| Endurecimento de autenticação | #32 | mergeado |
 
-**Riscos conhecidos, hoje:**
+**O único bloqueio de código restante:**
 
-- O último run do workflow na branch `feat/10-cicd-deploy` (PR #30) está **vermelho**:
-  `Integration Tests: failure`. `Lint`, `Typecheck` e `Unit Tests` passaram; o resto foi
-  pulado em cascata. **O bloco 3 do vídeo mostra um pipeline verde — isso precisa estar
-  resolvido antes de gravar.**
-- A issue #11 (README + diagrama) ainda não tem PR. O bloco 1 do roteiro e a página 2 do
-  PDF dependem do diagrama que ela entrega.
+- **[PR #45](https://github.com/gomes-leonardo/fiap-software-architecture/pull/45) precisa
+  ser mergeado antes de gravar.** Sem ele **não existe administrador no cluster** e o bloco 4
+  do vídeo morre no primeiro comando, com `POST /auth/login` respondendo 401. Detalhe na
+  seção 2.4.
 
 ### 1.3 Vídeo
 
@@ -132,6 +130,11 @@ summary e pula os passos seguintes (`.github/DEPLOYMENT.md`). Ou seja, **sem cad
 secrets você grava um pipeline verde que não deployou nada** — e é justamente o deploy que
 o enunciado pede para mostrar.
 
+**Estado hoje:** `DB_PASS`, `JWT_SECRET` e `WEBHOOK_SECRET` **já estão cadastrados**.
+Falta apenas o `KUBECONFIG_BASE64` — que é justamente o único que o preflight testa
+(`ci-cd.yml:312`), então o deploy continua pulando. O pacote no GHCR **já está público**
+(verificado: `docker pull` anônimo retorna o manifest).
+
 Comandos, de `.github/DEPLOYMENT.md`:
 
 ```bash
@@ -159,24 +162,51 @@ Três avisos que vêm do próprio `.github/DEPLOYMENT.md` e custam caro se ignor
    EKS da #26. **Se você não vai subir o EKS, aceite que o bloco 3 mostra o CI completo
    (lint, typecheck, testes, build, scan, publish no GHCR) e o job de deploy pulando com
    aviso — e diga isso em voz alta no vídeo, em vez de deixar o avaliador descobrir.**
-3. **O pacote no GHCR nasce privado.** Deixe público em
-   *Settings → Packages → Package settings → Change visibility*, senão um pod reagendado
-   depois falha com `ImagePullBackOff`.
+3. **O pacote no GHCR nasce privado — já resolvido.** Foi tornado público; um `docker
+   pull` anônimo de `ghcr.io/gomes-leonardo/fiap-software-architecture` funciona. Sem isso,
+   um pod reagendado depois falharia com `ImagePullBackOff`.
+4. **A proteção da `main` existe mas está desligada.** O ruleset `main` está com
+   `enforcement: disabled` e `gh api .../rules/branches/main` retorna `[]` — nenhuma regra
+   incide hoje. Não bloqueia a gravação, mas é item de entrega (issue #37).
 
-### 2.4 A imagem precisa conter o PR #23
+### 2.4 A imagem precisa conter o PR #45
 
-Verificado na prática: com a imagem buildada da `main` atual (commit `4126155`), o
-endpoint do canal externo **não existe**:
+O canal externo do PR #23 **já está na `main`** e funciona — verificado em 31/08 num
+cluster Kind, com a imagem buildada da `main` em `909f055`:
 
 ```
 $ curl -X POST http://localhost:3000/webhooks/budgets/<id>/approve \
-    -H "Authorization: Bearer change-me-webhook-secret"
-{"message":"Cannot POST /webhooks/budgets/.../approve","error":"Not Found","statusCode":404}
-HTTP 404
+    -H "Authorization: Bearer $WEBHOOK_SECRET"
+{"id":"6da353b7-...","status":"APROVADO","total":221.8}
+HTTP 200
 ```
 
-O bloco 4 do roteiro é o requisito novo da Fase 2. **Builde a imagem só depois que o PR #23
-estiver na `main`.**
+O bloqueio agora é outro, e é mais grave porque derruba o bloco 4 já no primeiro comando.
+
+**O ConfigMap define `NODE_ENV=production`. O `AdminSeeder` do PR #32 não cria
+administrador nenhum em produção sem `ADMIN_BOOTSTRAP_EMAIL` e `ADMIN_BOOTSTRAP_PASSWORD`
+— e essas variáveis não estavam em manifesto algum.** Como o mesmo PR passou a exigir token
+em `POST /auth/register`, também não havia como criar o primeiro admin pela API.
+
+Reproduzido no cluster:
+
+```
+$ curl -X POST $API/auth/login -d '{"email":"admin@oficina.com","password":"admin123"}'
+HTTP 401 {"message":"Invalid credentials","error":"Unauthorized","statusCode":401}
+
+$ kubectl logs -n soat -l app.kubernetes.io/name=soat-app
+WARN [AdminSeeder] Nenhum administrador foi semeado. Defina ADMIN_BOOTSTRAP_EMAIL
+     e ADMIN_BOOTSTRAP_PASSWORD para criar o primeiro administrador.
+```
+
+Os PRs #27 e #32 estavam corretos isoladamente — o defeito só existe na combinação, e
+nenhum CI o pegaria: os testes de integração e smoke usam Testcontainers com
+`NODE_ENV=test`, onde o seed de desenvolvimento roda normalmente.
+
+**Builde a imagem da gravação depois de mergear o
+[PR #45](https://github.com/gomes-leonardo/fiap-software-architecture/pull/45).** Com ele,
+no mesmo cluster: `LOG [AdminSeeder] Administrador inicial criado: admin@oficina.com` e o
+login devolve 200.
 
 ---
 
@@ -187,7 +217,7 @@ Se algum bloco estourar, corte do bloco 1 (é o único que não é demonstraçã
 
 | # | Bloco | Duração | Acumulado |
 | --- | --- | --- | --- |
-| 1 | Arquitetura e diagrama | 2:30 | 2:30 |
+| 1 | Estrutura, arquitetura e diagrama | 2:30 | 2:30 |
 | 2 | Deploy da aplicação | 3:00 | 5:30 |
 | 3 | Pipeline CI/CD | 2:30 | 8:00 |
 | 4 | Consumo das APIs | 3:30 | 11:30 |
@@ -200,10 +230,12 @@ abertos lado a lado — você vai precisar deles no bloco 5.
 
 ---
 
-### Bloco 1 — Arquitetura e diagrama · 2:30
+### Bloco 1 — Estrutura, arquitetura e diagrama · 2:30
 
-**Na tela:** o README no GitHub, no diagrama de arquitetura (entregue pela #11), e depois
-`infra/README.md` no diagrama do ambiente AWS.
+Subdividido em 0:40 + 0:50 + 1:00. Corresponde às **lâminas 2 a 5** do deck.
+
+**Na tela:** a raiz do repositório no GitHub, depois o README no diagrama de arquitetura
+(entregue pela #31), e por fim `infra/README.md` nos diagramas dos dois ambientes.
 
 **Comandos:** nenhum. É navegação.
 
@@ -211,7 +243,8 @@ abertos lado a lado — você vai precisar deles no bloco 5.
 
 | Parada | Frase |
 | --- | --- |
-| Diagrama do README | "A aplicação é um NestJS em Clean Architecture, empacotado em imagem Docker e rodando em Kubernetes; o banco é PostgreSQL." |
+| Raiz do repositório (0:00) | "A arquitetura da aplicação não mudou nesta fase. O que a Fase 2 acrescentou está quase todo fora do `src`: infraestrutura, pipeline e documentação." **Não diga "nenhum endpoint mudou"** — a API foi de 39 para 43 rotas e quatro contratos existentes mudaram, incluindo `POST /auth/register`, que passou a exigir token. |
+| Diagrama do README (0:40) | "A aplicação é um NestJS em Clean Architecture, empacotado em imagem Docker e rodando em Kubernetes; o banco é PostgreSQL." |
 | `k8s/` | "O namespace `soat` tem Deployment do app com 2 réplicas, StatefulSet do Postgres com volume persistente, Services ClusterIP e um HPA de 2 a 10 pods com alvo de 70% de CPU." |
 | Diagrama AWS de `infra/README.md` | "Na AWS o Terraform provisiona VPC com subnets públicas e privadas, EKS com managed node group nas privadas e RDS PostgreSQL sem endereço público — a única regra de entrada do banco é a porta 5432 vinda do security group dos nodes." |
 | Diagrama local de `infra/README.md` | "Para esta demonstração o mesmo Terraform provisiona um cluster Kind no Docker, com `metrics-server` instalado — sem ele o HPA não tem métrica e nunca escala." |
@@ -289,10 +322,10 @@ carga.
 | Tempo | Terminal | Comando | O que dizer |
 | --- | --- | --- | --- |
 | 0:00 | esquerda | `kubectl get hpa soat-app -n soat -w` | "O HPA vai de 2 a 10 pods com alvo de 70% da CPU requisitada. Agora está em 2 réplicas e a utilização perto de zero." |
-| 0:20 | — | *(mostrar `k8s/app-hpa.yaml`, 15 s)* | "A subida é agressiva de propósito — sem janela de estabilização, podendo dobrar a cada 30 segundos — e a descida é conservadora, com os 5 minutos padrão, para não haver flapping." |
-| 0:40 | direita | `kubectl run load-generator -n soat --rm -it --restart=Never --image=williamyeh/hey -- -z 5m -c 200 http://soat-app:3000/health` | "A carga é gerada **de dentro do cluster**, batendo direto no Service — o `port-forward` é single-threaded e seria ele o gargalo, não a aplicação." |
-| 1:10 | esquerda | *(o watch começa a mexer)* | "A utilização passa de 70% e o HPA reage." |
-| 1:30 | esquerda | *(pods subindo)* | "De 2 para 4 réplicas em cerca de 30 segundos." |
+| 0:30 | — | *(mostrar `k8s/app-hpa.yaml` enquanto as métricas sobem — há ~30 s de atraso até o HPA enxergar a carga)* | "A subida é agressiva de propósito — sem janela de estabilização, podendo dobrar a cada 30 segundos — e a descida é conservadora, com os 5 minutos padrão, para não haver flapping." |
+| 0:15 | direita | `kubectl run load-generator -n soat --rm -it --restart=Never --image=williamyeh/hey -- -z 5m -c 200 http://soat-app:3000/health` | "A carga é gerada **de dentro do cluster**, batendo direto no Service — o `port-forward` é single-threaded e seria ele o gargalo, não a aplicação." **Dispare cedo:** medido, o HPA leva ~60 s para reagir. |
+| 1:00 | esquerda | *(o watch começa a mexer)* | "A utilização passa de 70% e o HPA reage." |
+| 1:40 | esquerda | *(pods subindo)* | "De 2 para 4 réplicas, e depois para 6 conforme a carga se mantém." |
 | 2:00 | terceiro terminal (ou pare o watch) | `kubectl get pods -n soat -l app.kubernetes.io/name=soat-app` | "Os pods novos já estão `Running` e recebendo tráfego." |
 | 2:30 | — | `kubectl top pods -n soat` | "A carga distribuída entre as réplicas, com a utilização convergindo de volta para o alvo de 70% — que é exatamente o que o autoscaler deveria fazer." |
 
@@ -300,11 +333,17 @@ carga.
 
 | Momento | `TARGETS` | `REPLICAS` |
 | --- | --- | --- |
-| ocioso | `0%/70%` | 2 |
-| ~15 s de carga (`-c 50`) | `141%/70%` | 2 |
-| ~30 s | `136%/70%` | **4** |
-| ~45 s em diante | estabiliza em `~66%/70%` | 4 |
-| com `-c 200` somado | `78%/70%` | **5** |
+| ocioso | `2%/70%` | 2 |
+| 30 s de carga (`-c 200`) | `22%/70%` | 2 |
+| 40 s | `147%/70%` | 2 |
+| 60 s | `169%/70%` | **4** |
+| 90 s | `90%/70%` | **6** |
+| 120 s em diante | estabiliza em `~75%/70%` | 6 |
+
+**O atraso é o dado que mais importa para gravar:** entre disparar a carga e o HPA mudar a
+contagem de réplicas passaram-se **~60 segundos**, porque o `metrics-server` leva ~30 s só
+para registrar o consumo. Uma narração que promete a subida aos 30 s fala de um número que
+ainda não está na tela.
 
 E, no cluster k3s onde os manifestos foram validados originalmente (PR #27): pico de
 `252%/70%` e **2 → 4 → 8 → 10 pods em ~3 minutos**.
@@ -400,9 +439,13 @@ Todos os `curl` abaixo foram executados contra o cluster e devolveram o que est�
 ```bash
 API=http://localhost:3000
 
+# A senha do administrador vem do Secret — o AdminSeeder a le no boot (PR #45).
+ADMIN_PASS=$(kubectl get secret soat-app-secret -n soat \
+  -o jsonpath='{.data.ADMIN_BOOTSTRAP_PASSWORD}' | base64 -d)
+
 TOKEN=$(curl -s -X POST $API/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"admin@oficina.com","password":"admin123"}' | jq -r .access_token)
+  -d "{\"email\":\"admin@oficina.com\",\"password\":\"$ADMIN_PASS\"}" | jq -r .access_token)
 
 AUTH="Authorization: Bearer $TOKEN"
 JSON='Content-Type: application/json'
@@ -456,20 +499,9 @@ curl -s -X POST "$API/webhooks/budgets/$BUDGET_ID/approve" \
   -H "Authorization: Bearer $WEBHOOK_SECRET" | jq '{id,status,total}'
 ```
 
-> **Atenção — este é o único comando da seção que não pôde ser executado.** Com a imagem
-> buildada da `main` atual ele responde **404**, porque o controller vem do PR #23, ainda
-> não mergeado (ver 2.4). O que foi executado no lugar, e devolveu 200, é o equivalente
-> interno protegido por JWT — mesmo caso de uso, mesma resposta:
->
-> ```bash
-> curl -s -X PATCH "$API/budgets/$BUDGET_ID/approve" -H "$AUTH" | jq '{id,status,total}'
-> # {"id":"3fd2277a-...","status":"APROVADO","total":221.8}
-> ```
->
-> O endpoint externo delega aos mesmos `ApproveBudgetUseCase`/`RefuseBudgetUseCase` e tem
-> teste de integração com HTTP real no PR #23. **Depois de mergear #23 e rebuildar a
-> imagem, rode o `curl` do webhook uma vez antes de gravar** — não descubra um 404 com a
-> câmera ligada.
+> **Executado com sucesso em 31/08**, contra a `main` em `909f055`: responde `200` com
+> `{"id":"6da353b7-...","status":"APROVADO","total":221.8}`. Com token inválido, `401`.
+> A ressalva anterior sobre `404` era do tempo em que o PR #23 estava aberto — não vale mais.
 
 No cluster local com o `app-secret.yaml` versionado, esse segredo é
 `change-me-webhook-secret` — placeholder público, documentado como tal no próprio
@@ -589,74 +621,91 @@ entre ele encontrar a demonstração de escalabilidade e não encontrar.
 
 ## 6. O que foi verificado, e como
 
-### Executado de verdade nesta máquina (macOS arm64, 2026-08-25)
+### Executado de verdade nesta máquina (macOS arm64, 2026-08-31)
+
+Repetido do zero contra a `main` em `909f055`, já com todos os PRs da Fase 2 mergeados.
 
 | O quê | Resultado |
 | --- | --- |
-| `tofu init` + `apply` em `infra/envs/local` | Cluster `soat-local` criado: control-plane + 2 workers, `kindest/node:v1.31.0` |
+| `tofu init` + `apply` em `infra/envs/local` | Cluster `soat-local` criado: control-plane + 2 workers |
 | `metrics-server` do Terraform | `kubectl top nodes` respondeu com números |
 | `docker build -t soat-tech-challenge:latest .` | Imagem construída a partir do `Dockerfile` da `main` |
-| Carga da imagem no Kind | `crictl images` no node lista `soat-tech-challenge:latest` |
-| `./k8s/apply-all.sh` | Stack completa no ar em ~50 s; Postgres `Ready` em ~20 s |
-| `GET /health` via `port-forward` | `{"status":"ok","database":"connected"}` |
-| Fluxo de APIs da seção 4.6 | Login, cliente, veículo, serviço, peça, OS com itens inline, aprovação (pelo `PATCH` interno — ver ressalva abaixo), `EM_EXECUCAO` e consulta pública, todos com o retorno documentado |
+| Carga da imagem no Kind | `kind load docker-image` distribuiu para os 3 nodes |
+| `./k8s/apply-all.sh` | Stack completa no ar; `GET /health` → `{"status":"ok","database":"connected"}` |
+| `POST /auth/login` **antes** do PR #45 | **401** — nenhum admin semeado (ver 2.4) |
+| `POST /auth/login` **depois** do PR #45 | 200, JWT de 245 caracteres |
+| `POST /service-orders` com itens inline | `AGUARDANDO_APROVACAO`, `createdBudgetId` preenchido, `budgetId: null` |
+| `POST /webhooks/budgets/:id/approve` | **200** · `{"status":"APROVADO","total":221.8}` |
+| Mesmo webhook com token inválido | **401** |
+| Baixa de estoque após aprovação | 100 → **98** |
+| `PATCH /service-orders/:id/status` → `EM_EXECUCAO` | 200, `budgetId` agora preenchido |
+| `GET /consult/:id?cpf=` correto / divergente | 200 / **403** |
+| `GET /api-docs` | 200 |
 | Gerador de carga `williamyeh/hey` | Funcionou no Kind em arm64 |
-| HPA escalando | `0%` → `141%` → 4 pods em ~30 s; 5 pods com `-c 200` |
+| HPA escalando | `2%` → `169%` → 4 pods aos 60 s → **6 pods** aos 90 s; pico `176%/70%` |
+| `kubectl top pods` e seletor `app.kubernetes.io/name=soat-app` | Ambos funcionaram; 6 pods listados |
 | `tofu destroy` | Cluster removido, `kind get clusters` vazio |
 | Colaboradores do repositório | `soat-architecture` presente, permissão `write`; repo público |
 
 ### Duas armadilhas encontradas ao executar — leia antes de gravar
 
-**1. O primeiro `terraform apply` falha quando `~/.kube/config` não existe.**
+**1. O primeiro `tofu apply` falha porque o contexto do kubectl ainda não existe.**
 
-Aconteceu aqui, literalmente:
+A causa registrada antes neste documento estava **errada**. Não é o `~/.kube/config`
+faltando: o arquivo existia e o `apply` falhou assim mesmo, porque o provider `kubernetes`
+é configurado com um *contexto* que só passa a existir quando o cluster nasce.
 
 ```
-Error: 'config_path' refers to an invalid path: "/Users/.../.kube/config":
-       no such file or directory
-Error: Post "http://localhost/api/v1/namespaces": dial tcp [::1]:80: connection refused
-  with kubernetes_namespace.app[0]
+Error: Provider configuration: cannot load Kubernetes client config
+  with provider["registry.opentofu.org/hashicorp/kubernetes"],
+  on providers.tf line 39, in provider "kubernetes":
+context "kind-soat-local" does not exist
 ```
 
-O provider `kubernetes` é configurado com um caminho que só passa a existir depois que o
-`kind_cluster` nasce. O cluster e o `metrics-server` **foram criados**; só o namespace
-falhou. **Rodar o `apply` de novo resolve** — e é por isso que a seção 4.2 usa o
-`-target=kind_cluster.this` primeiro, o contorno que o próprio `infra/README.md` já
-documentava.
+O contorno é o da seção 4.2 — criar o cluster primeiro:
 
-**2. `POST /webhooks/budgets/:id/approve` responde 404 na `main` atual.**
+```bash
+tofu apply -auto-approve -target=kind_cluster.this
+tofu apply -auto-approve
+```
 
-O canal externo vem do PR #23, ainda não mergeado. Builde a imagem da gravação **depois**
-do merge, ou o bloco 4 do vídeo perde o requisito novo da Fase 2. Verificado com a imagem
-do commit `4126155`.
+**Atenção ao endereço do recurso:** é `kind_cluster.this`, na raiz do módulo.
+`module.cluster.kind_cluster.this` não casa com nada e o `apply` responde
+`0 added, 0 changed, 0 destroyed` sem criar o cluster — silenciosamente.
+
+**2. Sem o PR #45, o cluster sobe sem nenhum administrador.**
+
+Detalhado na seção 2.4. `GET /health` responde saudável, mas `POST /auth/login` devolve
+401 e o bloco 4 do vídeo não sai do lugar. É o defeito mais caro encontrado nesta
+validação, justamente porque tudo *parece* funcionar.
 
 ### O que NÃO foi executado, e por quê
 
 | Item | Por quê |
 | --- | --- |
-| `infra/envs/aws` (EKS + RDS) | Custa ~US$ 185–195/mês e leva 15–20 min por `apply`. Os comandos vêm de `infra/README.md`; **nenhum deles foi executado**. |
+| `infra/envs/aws` (EKS + RDS) | Custa ~US$ 185–195/mês e leva 15–20 min por `apply`. Os comandos vêm de `infra/README.md`; **nenhum deles foi executado**. Validado apenas com `tofu validate`. |
 | `infra/bootstrap` (backend S3 + DynamoDB) | Mesmo motivo. |
-| O pipeline `ci-cd.yml` de ponta a ponta com deploy | Exige os secrets do repositório, que só você pode cadastrar. Os comandos vêm de `.github/DEPLOYMENT.md`; **não foram executados**. O último run da branch está vermelho no job `Integration Tests`. |
+| O job `deploy` do `ci-cd.yml` de ponta a ponta | Exige `KUBECONFIG_BASE64`, ainda não cadastrado — e um kubeconfig de Kind não é alcançável pelo runner. O CI completo, o build, o scan e o `publish` no GHCR **rodam verdes na `main`**. |
 | Fallback de carga com `busybox` | O `hey` funcionou; o fallback está em `k8s/README.md` e não foi exercitado. |
 | Descida do HPA de volta a 2 réplicas | Exige 5 minutos de janela de estabilização. Comportamento documentado em `k8s/app-hpa.yaml`, não cronometrado aqui. |
-| `PATCH /budgets/:id/refuse` e `POST /webhooks/budgets/:id/refuse` | Fora do caminho do vídeo. O `PATCH .../approve` interno foi executado e devolveu `APROVADO`. |
-
----
+| `POST /webhooks/budgets/:id/refuse` | Fora do caminho do vídeo. O `approve` do mesmo controller foi executado e devolveu `APROVADO`. |
 
 ## 7. O que só você pode fazer, em ordem
 
-1. **Mergear** os PRs #23, #26, #27 e #30 (e #11, quando existir) — o vídeo mostra o estado
-   final do projeto.
-2. **Consertar** o `Integration Tests` vermelho do PR #30, ou aceitar que o bloco 3 vai
-   mostrar um run anterior.
-3. **Cadastrar** os secrets `KUBECONFIG_BASE64`, `DB_PASS`, `JWT_SECRET` e `WEBHOOK_SECRET`
-   (seção 2.3) — sem eles o job de deploy pula e não há CD para mostrar.
-4. **Tornar público** o pacote no GHCR.
-5. **Preparar o ambiente**: passos 4.1 a 4.4 desta lista de comandos.
+1. **Mergear o [PR #45](https://github.com/gomes-leonardo/fiap-software-architecture/pull/45)** —
+   sem ele não há administrador no cluster e o bloco 4 não roda. Todo o resto da Fase 2 já
+   está na `main`.
+2. **Cadastrar o `KUBECONFIG_BASE64`** (seção 2.3), se quiser CD real no bloco 3. Os outros
+   três secrets já estão. Sem cluster alcançável pela internet, aceite mostrar o deploy
+   pulando com aviso — e diga isso em voz alta.
+3. **Ativar o ruleset da `main`** — existe, mas está com `enforcement: disabled` (issue #37).
+4. **Preparar o ambiente**: passos 4.1 a 4.4, com a imagem buildada **depois** do #45.
+5. **Ensaiar o bloco 5 uma vez** antes de gravar, para calibrar com o atraso de ~60 s do HPA.
 6. **Gravar** o vídeo seguindo a seção 3, em até 15 minutos.
 7. **Publicar** no YouTube ou Vimeo, como público ou não listado.
-8. **Colocar o link real no README**, substituindo o placeholder da issue #11.
-9. **Montar o PDF** com a estrutura da seção 5.
+8. **Colocar o link real no README**, substituindo o placeholder (issue #38).
+9. **Montar o PDF** com a estrutura da seção 5, usando a URL canônica do repositório
+   (`fiap-software-architecture`, não o nome antigo).
 10. **Submeter no portal do aluno** antes do prazo.
-11. **Destruir** o ambiente: `tofu destroy` no local e, se usou AWS, `terraform destroy` em
+11. **Destruir** o ambiente: `tofu destroy` no local e, se usou AWS, `tofu destroy` em
     `infra/envs/aws` — o EKS cobra por hora ligada mesmo vazio.
