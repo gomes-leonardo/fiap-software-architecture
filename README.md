@@ -15,9 +15,9 @@ A Fase 1 entregou o MVP: dominio em camadas, CRUDs, maquina de status da OS, orc
 
 ## Video demonstrativo
 
-> **Pendente.** Substituir por link do YouTube/Vimeo antes da entrega (issue [#16](https://github.com/gomes-leonardo/fiap-software-architecture/issues/16)).
->
-> Roteiro: arquitetura → deploy da aplicacao → execucao do pipeline CI/CD → consumo das APIs → escalabilidade automatica com o HPA escalando ao vivo.
+**[Assistir no YouTube](https://www.youtube.com/watch?v=dXYspEFJsoQ)**
+
+Roteiro: arquitetura → deploy da aplicacao → execucao do pipeline CI/CD → consumo das APIs → escalabilidade automatica com o HPA escalando ao vivo.
 
 ## Fase 2 — Objetivos
 
