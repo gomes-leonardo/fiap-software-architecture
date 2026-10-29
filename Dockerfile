@@ -36,6 +36,9 @@ COPY --from=builder /app/dist ./dist
 USER nestjs
 
 EXPOSE 3000
+# Porta do /metrics. `EXPOSE` e metadado da imagem, nao abre nada: serve para
+# quem le a imagem saber que esta porta existe.
+EXPOSE 9464
 
 # wget faz parte do busybox da imagem alpine — nao ha dependencia extra.
 # start-period cobre o boot do Nest + migrations em producao.
