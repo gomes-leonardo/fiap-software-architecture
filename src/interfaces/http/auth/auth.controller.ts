@@ -14,6 +14,9 @@ import { AdminRepository } from '@domain/admin/admin-repository.port';
 import { Admin } from '@domain/admin/admin.entity';
 import { DomainException } from '@domain/shared';
 import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard';
+import { trace } from '@opentelemetry/api';
+
+const tracer = trace.getTracer('soat-app');
 
 class LoginDto {
   @ApiProperty({ example: 'admin@oficina.com', description: 'Email do administrador' })
@@ -119,7 +122,14 @@ export class AuthController {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isValid = await admin.verifyPassword(dto.password);
+    const isValid = await tracer.startActiveSpan('auth.verify_password', async (span) => {
+      try {
+        return await admin.verifyPassword(dto.password);
+      } finally {
+        span.end();
+      }
+    });
+
     if (!isValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
