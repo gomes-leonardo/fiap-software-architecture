@@ -1,10 +1,21 @@
+// Deve ser o primeiro import do processo: a instrumentacao precisa trocar os
+// metodos de `pg`, `express` e `http` antes de qualquer modulo carrega-los.
+import './instrumentation';
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { httpLogger, logger } from '@infrastructure/logging/logger';
+import { PinoNestLogger } from '@infrastructure/logging/nest-logger';
+import { traceIdHeader } from '@infrastructure/logging/trace-id.middleware';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+
+  app.useLogger(new PinoNestLogger());
+  app.use(httpLogger);
+  app.use(traceIdHeader);
 
   // Shutdown gracioso: com o tini encaminhando o SIGTERM (ver Dockerfile), o
   // Nest fecha o servidor HTTP e o pool do TypeORM antes de sair, em vez de
@@ -47,7 +58,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  console.log(`Application running on port ${port}`);
-  console.log(`Swagger docs at http://localhost:${port}/api-docs`);
+  logger.info({ port }, 'application started');
+  logger.info({ url: `http://localhost:${port}/api-docs` }, 'swagger ready');
 }
 bootstrap();
