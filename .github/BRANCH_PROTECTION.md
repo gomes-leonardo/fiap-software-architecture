@@ -19,7 +19,7 @@ seja reproduzível e revisável.
 |-------|-------|--------|
 | Required status checks | `Lint`, `Typecheck`, `Unit Tests`, `Integration Tests`, `Smoke Tests`, `Build Docker Image`, `Render dos manifestos` | Impede merge sem CI verde |
 | Require branches to be up to date (`strict`) | `true` | Evita merge semântico quebrado: a branch precisa estar rebaseada na `main` antes do merge |
-| Required pull request reviews | 1 aprovação, `dismiss_stale_reviews: true` | Fecha o push direto na `main`; aprovação some se novos commits chegarem |
+| Required pull request reviews | 0 aprovações, PR obrigatório | Fecha o push direto na `main`. Com `enforce_admins` e um dono só, exigir aprovação travaria todo merge: o GitHub não deixa o autor aprovar o próprio PR |
 | Required conversation resolution | `true` | Nenhum comentário de review fica pendente |
 | Allow force pushes | `false` | Preserva o histórico da `main` |
 | Allow deletions | `false` | Ninguém apaga a `main` |
@@ -58,7 +58,7 @@ cat > /tmp/protection.json <<'EOF'
   "required_pull_request_reviews": {
     "dismiss_stale_reviews": true,
     "require_code_owner_reviews": false,
-    "required_approving_review_count": 1
+    "required_approving_review_count": 0
   },
   "restrictions": null,
   "allow_force_pushes": false,
@@ -87,7 +87,7 @@ gh api repos/gomes-leonardo/fiap-software-architecture/branches/main/protection 
 **Settings → Branches → Add branch protection rule**
 
 1. Branch name pattern: `main`
-2. ☑ Require a pull request before merging → Required approvals: **1** → ☑ Dismiss stale pull request approvals when new commits are pushed
+2. ☑ Require a pull request before merging → Required approvals: **0**
 3. ☑ Require status checks to pass before merging → ☑ Require branches to be up to date before merging
    → buscar e marcar: `Lint`, `Typecheck`, `Unit Tests`, `Integration Tests`, `Smoke Tests`, `Build Docker Image`, `Render dos manifestos`
 4. ☑ Require conversation resolution before merging
