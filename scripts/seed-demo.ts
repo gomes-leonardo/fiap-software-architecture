@@ -16,7 +16,7 @@
 
 const API = process.env.API_URL ?? 'http://localhost:3000';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'admin@oficina.com';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'admin123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'Admin@Oficina2026';
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET ?? 'change-me-webhook-secret';
 const FORCE = process.env.SEED_FORCE === '1';
 

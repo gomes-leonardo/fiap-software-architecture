@@ -19,13 +19,18 @@ import { AdminRepository } from '@domain/admin/admin-repository.port';
 import { Admin } from '@domain/admin/admin.entity';
 import { JwtStrategy } from '@infrastructure/auth/jwt.strategy';
 import { AuthController } from '@interfaces/http/auth/auth.controller';
+import {
+  InMemoryRateLimitStore,
+  RateLimitGuard,
+  RateLimitStore,
+} from '@interfaces/http/guards/rate-limit.guard';
 import { DomainExceptionFilter } from '@interfaces/http/filters/domain-exception.filter';
 
 const SECRET = 'segredo-de-teste-do-auth-controller';
 const EXISTING_ADMIN = {
   name: 'Admin Existente',
   email: 'admin@oficina.com',
-  password: 'admin123',
+  password: 'Admin@Oficina2026',
 };
 
 class InMemoryAdminRepository extends AdminRepository {
@@ -64,6 +69,8 @@ describe('AuthController (HTTP)', () => {
         JwtStrategy,
         { provide: ConfigService, useValue: { get: () => SECRET } },
         { provide: AdminRepository, useValue: repository },
+        { provide: RateLimitStore, useValue: new InMemoryRateLimitStore(1000, 60_000) },
+        RateLimitGuard,
       ],
     }).compile();
 
@@ -88,7 +95,7 @@ describe('AuthController (HTTP)', () => {
       .send({ email: EXISTING_ADMIN.email, password });
   }
 
-  const NEW_ADMIN = { name: 'Novo Admin', email: 'novo@oficina.com', password: 'senha-nova' };
+  const NEW_ADMIN = { name: 'Novo Admin', email: 'novo@oficina.com', password: 'Senha-Nova-2026' };
 
   describe('POST /auth/register exige um admin autenticado', () => {
     it('recusa quem nao apresenta token', async () => {

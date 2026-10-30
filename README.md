@@ -446,7 +446,7 @@ publicada no host.
 
 ```text
 Email: admin@oficina.com
-Senha: admin123
+Senha: Admin@Oficina2026
 ```
 
 Para obter um JWT:
@@ -454,7 +454,7 @@ Para obter um JWT:
 ```bash
 curl -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@oficina.com","password":"admin123"}'
+  -d '{"email":"admin@oficina.com","password":"Admin@Oficina2026"}'
 ```
 
 ## Deploy em Kubernetes

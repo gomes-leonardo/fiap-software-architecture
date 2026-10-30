@@ -3,12 +3,13 @@
 import './instrumentation';
 
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { httpLogger, logger } from '@infrastructure/logging/logger';
 import { PinoNestLogger } from '@infrastructure/logging/nest-logger';
 import { traceIdHeader } from '@infrastructure/logging/trace-id.middleware';
+import { corsOrigins, isSwaggerEnabled } from '@infrastructure/http/bootstrap-options';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -22,9 +23,10 @@ async function bootstrap() {
   // derrubar conexoes em aberto durante um rolling update do Kubernetes.
   app.enableShutdownHooks();
 
-  // CORS liberado para o MVP (permite o app/cliente consumir a API e a consulta
-  // publica de OS). Em producao, restringir `origin` aos dominios confiaveis.
-  app.enableCors();
+  const allowedOrigins = corsOrigins(process.env);
+  if (allowedOrigins.length > 0) {
+    app.enableCors({ origin: allowedOrigins });
+  }
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -34,6 +36,16 @@ async function bootstrap() {
     }),
   );
 
+  if (isSwaggerEnabled(process.env)) {
+    setupSwagger(app);
+  }
+
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+  logger.info({ port }, 'application started');
+}
+
+function setupSwagger(app: INestApplication): void {
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Auto Repair Shop OS Management')
     .setDescription(
@@ -56,10 +68,6 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api-docs', app, document);
-
-  const port = process.env.PORT || 3000;
-  await app.listen(port);
-  logger.info({ port }, 'application started');
-  logger.info({ url: `http://localhost:${port}/api-docs` }, 'swagger ready');
+  logger.info({ path: '/api-docs' }, 'swagger ready');
 }
 bootstrap();

@@ -15,6 +15,7 @@ import { Admin } from '@domain/admin/admin.entity';
 import { DomainException } from '@domain/shared';
 import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard';
 import { RolesGuard } from '@infrastructure/auth/roles.guard';
+import { RateLimitGuard } from '../guards/rate-limit.guard';
 import { Roles } from '@infrastructure/auth/roles.decorator';
 import { ADMIN_TOKEN_ISSUER, Role } from '@infrastructure/auth/role.enum';
 import { trace } from '@opentelemetry/api';
@@ -27,7 +28,7 @@ class LoginDto {
   @IsNotEmpty()
   email!: string;
 
-  @ApiProperty({ example: 'admin123', description: 'Senha do administrador' })
+  @ApiProperty({ example: 'Admin@Oficina2026', description: 'Senha do administrador' })
   @IsString()
   @IsNotEmpty()
   password!: string;
@@ -44,9 +45,12 @@ class RegisterAdminDto {
   @IsNotEmpty()
   email!: string;
 
-  @ApiProperty({ example: 'admin123', description: 'Senha (mínimo 6 caracteres)' })
+  @ApiProperty({
+    example: 'Admin@Oficina2026',
+    description: 'Senha: mínimo 12 caracteres, com maiúsculas, minúsculas e dígitos',
+  })
   @IsString()
-  @MinLength(6)
+  @MinLength(12)
   password!: string;
 }
 
@@ -111,9 +115,11 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(RateLimitGuard)
   @ApiOperation({ summary: 'Autenticar administrador' })
   @ApiResponse({ status: 200, description: 'JWT token retornado', type: LoginResponseDto })
   @ApiResponse({ status: 401, description: 'Credenciais inválidas' })
+  @ApiResponse({ status: 429, description: 'Tentativas demais para este e-mail' })
   async login(@Body() dto: LoginDto): Promise<LoginResponseDto> {
     const admin = await this.adminRepository.findByEmail(dto.email.toLowerCase());
     if (!admin) {

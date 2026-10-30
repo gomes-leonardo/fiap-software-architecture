@@ -810,6 +810,17 @@ e adicionar bloqueio temporario apos N falhas.
   vir no campo `token`. E o motivo documentado de o header ser a forma preferida
   (`webhook-auth.guard.ts:56-61`).
 
+## 7. Achados pendentes resolvidos na Fase 3 (#42)
+
+| Achado | Resolução |
+|---|---|
+| CORS liberado para qualquer origem | `CORS_ORIGINS` define a allowlist. Sem a variável, nenhuma origem cruzada é liberada (`src/infrastructure/http/bootstrap-options.ts`). |
+| Rate limit sem expurgo e por réplica | Janelas expiradas são removidas uma vez por janela. A contagem por réplica foi **aceita por escrito**: com N pods, o limite efetivo é N vezes o configurado. O rate limit do Kong, que vê todo o tráfego, é a barreira de borda. Um store compartilhado (Redis) entraria atrás do mesmo port `RateLimitStore`. |
+| Enumeração de clientes em `/consult` | Cliente inexistente e CPF que não corresponde respondem o mesmo `404 Not found`, com corpo idêntico (`test/integration/consult/public-consult.integration.spec.ts`). |
+| Swagger exposto em produção | Desligado por padrão com `NODE_ENV=production`. `SWAGGER_ENABLED=true` liga explicitamente, como na homologação. |
+| `RolesGuard` nunca aplicado | Aplicado em todas as rotas de administração, com `@Roles('admin')`. Existe um segundo papel, o cliente autenticado por CPF (#52). Detalhe em `docs/api/acesso-por-papel.md`. |
+| Senha fraca e login sem rate limit | Senha nova de admin exige 12 caracteres, com maiúsculas, minúsculas e dígitos (`Admin.create`). Hashes já gravados não são reavaliados. O login aceita 10 tentativas por minuto **por e-mail**, porque atrás do gateway todas as requisições chegam do mesmo IP. |
+
 ## Como reproduzir estes scans
 
 ```bash

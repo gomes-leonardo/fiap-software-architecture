@@ -17,7 +17,7 @@ interface AdminCredentials {
 export const DEV_ADMIN: AdminCredentials = {
   name: 'Admin Padrão',
   email: 'admin@oficina.com',
-  password: 'admin123',
+  password: 'Admin@Oficina2026',
 };
 
 const BOOTSTRAP_HINT =
@@ -30,7 +30,7 @@ const BOOTSTRAP_HINT =
  * Duas coisas mudaram em relacao ao seed que rodava no construtor do
  * `AuthController`:
  *
- * 1. **Ambiente.** `admin@oficina.com` / `admin123` esta no README e neste
+ * 1. **Ambiente.** `admin@oficina.com` / `Admin@Oficina2026` esta no README e neste
  *    arquivo. Semear isso com `NODE_ENV=production` — que era o que acontecia,
  *    porque nada checava o ambiente — entrega uma conta de administrador com
  *    senha publicada para quem chegar primeiro. Em producao o seed de
