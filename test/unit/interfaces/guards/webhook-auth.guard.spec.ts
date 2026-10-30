@@ -1,6 +1,12 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { WebhookAuthGuard } from '@interfaces/http/guards/webhook-auth.guard';
+import { recordIntegrationError } from '@infrastructure/observability/integration-errors';
+
+jest.mock('@infrastructure/observability/integration-errors', () => ({
+  ...jest.requireActual('@infrastructure/observability/integration-errors'),
+  recordIntegrationError: jest.fn(),
+}));
 
 const SECRET = 'segredo-do-webhook-bem-longo';
 
@@ -119,5 +125,33 @@ describe('WebhookAuthGuard', () => {
 
     expect(mensagens.size).toBe(1);
     expect([...mensagens][0]).toBe('Invalid webhook credentials');
+  });
+
+  describe('contagem para o painel de integracoes', () => {
+    beforeEach(() => jest.mocked(recordIntegrationError).mockClear());
+
+    it('conta o segredo errado como webhook_unauthorized, pela rota', () => {
+      const guard = guardWithSecret(SECRET);
+      const request = {
+        headers: { authorization: 'Bearer errado' },
+        body: {},
+        baseUrl: '',
+        route: { path: '/webhooks/service-orders/:id/status' },
+      };
+
+      expect(() => guard.canActivate(contextWith(request))).toThrow(UnauthorizedException);
+      expect(recordIntegrationError).toHaveBeenCalledWith(
+        'webhook_unauthorized',
+        '/webhooks/service-orders/:id/status',
+      );
+    });
+
+    it('nao conta a chamada aceita', () => {
+      guardWithSecret(SECRET).canActivate(
+        contextWith({ headers: { authorization: `Bearer ${SECRET}` }, body: {} }),
+      );
+
+      expect(recordIntegrationError).not.toHaveBeenCalled();
+    });
   });
 });

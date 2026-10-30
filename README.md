@@ -462,6 +462,53 @@ curl -X POST http://localhost:3000/auth/login \
   -d '{"email":"admin@oficina.com","password":"Admin@Oficina2026"}'
 ```
 
+### Observabilidade local
+
+O `docker-compose up -d` sobe quatro portas de observabilidade junto com a API:
+
+| Porta | O que e | Guarda dado? |
+| --- | --- | --- |
+| 9464 | `/metrics` do app, em texto no formato Prometheus | Nao — mostra o estado do processo agora |
+| 9090 | Prometheus | Sim — raspa a 9464 a cada 15s e retem 15 dias |
+| 3002 | Grafana | Nao — pergunta ao Prometheus e desenha |
+| 16686 | Jaeger | Sim, **em memoria** — um `restart` do container apaga tudo |
+
+Os dois caminhos sao diferentes de proposito: a **metrica e raspada** (o
+Prometheus vem buscar na 9464) e o **trace e empurrado** (o app envia para o
+`OTEL_EXPORTER_OTLP_ENDPOINT`). A consequencia pratica: o app sabe o endereco do
+Jaeger e nao sabe quem le o `/metrics`.
+
+Isso vale para esta stack, nao e uma regra do OpenTelemetry: a mesma
+`OTEL_EXPORTER_OTLP_ENDPOINT` serve metrica e log quando o destino e um
+collector. Aqui o unico leitor de metrica e o Prometheus, que e pull.
+
+Prometheus e Grafana ficam publicados so em `127.0.0.1`
+(`OBSERVABILITY_BIND_ADDRESS`). O Grafana sobe com acesso anonimo no papel
+Editor e sem tela de login, para a demo: quem abre a porta cria e edita
+dashboard sem autenticar, mas nao cria datasource. A mesma variavel vale para
+os dois servicos — abrir um para a rede abre o outro junto.
+
+Latencia por rota, no Prometheus (`http://localhost:9090`), com trafego rodando:
+
+```promql
+histogram_quantile(
+  0.95,
+  sum by (le, http_route) (
+    rate(http_server_request_duration_bucket{job="soat-app-compose"}[5m])
+  )
+)
+```
+
+O `job` no seletor nao e enfeite: existe um job por fluxo de execucao
+(`soat-app-compose` e `soat-app-host`, ver `observability/prometheus.yml`), e
+somar sem escopo pode contar o mesmo processo duas vezes.
+
+O `rate()` precisa do contador subir *dentro* da janela. Sem trafego recente o
+resultado nao e zero: para uma rota que teve trafego e ficou quieta, todos os
+buckets zeram e o `histogram_quantile` devolve **NaN**; quando a serie some por
+staleness, o resultado fica **vazio**. Grafico em branco quase sempre significa
+"nao houve requisicao", e nao "quebrou".
+
 ## Deploy em Kubernetes
 
 Os manifestos ficam em [`k8s/`](k8s/README.md) e sobem a stack inteira no namespace `soat`: StatefulSet do Postgres com PVC, Deployment da API com 2 replicas, Services, ConfigMap, Secret e o HPA de 2 a 10 pods.

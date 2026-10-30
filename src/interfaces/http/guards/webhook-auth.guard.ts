@@ -7,6 +7,10 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash, timingSafeEqual } from 'crypto';
+import {
+  recordIntegrationError,
+  routeTemplate,
+} from '@infrastructure/observability/integration-errors';
 
 const BEARER_PREFIX = 'Bearer ';
 
@@ -47,6 +51,7 @@ export class WebhookAuthGuard implements CanActivate {
     const presented = this.extractToken(request);
 
     if (!presented || !this.matchesSecret(presented, secret)) {
+      recordIntegrationError('webhook_unauthorized', routeTemplate(request));
       throw new UnauthorizedException('Invalid webhook credentials');
     }
 
