@@ -44,10 +44,17 @@ interface Bucket {
  * zera. Trade-off conhecido: permite um burst na virada de janela — aceitavel
  * aqui; para producao com mais rigor, trocar por sliding-window/Redis atras
  * do mesmo port `RateLimitStore`.
+ *
+ * O estado e por processo: com N replicas o limite efetivo e N vezes o
+ * configurado. Limitacao aceita por escrito; o rate limit do gateway (Kong),
+ * que ve todo o trafego, e a barreira de borda. Janelas expiradas sao
+ * expurgadas uma vez por janela, para o Map nao crescer enquanto o processo
+ * viver.
  */
 @Injectable()
 export class InMemoryRateLimitStore extends RateLimitStore {
   private readonly buckets = new Map<string, Bucket>();
+  private lastSweep = Date.now();
 
   constructor(
     private readonly maxRequests: number = 10,
@@ -58,6 +65,7 @@ export class InMemoryRateLimitStore extends RateLimitStore {
 
   async hit(key: string): Promise<RateLimitState> {
     const now = Date.now();
+    this.sweepExpired(now);
     let bucket = this.buckets.get(key);
 
     if (!bucket || now - bucket.windowStart >= this.windowMs) {
@@ -92,6 +100,23 @@ export class InMemoryRateLimitStore extends RateLimitStore {
     };
   }
 
+  /** Quantidade de chaves em memoria. Exposto para teste do expurgo. */
+  get size(): number {
+    return this.buckets.size;
+  }
+
+  private sweepExpired(now: number): void {
+    if (now - this.lastSweep < this.windowMs) {
+      return;
+    }
+    for (const [key, bucket] of this.buckets) {
+      if (now - bucket.windowStart >= this.windowMs) {
+        this.buckets.delete(key);
+      }
+    }
+    this.lastSweep = now;
+  }
+
   private resetInSeconds(windowStart: number, now: number): number {
     return Math.ceil((windowStart + this.windowMs - now) / 1000);
   }
@@ -100,9 +125,11 @@ export class InMemoryRateLimitStore extends RateLimitStore {
 /**
  * Rate Limit Guard — protege endpoints de excesso de requisicoes.
  *
- * Chave = clientId da rota (cai para o IP se ausente). Quando a contagem na
- * janela ultrapassa o limite, responde HTTP 429 com header `Retry-After`.
- * Aplicado no endpoint publico de consulta (`/consult/:clientId`).
+ * Chave = clientId da rota, ou o e-mail do corpo no login, ou o IP. Quando a
+ * contagem na janela ultrapassa o limite, responde HTTP 429 com header
+ * `Retry-After`. Aplicado na consulta publica (`/consult/:clientId`) e no
+ * login, onde a chave por e-mail limita forca bruta numa conta mesmo quando
+ * as tentativas chegam pelo mesmo IP do gateway.
  */
 @Injectable()
 export class RateLimitGuard implements CanActivate {
@@ -110,7 +137,12 @@ export class RateLimitGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const key: string = request.params?.clientId ?? request.ip ?? 'global';
+    const email = typeof request.body?.email === 'string' ? request.body.email : undefined;
+    const key: string =
+      request.params?.clientId ??
+      (email ? `login:${email.toLowerCase()}` : undefined) ??
+      request.ip ??
+      'global';
 
     const { count, resetInSeconds, limit } = await this.store.hit(key);
 

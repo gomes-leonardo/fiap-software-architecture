@@ -59,7 +59,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+              "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -90,7 +90,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -131,7 +131,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -167,7 +167,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -203,7 +203,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -244,7 +244,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+              "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -278,7 +278,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -322,7 +322,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -332,6 +332,45 @@
               },
               "status": "Unauthorized",
               "code": 401,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "name": "Tentativas demais para este e-mail",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/login",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "",
+              "code": 429,
               "header": [],
               "body": "",
               "_postman_previewlanguage": "text"
@@ -3067,47 +3106,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "name": "CPF/CNPJ não corresponde ao cliente",
-              "originalRequest": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{base_url}}/consult/:clientId?cpf=string",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "consult",
-                    ":clientId"
-                  ],
-                  "variable": [
-                    {
-                      "key": "clientId",
-                      "value": "00000000-0000-0000-0000-000000000000"
-                    }
-                  ],
-                  "query": [
-                    {
-                      "key": "cpf",
-                      "value": "string",
-                      "description": "CPF ou CNPJ do cliente (para verificação)",
-                      "disabled": false
-                    }
-                  ]
-                },
-                "description": "Endpoint público para o cliente acompanhar o status das suas OS. Requer clientId na URL e CPF/CNPJ como query parameter para verificação de identidade.",
-                "auth": {
-                  "type": "noauth"
-                }
-              },
-              "status": "Forbidden",
-              "code": 403,
-              "header": [],
-              "body": "",
-              "_postman_previewlanguage": "text"
-            },
-            {
-              "name": "Cliente não encontrado",
+              "name": "Cliente inexistente ou CPF/CNPJ que não corresponde — mesma resposta nos dois casos",
               "originalRequest": {
                 "method": "GET",
                 "header": [],

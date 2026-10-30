@@ -26,7 +26,7 @@ import { startPostgresContainer } from '../helpers/test-db.helper';
 import type { TestPostgres } from '../helpers/test-db.helper';
 
 const ADMIN_EMAIL = 'admin@oficina.com';
-const ADMIN_PASSWORD = 'admin123';
+const ADMIN_PASSWORD = 'Admin@Oficina2026';
 const SMOKE_CLIENT_CPF = '529.982.247-25';
 const UNKNOWN_CLIENT_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -151,6 +151,10 @@ function pointEnvironmentAt(postgres: TestPostgres): void {
   process.env.DB_PASS = postgres.password;
   process.env.JWT_SECRET = 'smoke-test-jwt-secret';
   process.env.WEBHOOK_SECRET = 'smoke-test-webhook-secret';
+  // Vazias de proposito: um .env local com bootstrap de admin nao pode
+  // mudar o que o teste sobe (process.env vence o .env).
+  process.env.ADMIN_BOOTSTRAP_EMAIL = '';
+  process.env.ADMIN_BOOTSTRAP_PASSWORD = '';
 }
 
 /**

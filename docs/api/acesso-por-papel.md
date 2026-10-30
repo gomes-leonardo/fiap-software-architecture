@@ -9,9 +9,10 @@ outro. Quem diferencia é o conteúdo:
 | Administrador | `POST /auth/login` (e-mail e senha) | `admin` | `soat-app` | id do admin |
 | Cliente | `POST /auth/cpf` no gateway (função serverless) | `client` | `soat-auth-lambda` | id do cliente |
 
-A aplicação recusa (401) qualquer token cujo `role` não seja um desses dois, ou cujo `iss` não
-corresponda ao papel. Um token de cliente que diz ter sido emitido pela aplicação é recusado. Tokens
-de admin emitidos antes da Fase 3 não têm `iss` e continuam aceitos até expirar.
+A aplicação recusa (401) qualquer token cujo `role` não seja um desses dois, cujo `iss` não
+corresponda ao papel, ou cujo `sub` não seja um id válido. Um token de cliente que diz ter sido
+emitido pela aplicação é recusado. Tokens de admin emitidos antes da Fase 3 não têm `iss` e são
+recusados: basta um novo login.
 
 O gateway (Kong) faz a primeira barreira e recusa token com assinatura inválida ou expirado. A
 aplicação repete a validação e decide o papel com o `RolesGuard`. As duas camadas são independentes:

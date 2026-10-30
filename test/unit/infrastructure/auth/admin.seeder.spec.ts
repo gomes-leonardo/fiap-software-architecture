@@ -1,7 +1,7 @@
 /**
  * Duas coisas estao sob teste aqui, e as duas eram falhas reais:
  *
- * 1. O seed de conveniencia (`admin@oficina.com` / `admin123`, credenciais que
+ * 1. O seed de conveniencia (`admin@oficina.com` / `Admin@Oficina2026`, credenciais que
  *    estao no README) rodava sem checar ambiente — inclusive com
  *    `NODE_ENV=production`.
  * 2. Ele era disparado do construtor do controller sem `await`, entao qualquer
@@ -88,7 +88,7 @@ describe('AdminSeeder', () => {
   describe('bootstrap por variavel de ambiente', () => {
     const BOOTSTRAP = {
       ADMIN_BOOTSTRAP_EMAIL: 'dono@empresa.com',
-      ADMIN_BOOTSTRAP_PASSWORD: 'senha-forte-do-dono',
+      ADMIN_BOOTSTRAP_PASSWORD: 'Senha-Forte-Do-Dono-1',
     };
 
     it('cria o primeiro admin em producao', async () => {
@@ -102,7 +102,7 @@ describe('AdminSeeder', () => {
 
       expect(saved).toHaveLength(1);
       expect(saved[0].email).toBe('dono@empresa.com');
-      await expect(saved[0].verifyPassword('senha-forte-do-dono')).resolves.toBe(true);
+      await expect(saved[0].verifyPassword('Senha-Forte-Do-Dono-1')).resolves.toBe(true);
     });
 
     it('substitui o admin de conveniencia tambem fora de producao', async () => {
@@ -182,7 +182,9 @@ describe('AdminSeeder', () => {
         repository,
       );
 
-      await expect(seeder.onModuleInit()).rejects.toThrow(/at least 6 characters/);
+      await expect(seeder.onModuleInit()).rejects.toThrow(
+        /ADMIN_BOOTSTRAP_PASSWORD recusada: .*at least 12 characters/,
+      );
       expect(repository.save).not.toHaveBeenCalled();
     });
   });

@@ -48,7 +48,7 @@ http://localhost:3000/api-docs-json   # o mesmo spec, servido pela app
 1. Importe `postman-collection.json` no Postman (File > Import).
 2. Ajuste a variável `base_url` se a API não estiver em `http://localhost:3000`.
 3. Rode **Auth > Autenticar administrador**. O ambiente do MVP já sobe com o
-   admin padrão `admin@oficina.com` / `admin123`.
+   admin padrão `admin@oficina.com` / `Admin@Oficina2026`.
 4. Copie o `access_token` da resposta para a variável `token`. Todas as pastas
    herdam o Bearer da collection; os endpoints públicos (`Auth`, `Consult`,
    `Health`, `Webhooks`) estão marcados como `noauth` e ignoram o token.

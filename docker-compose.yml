@@ -71,6 +71,9 @@ services:
       ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:?defina ADMIN_BOOTSTRAP_PASSWORD no .env (cp .env.example .env)}
       ADMIN_BOOTSTRAP_NAME: ${ADMIN_BOOTSTRAP_NAME:-Administrador}
       NODE_ENV: production
+      # A imagem e a de producao, mas o compose e o fluxo de desenvolvimento:
+      # o Swagger fica ligado aqui e desligado no prd do Kubernetes.
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
       PORT: 3000
     depends_on:
       db:

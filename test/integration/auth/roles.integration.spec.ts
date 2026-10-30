@@ -55,6 +55,10 @@ describe('Autorizacao por papel', () => {
     process.env.DB_PASS = postgres.password;
     process.env.JWT_SECRET = SECRET;
     process.env.WEBHOOK_SECRET = 'roles-integration-webhook';
+    // Vazias de proposito: um .env local com bootstrap de admin nao pode
+    // mudar o que o teste sobe (process.env vence o .env).
+    process.env.ADMIN_BOOTSTRAP_EMAIL = '';
+    process.env.ADMIN_BOOTSTRAP_PASSWORD = '';
 
     const { AppModule } = await import('../../../src/app.module');
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();

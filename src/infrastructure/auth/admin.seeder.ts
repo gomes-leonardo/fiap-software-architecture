@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AdminRepository } from '@domain/admin/admin-repository.port';
 import { Admin } from '@domain/admin/admin.entity';
+import { DomainException } from '@domain/shared';
 
 interface AdminCredentials {
   name: string;
@@ -17,7 +18,7 @@ interface AdminCredentials {
 export const DEV_ADMIN: AdminCredentials = {
   name: 'Admin Padrão',
   email: 'admin@oficina.com',
-  password: 'admin123',
+  password: 'Admin@Oficina2026',
 };
 
 const BOOTSTRAP_HINT =
@@ -30,7 +31,7 @@ const BOOTSTRAP_HINT =
  * Duas coisas mudaram em relacao ao seed que rodava no construtor do
  * `AuthController`:
  *
- * 1. **Ambiente.** `admin@oficina.com` / `admin123` esta no README e neste
+ * 1. **Ambiente.** `admin@oficina.com` / `Admin@Oficina2026` esta no README e neste
  *    arquivo. Semear isso com `NODE_ENV=production` — que era o que acontecia,
  *    porque nada checava o ambiente — entrega uma conta de administrador com
  *    senha publicada para quem chegar primeiro. Em producao o seed de
@@ -99,9 +100,25 @@ export class AdminSeeder implements OnModuleInit {
       return;
     }
 
-    const admin = await Admin.create({ ...credentials, email });
+    const admin = await this.buildAdmin(credentials, email);
     await this.adminRepository.save(admin);
 
     this.logger.log(`Administrador inicial criado: ${admin.email}`);
+  }
+
+  /**
+   * Uma senha de bootstrap fora da politica derruba o boot de proposito, mas
+   * o erro precisa dizer qual variavel corrigir: "senha fraca" sozinho, num
+   * pod em CrashLoop, nao aponta para o Secret.
+   */
+  private async buildAdmin(credentials: AdminCredentials, email: string): Promise<Admin> {
+    try {
+      return await Admin.create({ ...credentials, email });
+    } catch (error) {
+      if (error instanceof DomainException) {
+        throw new Error(`ADMIN_BOOTSTRAP_PASSWORD recusada: ${error.message}`);
+      }
+      throw error;
+    }
   }
 }
