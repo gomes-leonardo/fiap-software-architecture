@@ -48,6 +48,14 @@ services:
     restart: unless-stopped
     ports:
       - '3000:3000'
+      # O /metrics expoe rotas, status codes, tamanho do pool do banco e heap —
+      # mapa da aplicacao, nao segredo, mas tambem nao e para a rede. Publicar
+      # so em loopback nao impede o Prometheus: ele raspa `app:9464` pela
+      # soat-network, que nao depende de publicacao no host.
+      # Nao conta com isto para evitar raspagem dupla: no Docker Desktop o
+      # `host.docker.internal` alcanca a porta do host mesmo em loopback. Quem
+      # resolve aquilo e manter um job por vez em observability/prometheus.yml.
+      - '${OBSERVABILITY_BIND_ADDRESS:-127.0.0.1}:9464:9464'
     environment:
       # DB_HOST/DB_PORT sao topologia interna do compose (nome do servico na
       # soat-network), nao configuracao de ambiente — por isso ficam fixos aqui
@@ -72,6 +80,12 @@ services:
       ADMIN_BOOTSTRAP_NAME: ${ADMIN_BOOTSTRAP_NAME:-Administrador}
       NODE_ENV: production
       PORT: 3000
+      # Sem esta variavel vale o default do codigo (`http://localhost:4318`),
+      # que dentro do container aponta para o proprio app: os traces eram
+      # descartados em silencio neste fluxo e so apareciam no `npm run
+      # start:dev`, onde localhost e a maquina. `jaeger` e o nome do servico na
+      # soat-network.
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
     depends_on:
       db:
         condition: service_healthy
@@ -99,8 +113,54 @@ services:
     networks:
       - soat-network
 
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: soat-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=15d'
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - promdata:/prometheus
+    ports:
+      - '${OBSERVABILITY_BIND_ADDRESS:-127.0.0.1}:9090:9090'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    networks:
+      - soat-network
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    container_name: soat-grafana
+    restart: unless-stopped
+    environment:
+      # Sem login para a demo: o avaliador abre a porta e ve o painel. O papel e
+      # Editor e nao Admin porque Editor ja permite criar e exportar dashboard,
+      # que e tudo o que esta stack precisa — Admin daria tambem
+      # `datasources:create`, e quem alcancasse esta porta poderia apontar um
+      # datasource novo para qualquer endereco que este container enxerga
+      # (inclusive o host, via host.docker.internal) e consultar pelo proxy do
+      # Grafana, sem autenticar.
+      # Atencao ao mexer no OBSERVABILITY_BIND_ADDRESS: ele vale para o
+      # Prometheus E para o Grafana. Abrir um para a rede abre o outro junto.
+      GF_AUTH_ANONYMOUS_ENABLED: 'true'
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Editor
+      GF_AUTH_DISABLE_LOGIN_FORM: 'true'
+    volumes:
+      - ./observability/grafana-datasource.yml:/etc/grafana/provisioning/datasources/prometheus.yml:ro
+      - grafanadata:/var/lib/grafana
+    ports:
+      - '${OBSERVABILITY_BIND_ADDRESS:-127.0.0.1}:3002:3000'
+    depends_on:
+      - prometheus
+    networks:
+      - soat-network
+
 volumes:
   pgdata:
+  promdata:
+  grafanadata:
 
 networks:
   soat-network:
