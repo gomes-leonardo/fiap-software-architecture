@@ -1,7 +1,7 @@
 {
-  "name": "soat-tech-challenge-fase1",
+  "name": "fiap-software-architecture",
   "version": "1.0.0",
-  "description": "Auto Repair Shop OS Management System - SOAT Tech Challenge Fase 1",
+  "description": "Sistema de gestao de ordens de servico de oficina mecanica - SOAT Tech Challenge Fase 3",
   "author": "Leonardo Rodrigues Gomes",
   "license": "MIT",
   "scripts": {
