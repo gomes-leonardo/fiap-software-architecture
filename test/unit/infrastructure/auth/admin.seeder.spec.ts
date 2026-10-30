@@ -182,7 +182,9 @@ describe('AdminSeeder', () => {
         repository,
       );
 
-      await expect(seeder.onModuleInit()).rejects.toThrow(/at least 12 characters/);
+      await expect(seeder.onModuleInit()).rejects.toThrow(
+        /ADMIN_BOOTSTRAP_PASSWORD recusada: .*at least 12 characters/,
+      );
       expect(repository.save).not.toHaveBeenCalled();
     });
   });

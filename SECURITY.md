@@ -819,7 +819,7 @@ e adicionar bloqueio temporario apos N falhas.
 | Enumeração de clientes em `/consult` | Cliente inexistente e CPF que não corresponde respondem o mesmo `404 Not found`, com corpo idêntico (`test/integration/consult/public-consult.integration.spec.ts`). |
 | Swagger exposto em produção | Desligado por padrão com `NODE_ENV=production`. `SWAGGER_ENABLED=true` liga explicitamente, como na homologação. |
 | `RolesGuard` nunca aplicado | Aplicado em todas as rotas de administração, com `@Roles('admin')`. Existe um segundo papel, o cliente autenticado por CPF (#52). Detalhe em `docs/api/acesso-por-papel.md`. |
-| Senha fraca e login sem rate limit | Senha nova de admin exige 12 caracteres, com maiúsculas, minúsculas e dígitos (`Admin.create`). Hashes já gravados não são reavaliados. O login aceita 10 tentativas por minuto **por e-mail**, porque atrás do gateway todas as requisições chegam do mesmo IP. |
+| Senha fraca e login sem rate limit | Senha nova de admin exige 12 caracteres, com maiúsculas, minúsculas e dígitos (`Admin.create`). Hashes já gravados não são reavaliados. O login aceita 10 tentativas por minuto **por e-mail**, porque atrás do gateway todas as requisições chegam do mesmo IP. Trade-off aceito: quem souber o e-mail de um admin consegue bloquear o login dele por até um minuto, e tentativas espalhadas por muitos e-mails não são contidas pela aplicação. Um limite por IP de origem exigiria confiar no `X-Forwarded-For` do Kong, o próximo passo se o login virar alvo. |
 
 ## Como reproduzir estes scans
 
