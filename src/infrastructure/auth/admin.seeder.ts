@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AdminRepository } from '@domain/admin/admin-repository.port';
 import { Admin } from '@domain/admin/admin.entity';
+import { DomainException } from '@domain/shared';
 
 interface AdminCredentials {
   name: string;
@@ -99,9 +100,25 @@ export class AdminSeeder implements OnModuleInit {
       return;
     }
 
-    const admin = await Admin.create({ ...credentials, email });
+    const admin = await this.buildAdmin(credentials, email);
     await this.adminRepository.save(admin);
 
     this.logger.log(`Administrador inicial criado: ${admin.email}`);
+  }
+
+  /**
+   * Uma senha de bootstrap fora da politica derruba o boot de proposito, mas
+   * o erro precisa dizer qual variavel corrigir: "senha fraca" sozinho, num
+   * pod em CrashLoop, nao aponta para o Secret.
+   */
+  private async buildAdmin(credentials: AdminCredentials, email: string): Promise<Admin> {
+    try {
+      return await Admin.create({ ...credentials, email });
+    } catch (error) {
+      if (error instanceof DomainException) {
+        throw new Error(`ADMIN_BOOTSTRAP_PASSWORD recusada: ${error.message}`);
+      }
+      throw error;
+    }
   }
 }

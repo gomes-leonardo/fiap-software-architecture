@@ -407,6 +407,11 @@ docker-compose up -d
 
 A API estara disponivel em `http://localhost:3000` e o Swagger em `http://localhost:3000/api-docs`.
 
+> A senha de administrador agora exige 12 caracteres, com maiusculas, minusculas e digitos.
+> O `ADMIN_BOOTSTRAP_PASSWORD` do seu `.env` precisa cumprir a regra, ou o app recusa o boot num
+> banco vazio. Um banco criado antes continua com a senha antiga do admin; para recomecar com a
+> nova, `docker-compose down -v` apaga o volume.
+
 ```bash
 curl http://localhost:3000/health
 ```

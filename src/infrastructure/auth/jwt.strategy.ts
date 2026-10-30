@@ -23,6 +23,8 @@ const ISSUER_BY_ROLE: Record<Role, string> = {
   [Role.CLIENT]: CLIENT_TOKEN_ISSUER,
 };
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function isRole(value: string): value is Role {
   return (Object.values(Role) as string[]).includes(value);
 }
@@ -39,18 +41,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   /**
    * A assinatura ja foi conferida pelo passport. Aqui o que se valida e o
-   * conteudo: so existem dois papeis, e cada um so pode vir do seu emissor.
-   * Um token de admin emitido antes da Fase 3 nao tem `iss` e continua aceito
-   * ate expirar.
+   * conteudo: so existem dois papeis, cada um so pode vir do seu emissor, e o
+   * `sub` e o id de uma linha do banco. Token de admin sem `iss`, emitido antes
+   * da Fase 3, e recusado: o custo e um novo login.
    */
   validate(payload: JwtPayload): AuthenticatedUser {
-    if (!payload.sub || !isRole(payload.role)) {
+    if (!UUID.test(payload.sub ?? '') || !isRole(payload.role)) {
       throw new UnauthorizedException();
     }
 
-    const expectedIssuer = ISSUER_BY_ROLE[payload.role];
-    const legacyAdminToken = payload.role === Role.ADMIN && payload.iss === undefined;
-    if (payload.iss !== expectedIssuer && !legacyAdminToken) {
+    if (payload.iss !== ISSUER_BY_ROLE[payload.role]) {
       throw new UnauthorizedException();
     }
 
