@@ -23,6 +23,8 @@ const ALL_MIGRATIONS = [
   DropClientVehicleIds1793300000002,
 ];
 
+const CLIENT_WITH_VEHICLE = randomUUID();
+const VEHICLE_OF_CLIENT = randomUUID();
 const FK_VIOLATION = '23503';
 const CHECK_VIOLATION = '23514';
 
@@ -144,6 +146,39 @@ describe('Migrations', () => {
         ds.query(`DELETE FROM "clients" WHERE id = $1`, [clientId]),
       ).rejects.toMatchObject({ code: FK_VIOLATION });
     });
+  });
+
+  it('desfaz as migrations da Fase 3 e as reaplica sem divergencia', async () => {
+    await createDatabase(postgres, 'round_trip');
+    const ds = dataSourceFor(postgres, 'round_trip', ALL_MIGRATIONS);
+    await ds.initialize();
+    try {
+      await ds.runMigrations();
+      await ds.query(
+        `INSERT INTO "clients" ("id", "name", "cpf_cnpj") VALUES ($1, 'Ana', '52998224725')`,
+        [CLIENT_WITH_VEHICLE],
+      );
+      await ds.query(
+        `INSERT INTO "vehicles" ("id", "plate", "brand", "model", "year", "owner_client_id")
+         VALUES ($1, 'RTP1A23', 'Fiat', 'Uno', 2010, $2)`,
+        [VEHICLE_OF_CLIENT, CLIENT_WITH_VEHICLE],
+      );
+
+      await ds.undoLastMigration();
+      const [{ vehicle_ids }] = await ds.query(`SELECT vehicle_ids FROM "clients" WHERE id = $1`, [
+        CLIENT_WITH_VEHICLE,
+      ]);
+      expect(vehicle_ids).toEqual([VEHICLE_OF_CLIENT]);
+
+      await ds.undoLastMigration();
+      await ds.undoLastMigration();
+      await ds.runMigrations();
+
+      const pending = await ds.driver.createSchemaBuilder().log();
+      expect(pending.upQueries).toEqual([]);
+    } finally {
+      await ds.destroy();
+    }
   });
 
   it('aponta a ligacao orfa em vez de falhar com erro generico', async () => {

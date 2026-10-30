@@ -6,8 +6,8 @@ import { ENTITIES } from './entities';
 /**
  * Ponto de entrada do Job de migration no Kubernetes:
  * `node dist/infrastructure/database/typeorm/run-migrations.js`.
- * Usa DB_MIGRATION_HOST quando definido, porque o pooler do banco gerenciado
- * nao segura o advisory lock que as migrations usam.
+ * Usa DB_MIGRATION_HOST quando definido: o pooler do banco gerenciado opera em
+ * modo transacao, que nao e indicado para DDL; as migrations vao direto ao host.
  */
 async function run(): Promise<void> {
   const config = getTypeOrmConfig() as PostgresConnectionOptions;

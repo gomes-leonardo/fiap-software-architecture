@@ -3,6 +3,7 @@ import { ServiceOrder } from '@domain/service-order/service-order.entity';
 import { ServiceOrderRepository } from '@domain/service-order/service-order-repository.port';
 import { ServiceOrderStatus } from '@domain/service-order/service-order-status.enum';
 import { ClientRepository } from '@domain/client/client-repository.port';
+import { VehicleRepository } from '@domain/vehicle/vehicle-repository.port';
 import { Budget } from '@domain/budget/budget.entity';
 import { BudgetRepository } from '@domain/budget/budget-repository.port';
 import { DomainException } from '@domain/shared';
@@ -27,6 +28,7 @@ export class CreateServiceOrderUseCase {
   constructor(
     private readonly serviceOrderRepository: ServiceOrderRepository,
     private readonly clientRepository: ClientRepository,
+    private readonly vehicleRepository: VehicleRepository,
     private readonly budgetRepository: BudgetRepository,
     private readonly lineResolver: BudgetLineResolver,
   ) {}
@@ -35,6 +37,10 @@ export class CreateServiceOrderUseCase {
     const client = await this.clientRepository.findById(input.clientId);
     if (!client) {
       throw DomainException.of(`Client with id '${input.clientId}' not found`);
+    }
+
+    if (input.vehicleId) {
+      await this.assertVehicleOfClient(input.vehicleId, input.clientId);
     }
 
     const requestedLines = this.toRequestedLines(input);
@@ -72,6 +78,21 @@ export class CreateServiceOrderUseCase {
     await this.serviceOrderRepository.save(serviceOrder);
 
     return CreateServiceOrderResponseDto.from(serviceOrder, budget.id, warnings);
+  }
+
+  /**
+   * A chave estrangeira garante que o veiculo existe, mas so devolveria um
+   * erro de banco (500). Que ele pertenca ao cliente da OS e regra de negocio
+   * que o banco nao expressa.
+   */
+  private async assertVehicleOfClient(vehicleId: string, clientId: string): Promise<void> {
+    const vehicle = await this.vehicleRepository.findById(vehicleId);
+    if (!vehicle) {
+      throw DomainException.of(`Vehicle with id '${vehicleId}' not found`);
+    }
+    if (vehicle.ownerClientId !== clientId) {
+      throw DomainException.of(`Vehicle '${vehicleId}' does not belong to client '${clientId}'`);
+    }
   }
 
   private toRequestedLines(input: CreateServiceOrderInput): RequestedLine[] {

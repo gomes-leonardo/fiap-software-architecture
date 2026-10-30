@@ -13,7 +13,7 @@
   orçamento são listas que pertencem a um único registro e são lidas junto com ele.
 - **Agregações para os dashboards.** Volume diário de OS e tempo médio por status são `GROUP BY`
   e funções de janela sobre as transições.
-- **Banco gerenciado sem custo.** É restrição desta entrega (RFC-001).
+- **Banco gerenciado sem custo.** É restrição desta entrega (RFC de nuvem e custo, em `docs/rfc/`).
 
 ## Alternativas
 
@@ -42,13 +42,13 @@ o código.
 
 O volume de uma oficina com várias unidades é de centenas de OS por dia. Cada acesso frequente tem
 índice (tabela em [modelo-er.md](modelo-er.md#acessos-e-índices)), e os dois que faltavam, nas
-colunas de FK `vehicle_id` e `budget_id`, entraram na migration `AddForeignKeys`. O dashboard lê
-agregados com cache de 60 segundos por réplica. Não há consulta pesada no caminho de uma
-requisição de usuário.
+colunas de FK `vehicle_id` e `budget_id`, entraram na migration `AddForeignKeys`. As métricas do
+dashboard (issue #62) vão ler agregados com cache por réplica, fora do caminho das requisições de
+usuário.
 
 ## Qual Postgres
 
 O banco gerenciado da entrega é o **Neon** (PostgreSQL 16, serverless), provisionado por Terraform
 no repositório `soat-infra-db`. Antes da ativação, o mesmo Terraform sobe um Postgres no próprio
 cluster como equivalente local. A troca de um para outro muda só o Secret `soat-db` que a aplicação
-lê. O RDS foi descartado por custo, e o motivo está na RFC-002.
+lê. O RDS foi descartado por custo, e o motivo está na RFC de banco, em `docs/rfc/`.

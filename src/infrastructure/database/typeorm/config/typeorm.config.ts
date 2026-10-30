@@ -15,8 +15,9 @@ export function getTypeOrmConfig(): TypeOrmModuleOptions {
     ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: true } : false,
     // Em dev/test usamos synchronize para agilidade. Em producao o schema e
     // criado/migrado pelas migrations, nunca por synchronize. No Kubernetes
-    // elas rodam num Job antes do rollout (DB_MIGRATIONS_ON_BOOT=false), para
-    // que varias replicas subindo juntas nao disputem o lock das migrations.
+    // elas rodam num Job antes do rollout (DB_MIGRATIONS_ON_BOOT=false): o
+    // TypeORM nao trava a tabela de migrations, e varias replicas subindo
+    // juntas aplicariam a mesma migration em paralelo.
     synchronize: !isProduction,
     migrations: [join(__dirname, '..', 'migrations', '*.{js,ts}')],
     migrationsRun: isProduction && process.env.DB_MIGRATIONS_ON_BOOT !== 'false',

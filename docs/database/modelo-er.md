@@ -1,9 +1,10 @@
 # Modelo relacional
 
-Schema de produção, gerado pelas migrations em `src/infrastructure/database/typeorm/migrations/`.
+O schema de produção é gerado pelas migrations em `src/infrastructure/database/typeorm/migrations/`.
 O teste `test/integration/database/migrations.integration.spec.ts` roda essas migrations num
-Postgres real e falha se o schema resultante divergir das entidades ORM. É ele que garante que
-este diagrama, as entidades e o banco descrevem a mesma coisa.
+Postgres real e falha se o schema resultante divergir das entidades ORM. Ele garante que
+migrations e entidades coincidem. O diagrama abaixo mostra todas as tabelas e colunas de ligação,
+mais as colunas principais de cada uma. Ficam de fora `created_at`/`updated_at` e `admins.name`.
 
 ## Diagrama
 
@@ -13,7 +14,7 @@ erDiagram
     clients ||--o{ service_orders : "solicita"
     vehicles |o--o{ service_orders : "e atendido em"
     service_orders ||--o{ budgets : "recebe versoes de"
-    service_orders |o--o| budgets : "aponta o vigente"
+    budgets |o--o{ service_orders : "e o vigente de"
 
     admins {
         uuid id PK
@@ -87,9 +88,9 @@ que é congelado, então não existe chave estrangeira para eles (ver "Linhas do
 |---|---|---|---|
 | `vehicles.owner_client_id → clients` | cliente 1 : N veículos | O carro pertence a um cliente; é por ele que a oficina sabe a quem ligar quando o serviço termina. | **Banco** (`FK_vehicles_owner_client_id`) |
 | `service_orders.client_id → clients` | cliente 1 : N OS | Toda OS tem um cliente responsável por aprovar o orçamento e pagar. | **Banco** (`FK_service_orders_client_id`) |
-| `service_orders.vehicle_id → vehicles` | veículo 0..1 : N OS | O carro em que o serviço é feito. Opcional porque uma OS pode ser aberta por telefone, antes de o carro chegar. | **Banco** (`FK_service_orders_vehicle_id`). Que o veículo pertença ao mesmo cliente da OS fica a cargo da **aplicação**. |
+| `service_orders.vehicle_id → vehicles` | veículo 0..1 : N OS | O carro em que o serviço é feito. Opcional porque uma OS pode ser aberta por telefone, antes de o carro chegar. | **Banco**: que o veículo existe (`FK_service_orders_vehicle_id`). **Aplicação**: que ele pertence ao cliente da OS (`CreateServiceOrderUseCase`, responde 400). |
 | `budgets.service_order_id → service_orders` | OS 1 : N orçamentos | Cada revisão de preço gera uma nova versão de orçamento para a mesma OS, e as anteriores ficam como histórico. | **Banco** (`FK_budgets_service_order_id`) |
-| `service_orders.budget_id → budgets` | OS 0..1 : 1 orçamento | O orçamento que o cliente aprovou e que autoriza a execução. Fica nulo até a aprovação. | **Banco** (`FK_service_orders_budget_id`). Que o orçamento apontado seja da própria OS fica a cargo da **aplicação**. |
+| `service_orders.budget_id → budgets` | OS N : 0..1 orçamento vigente | O orçamento que o cliente aprovou e que autoriza a execução. Fica nulo até a aprovação. | **Banco**: que o orçamento existe (`FK_service_orders_budget_id`). **Aplicação**: que ele é da própria OS e que nenhuma outra OS aponta para ele (`ApproveBudgetUseCase`). O schema não tem `UNIQUE` em `budget_id`. |
 
 Todas as chaves estrangeiras usam `ON DELETE RESTRICT`. A aplicação nunca apaga linhas, só faz
 soft delete. Um `DELETE` físico que deixaria órfãos é sempre um erro, e o banco o recusa.
@@ -122,7 +123,8 @@ Ele é diferente do soft delete:
   consegue obter token. Reversível por `PATCH /clients/:id/status`.
 - **`deleted_at` preenchido**: o cliente foi removido. Some de todas as consultas.
 
-A função de autenticação só emite token quando `status = 'ATIVO' AND deleted_at IS NULL`.
+Pelo contrato da função de autenticação (repositório `soat-auth-lambda`), ela só emite token quando
+`status = 'ATIVO' AND deleted_at IS NULL`.
 
 ## Soft delete e os relacionamentos
 
@@ -167,9 +169,11 @@ Sem eles, cada checagem de `RESTRICT` faria varredura completa em `service_order
 ### Tempo médio por status a partir de `status_history`
 
 O dashboard pede o tempo médio em Diagnóstico, Execução e Finalização. Esse dado vive em
-`service_orders.status_history` (jsonb, uma entrada por transição com o horário). A consulta usa
-`jsonb_array_elements` com `lead()` sobre as transições de cada OS. No volume de uma oficina
-(centenas de OS por dia), uma varredura por minuto, com cache, é barata. Uma tabela
+`service_orders.status_history` (jsonb, uma entrada por transição com o horário). Hoje
+`AverageExecutionTimeUseCase` calcula em memória a partir desse histórico. A métrica do dashboard
+(issue #62) vai ler o mesmo histórico com `jsonb_array_elements` e `lead()` sobre as transições de
+cada OS. No volume de uma oficina (centenas de OS por dia), uma varredura por minuto, com cache, é
+barata. Uma tabela
 `service_order_transitions` só se justificaria com volume na casa dos milhões ou com consultas
 ad hoc frequentes. Fica registrado como o primeiro ajuste a fazer se o volume crescer.
 
@@ -191,3 +195,11 @@ Resultado no banco local do docker-compose em 29/10/2026, antes das migrations n
 
 O banco local tem poucos dados (1 cliente, 1 veículo, 1 OS, 1 orçamento). Contra o banco
 gerenciado, a mesma checagem roda dentro da migration no deploy.
+
+## Compatibilidade durante o deploy
+
+`DropClientVehicleIds` remove uma coluna que a versão anterior da aplicação ainda lê. Se as
+migrations rodarem enquanto pods antigos atendem, as leituras de cliente nesses pods falham até
+eles serem substituídos. A versão anterior também grava o orçamento antes da OS, o que a nova chave
+estrangeira recusa. A janela é a do rolling update, e aceitável nesta entrega. O caminho limpo
+seria expand/contract: parar de ler a coluna numa versão e removê-la na seguinte.
