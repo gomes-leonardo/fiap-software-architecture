@@ -1,9 +1,6 @@
-# Pre-requisito: metrics-server rodando no cluster. Sem ele o HPA reporta
-# `<unknown>/70%` e nunca escala:
-#
-#   minikube addons enable metrics-server
-#   # kind / cluster generico:
-#   kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+# Pre-requisito: metrics-server no cluster (instalado por soat-infra-k8s/cluster).
+# Sem ele o HPA reporta `<unknown>/70%` e nunca escala. Os limites de pods
+# (min/max) vem de cada overlay: hml 1-3, prd 2-10.
 #
 # autoscaling/v2 (nao a v2beta2, removida no 1.26): e a versao estavel desde o
 # Kubernetes 1.23 e a unica que aceita a lista `metrics` e o bloco `behavior`.

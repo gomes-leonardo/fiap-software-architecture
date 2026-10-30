@@ -1,156 +1,77 @@
-# Deploy em Kubernetes
+# Manifestos Kubernetes da aplicação
 
-Manifestos da stack do Tech Challenge Fase 2: a API NestJS e o PostgreSQL, isolados no namespace `soat`.
+O app em Kustomize: uma base sem ambiente e um overlay por ambiente. O cluster, o gateway e o
+banco **não** estão aqui. Cada um tem o próprio repositório e o próprio pipeline:
 
-| Arquivo | Recurso |
-| --- | --- |
-| `namespace.yaml` | Namespace `soat` |
-| `app-secret.yaml` | Secret `soat-app-secret` — `DB_USER`, `DB_PASS`, `JWT_SECRET`, `WEBHOOK_SECRET` |
-| `app-configmap.yaml` | ConfigMap `soat-app-config` — `NODE_ENV`, `PORT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `JWT_EXPIRES_IN` |
-| `db-deployment.yaml` | StatefulSet `soat-db` (postgres:16-alpine) + PVC de 2Gi |
-| `db-service.yaml` | Services `soat-db` (ClusterIP) e `soat-db-headless` |
-| `app-deployment.yaml` | Deployment `soat-app`, container `app`, 2 replicas |
-| `app-service.yaml` | Service `soat-app` (ClusterIP, porta 3000) |
-| `app-hpa.yaml` | HPA `soat-app` — 2 a 10 pods, alvo de 70% de CPU |
-| `apply-all.sh` | Aplica tudo na ordem de dependencia |
+| Peça | Repositório | O que entrega para este app |
+|---|---|---|
+| Cluster Kind, namespaces, metrics-server | `soat-infra-k8s/cluster` | `soat-hml`, `soat-prd` |
+| Kong e segredo JWT | `soat-infra-k8s/gateway` | Secret `soat-jwt` e a rota até `soat-app:3000` |
+| Banco (Neon ou Postgres local) | `soat-infra-db` | Secret `soat-db` |
+| Collector OpenTelemetry | `soat-infra-k8s/observability` | `otel-gateway.observability:4318` |
 
-## Pre-requisitos
+## Estrutura
 
-- **Cluster Kubernetes 1.23+** (kind, minikube, k3d ou EKS). A versao importa porque o HPA usa `autoscaling/v2`.
-- **kubectl** apontando para o cluster certo — confira com `kubectl config current-context`.
-- **metrics-server** instalado. Sem ele o HPA fica em `<unknown>/70%` e nunca escala:
-
-  ```bash
-  # minikube
-  minikube addons enable metrics-server
-
-  # kind ou cluster generico
-  kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-  # em kind/minikube o kubelet usa certificado self-signed; sem isto o metrics-server nao sobe:
-  kubectl patch deployment metrics-server -n kube-system --type=json \
-    -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
-  ```
-
-- **Imagem `soat-tech-challenge:latest` disponivel para os nodes.** Os manifestos usam `imagePullPolicy: IfNotPresent`, ou seja, uma imagem local basta — mas ela precisa estar no node, nao so na sua maquina:
-
-  ```bash
-  docker build -t soat-tech-challenge:latest .
-
-  # kind
-  kind load docker-image soat-tech-challenge:latest
-  # minikube
-  minikube image load soat-tech-challenge:latest
-  ```
-
-## Antes de aplicar: os segredos
-
-`app-secret.yaml` esta versionado com **valores de exemplo em base64** (`change-me-*`). base64 nao e criptografia — serve so para o Kubernetes transportar bytes.
-
-Para qualquer uso que nao seja demonstracao local, crie o Secret fora do Git:
-
-```bash
-kubectl create secret generic soat-app-secret -n soat \
-  --from-literal=DB_USER=postgres \
-  --from-literal=DB_PASS="$(openssl rand -base64 32)" \
-  --from-literal=JWT_SECRET="$(openssl rand -base64 48)" \
-  --from-literal=WEBHOOK_SECRET="$(openssl rand -base64 48)"
+```
+k8s/
+├── base/                 ConfigMap, Deployment, Service e HPA, sem namespace nem imagem
+├── migrate/              Job soat-migrate (migrations do TypeORM)
+└── overlays/
+    ├── hml/              namespace soat-hml, HPA 1-3, Swagger ligado
+    │   └── migrate/      o Job no namespace soat-hml
+    └── prd/              namespace soat-prd, HPA 2-10, Swagger desligado
+        └── migrate/
 ```
 
-O mesmo Secret alimenta o app e o Postgres: as credenciais precisam ser iguais dos dois lados, e o banco so le `POSTGRES_PASSWORD` no primeiro boot (o `initdb`). Trocar a senha depois exige `ALTER USER` no banco ou apagar o PVC.
+| Ambiente | Branch | Namespace | HPA | Gateway no host |
+|---|---|---|---|---|
+| hml | `develop` | `soat-hml` | 1 a 3 pods | `http://127.0.0.1:18081` |
+| prd | `main` | `soat-prd` | 2 a 10 pods | `http://127.0.0.1:18080` |
 
-## Aplicar
+O HPA mira 70% da `requests.cpu` (250m), ou seja, cerca de 175m por pod. O Deployment não declara
+`replicas`, porque quem decide o número de pods é o HPA.
 
-```bash
-./k8s/apply-all.sh
-```
+## Segredos
 
-O script aplica namespace -> Secret -> ConfigMap -> banco, **espera o Postgres aceitar conexoes**, sobe o app, espera o rollout e so entao cria o HPA. Se algo falhar, ele imprime os pods e os logs relevantes antes de sair.
+Nenhum valor secreto está versionado. O pod lê três Secrets, cada um com um dono:
 
-Manualmente, a mesma ordem:
+| Secret | Chaves | Dono |
+|---|---|---|
+| `soat-db` | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_SSL`, `DB_MIGRATION_HOST` | `soat-infra-db` |
+| `soat-jwt` | `JWT_SECRET` | `soat-infra-k8s/gateway`. É o mesmo segredo que o Kong usa para conferir os tokens |
+| `soat-app-secret` | `WEBHOOK_SECRET`, `ADMIN_BOOTSTRAP_PASSWORD` | pipeline deste repositório, a partir dos secrets do Environment |
 
-```bash
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/app-secret.yaml -f k8s/app-configmap.yaml
-kubectl apply -f k8s/db-service.yaml -f k8s/db-deployment.yaml
-kubectl rollout status statefulset/soat-db -n soat --timeout=300s
-kubectl apply -f k8s/app-service.yaml -f k8s/app-deployment.yaml
-kubectl rollout status deployment/soat-app -n soat --timeout=300s
-kubectl apply -f k8s/app-hpa.yaml
-```
+## Ordem de um deploy
 
-## Verificar
+1. O pipeline recria o `soat-app-secret` a partir dos secrets do Environment.
+2. Roda o **Job `soat-migrate`** e espera `complete`. Se a migration falhar, o Deployment não é
+   tocado e a versão anterior continua no ar.
+3. Aplica o overlay com a imagem do commit (`ghcr.io/<repo>:sha-<curto>`) e espera o rollout.
+   O `maxUnavailable: 0` mantém a capacidade durante a troca.
+4. Faz o smoke de `/health` pelo Kong do ambiente.
+5. Se algum passo falhar, coleta o diagnóstico e reverte o Deployment para a revisão anterior.
 
-```bash
-kubectl get all -n soat
-kubectl get pvc -n soat                 # o PVC do banco deve estar Bound
-kubectl logs -n soat -l app.kubernetes.io/name=soat-app --tail=50
-```
+As migrations não rodam no boot (`DB_MIGRATIONS_ON_BOOT=false`). Com várias réplicas subindo
+juntas, todas disputariam o mesmo DDL.
 
-Acessar a API (o Service e ClusterIP; nao ha IP externo por padrao):
+## Aplicar à mão
 
-```bash
-kubectl port-forward -n soat svc/soat-app 3000:3000
-
-curl -s localhost:3000/health          # {"status":"ok","database":"connected"}
-open http://localhost:3000/api-docs    # Swagger
-```
-
-Confirmar que o banco persiste um restart:
+Com o cluster, o gateway e o banco já de pé:
 
 ```bash
-kubectl delete pod -n soat soat-db-0
-kubectl rollout status statefulset/soat-db -n soat
-# o pod volta com o mesmo PVC; os dados continuam la
+kubectl config use-context kind-soat
+kubectl create secret generic soat-app-secret -n soat-hml \
+  --from-literal=WEBHOOK_SECRET=... --from-literal=ADMIN_BOOTSTRAP_PASSWORD=...
+
+docker build -t soat-tech-challenge:dev .
+kind load docker-image soat-tech-challenge:dev --name soat
+for d in k8s/overlays/hml k8s/overlays/hml/migrate; do
+  (cd $d && kustomize edit set image soat-tech-challenge=soat-tech-challenge:dev)
+done
+
+kubectl apply -k k8s/overlays/hml/migrate && kubectl wait --for=condition=complete job/soat-migrate -n soat-hml --timeout=300s
+kubectl apply -k k8s/overlays/hml
+curl -s http://127.0.0.1:18081/health
 ```
 
-## Demonstrar o HPA escalando
-
-Em um terminal, acompanhe:
-
-```bash
-kubectl get hpa soat-app -n soat -w
-# em outro terminal:
-kubectl get pods -n soat -l app.kubernetes.io/name=soat-app -w
-kubectl top pods -n soat
-```
-
-Em outro, gere carga de dentro do cluster (evita o gargalo do `port-forward`, que e single-threaded):
-
-```bash
-# com hey: 50 conexoes concorrentes por 5 minutos
-kubectl run load-generator -n soat --rm -it --restart=Never \
-  --image=williamyeh/hey -- -z 5m -c 50 http://soat-app:3000/health
-```
-
-Sem `hey` disponivel, um loop de `wget` em paralelo resolve:
-
-```bash
-kubectl run load-generator -n soat --rm -it --restart=Never --image=busybox:1.36 -- \
-  sh -c 'for i in $(seq 1 20); do (while true; do wget -q -O- http://soat-app:3000/health >/dev/null; done) & done; wait'
-```
-
-`/health` foi escolhido por ser publico (sem JWT) e por fazer um `SELECT 1` — exercita o caminho HTTP e o pool de conexoes. Para uma demo mais realista, aponte a carga para `POST /auth/login` ou para a consulta publica de OS, que gastam mais CPU por requisicao e fazem o HPA reagir mais rapido.
-
-O que esperar: `TARGETS` sobe acima de `70%`, `REPLICAS` cresce (ate 10) em ate ~1 minuto, e depois que a carga para os pods so voltam para 2 apos os 5 minutos de janela de estabilizacao de descida — comportamento intencional, configurado em `app-hpa.yaml`.
-
-Se `TARGETS` mostrar `<unknown>/70%`, o metrics-server nao esta funcionando:
-
-```bash
-kubectl top pods -n soat            # tem que retornar numeros
-kubectl describe hpa soat-app -n soat
-```
-
-## Limpar
-
-```bash
-kubectl delete namespace soat
-```
-
-Isso apaga tambem o PVC do banco e, com ele, os dados.
-
-## Escolhas que valem explicar
-
-- **StatefulSet para o Postgres, nao Deployment.** O PVC e `ReadWriteOnce`: um Deployment com rolling update travaria com o pod novo esperando um volume que o antigo ainda segura. O StatefulSet derruba antes de subir e amarra o PVC a identidade do pod.
-- **Requests de CPU obrigatorias no app.** O HPA calcula utilizacao como `uso / requests.cpu`. Sem a request, nao ha percentual e o autoscaling nunca dispara.
-- **`ClusterIP` no Service do app.** `LoadBalancer` fica `<pending>` para sempre em kind/minikube. Em cloud, trocar o `type` (ou colocar um Ingress na frente) e uma linha.
-- **Banco dentro do cluster e de demonstracao.** Uma replica, sem backup e sem failover. Em producao o caminho e um Postgres gerenciado (RDS) — ver a issue de Terraform (#8).
+Desfaça o `kustomize edit` antes de commitar: a imagem do overlay versionado fica com o nome lógico.

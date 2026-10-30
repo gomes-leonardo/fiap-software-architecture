@@ -1,14 +1,8 @@
-# ClusterIP e o default deliberado.
+# ClusterIP: o unico caminho de fora e o Kong do ambiente (soat-infra-k8s),
+# que chama http://soat-app.<namespace>.svc.cluster.local:3000. Para depurar
+# sem o gateway:
 #
-# LoadBalancer so entrega IP em cloud (ou com metallb/`minikube tunnel`); em
-# kind ou minikube puro o Service ficaria <pending> para sempre e o apply
-# pareceria quebrado. Para acessar a API de fora:
-#
-#   kubectl port-forward -n soat svc/soat-app 3000:3000
-#
-# Em cluster cloud (EKS, ver #8), trocar `type` para LoadBalancer — ou colocar
-# um Ingress na frente deste Service, que e o caminho normal quando houver
-# mais de uma rota publica.
+#   kubectl port-forward -n soat-hml svc/soat-app 3000:3000
 apiVersion: v1
 kind: Service
 metadata:

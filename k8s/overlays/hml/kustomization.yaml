@@ -1,5 +1,5 @@
 # Ambiente hml: namespace soat-hml, HPA de 1 a 3 pods.
-# O pipeline gera overlays/hml/deploy/ com a imagem do commit e aplica de la.
+# O pipeline gera k8s/.deploy/hml/ com a imagem do commit por cima deste overlay.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: soat-hml
