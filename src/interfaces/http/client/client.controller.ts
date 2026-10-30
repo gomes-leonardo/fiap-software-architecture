@@ -23,10 +23,14 @@ import { ClientResponseDto } from '@application/client/dtos/client-response.dto'
 import { ClientRepository } from '@domain/client/client-repository.port';
 import { ClientStatus } from '@domain/client/client-status.enum';
 import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard';
+import { RolesGuard } from '@infrastructure/auth/roles.guard';
+import { Roles } from '@infrastructure/auth/roles.decorator';
+import { Role } from '@infrastructure/auth/role.enum';
 
 @ApiTags('clients')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
 @Controller('clients')
 export class ClientController {
   constructor(

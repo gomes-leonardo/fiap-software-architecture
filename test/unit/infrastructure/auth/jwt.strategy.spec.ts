@@ -1,3 +1,4 @@
+import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtStrategy } from '@infrastructure/auth/jwt.strategy';
 
@@ -23,13 +24,37 @@ describe('JwtStrategy', () => {
     expect(() => new JwtStrategy(configWith({ JWT_SECRET: SECRET }))).not.toThrow();
   });
 
-  it('expoe o payload do token como o usuario da requisicao', () => {
+  describe('validate', () => {
     const strategy = new JwtStrategy(configWith({ JWT_SECRET: SECRET }));
 
-    expect(strategy.validate({ sub: 'id-1', email: 'admin@oficina.com', role: 'admin' })).toEqual({
-      userId: 'id-1',
-      email: 'admin@oficina.com',
-      role: 'admin',
+    it('expoe o token de admin como o usuario da requisicao', () => {
+      expect(
+        strategy.validate({ sub: 'id-1', email: 'a@oficina.com', role: 'admin', iss: 'soat-app' }),
+      ).toEqual({ userId: 'id-1', email: 'a@oficina.com', role: 'admin' });
+    });
+
+    it('aceita token de cliente emitido pela autenticacao por CPF', () => {
+      expect(strategy.validate({ sub: 'c-1', role: 'client', iss: 'soat-auth-lambda' })).toEqual({
+        userId: 'c-1',
+        email: undefined,
+        role: 'client',
+      });
+    });
+
+    it('aceita token de admin sem iss, emitido antes da Fase 3', () => {
+      expect(strategy.validate({ sub: 'id-1', email: 'a@oficina.com', role: 'admin' }).role).toBe(
+        'admin',
+      );
+    });
+
+    it.each([
+      ['papel desconhecido', { sub: 'x', role: 'superuser', iss: 'soat-app' }],
+      ['sem sub', { sub: '', role: 'admin', iss: 'soat-app' }],
+      ['cliente sem iss', { sub: 'c-1', role: 'client' }],
+      ['cliente se dizendo emitido pela app', { sub: 'c-1', role: 'client', iss: 'soat-app' }],
+      ['admin emitido pela funcao de CPF', { sub: 'c-1', role: 'admin', iss: 'soat-auth-lambda' }],
+    ])('recusa %s', (_caso, payload) => {
+      expect(() => strategy.validate(payload)).toThrow(UnauthorizedException);
     });
   });
 });

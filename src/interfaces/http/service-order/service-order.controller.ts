@@ -26,10 +26,14 @@ import { CreateServiceOrderResponseDto } from '@application/service-order/dtos/c
 import { ServiceOrderStatus } from '@domain/service-order/service-order-status.enum';
 import { ServiceOrderRepository } from '@domain/service-order/service-order-repository.port';
 import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard';
+import { RolesGuard } from '@infrastructure/auth/roles.guard';
+import { Roles } from '@infrastructure/auth/roles.decorator';
+import { Role } from '@infrastructure/auth/role.enum';
 
 @ApiTags('service-orders')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
 @Controller('service-orders')
 export class ServiceOrderController {
   constructor(

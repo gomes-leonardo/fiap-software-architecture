@@ -180,6 +180,42 @@
               "header": [],
               "body": "",
               "_postman_previewlanguage": "text"
+            },
+            {
+              "name": "Token sem papel de administrador",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/register",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
             }
           ]
         },
@@ -3845,6 +3881,148 @@
               ],
               "body": "{\n  \"status\": \"error\",\n  \"database\": \"disconnected\"\n}",
               "_postman_previewlanguage": "json"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "me",
+      "description": "Dados do cliente autenticado por CPF (token de cliente)",
+      "item": [
+        {
+          "name": "Ordens de servico do cliente autenticado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/me/service-orders",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "me",
+                "service-orders"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/me/service-orders",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "me",
+                    "service-orders"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"string\",\n    \"clientId\": \"string\",\n    \"vehicleId\": {},\n    \"description\": \"string\",\n    \"status\": \"RECEBIDA\",\n    \"budgetId\": {},\n    \"statusHistory\": []\n  }\n]",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Token sem papel de cliente, ou cliente inativo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/me/service-orders",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "me",
+                    "service-orders"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Veiculos do cliente autenticado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/me/vehicles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "me",
+                "vehicles"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/me/vehicles",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "me",
+                    "vehicles"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"string\",\n    \"plate\": \"string\",\n    \"brand\": \"string\",\n    \"model\": \"string\",\n    \"year\": 0,\n    \"ownerClientId\": \"string\"\n  }\n]",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Token sem papel de cliente, ou cliente inativo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/me/vehicles",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "me",
+                    "vehicles"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
             }
           ]
         }

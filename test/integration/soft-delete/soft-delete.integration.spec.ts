@@ -42,6 +42,7 @@ import { RegisterClientUseCase } from '@application/client/register-client.use-c
 import { FindClientUseCase } from '@application/client/find-client.use-case';
 import { DomainExceptionFilter } from '@interfaces/http/filters/domain-exception.filter';
 import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard';
+import { RolesGuard } from '@infrastructure/auth/roles.guard';
 
 const CLIENT_ID = '22222222-2222-4222-8222-222222222222';
 
@@ -75,6 +76,8 @@ describe('Soft delete', () => {
       ],
     })
       .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(RolesGuard)
       .useValue({ canActivate: () => true })
       .compile();
 
