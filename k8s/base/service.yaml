@@ -1,0 +1,24 @@
+# ClusterIP: o unico caminho de fora e o Kong do ambiente (soat-infra-k8s),
+# que chama http://soat-app.<namespace>.svc.cluster.local:3000. Para depurar
+# sem o gateway:
+#
+#   kubectl port-forward -n soat-hml svc/soat-app 3000:3000
+apiVersion: v1
+kind: Service
+metadata:
+  name: soat-app
+  labels:
+    app.kubernetes.io/name: soat-app
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: soat-tech-challenge
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: soat-app
+  ports:
+    - name: http
+      port: 3000
+      # Aponta para a porta nomeada do container: se a porta da app mudar,
+      # muda em um lugar so (o Deployment).
+      targetPort: http
+      protocol: TCP

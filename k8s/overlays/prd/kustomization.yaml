@@ -1,0 +1,34 @@
+# Ambiente prd: namespace soat-prd, HPA de 2 a 10 pods.
+# O pipeline gera k8s/.deploy/prd/ com a imagem do commit por cima deste overlay.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: soat-prd
+resources:
+  - ../../base
+labels:
+  - pairs:
+      app.kubernetes.io/instance: soat-prd
+patches:
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: soat-app
+    patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 2
+      - op: replace
+        path: /spec/maxReplicas
+        value: 10
+  - target:
+      kind: ConfigMap
+      name: soat-app-config
+    patch: |-
+      - op: replace
+        path: /data/OTEL_SERVICE_NAME
+        value: soat-app-prd
+      - op: replace
+        path: /data/OTEL_RESOURCE_ATTRIBUTES
+        value: deployment.environment=prd
+      - op: replace
+        path: /data/SWAGGER_ENABLED
+        value: 'false'

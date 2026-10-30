@@ -1,0 +1,34 @@
+# Ambiente hml: namespace soat-hml, HPA de 1 a 3 pods.
+# O pipeline gera k8s/.deploy/hml/ com a imagem do commit por cima deste overlay.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: soat-hml
+resources:
+  - ../../base
+labels:
+  - pairs:
+      app.kubernetes.io/instance: soat-hml
+patches:
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: soat-app
+    patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 1
+      - op: replace
+        path: /spec/maxReplicas
+        value: 3
+  - target:
+      kind: ConfigMap
+      name: soat-app-config
+    patch: |-
+      - op: replace
+        path: /data/OTEL_SERVICE_NAME
+        value: soat-app-hml
+      - op: replace
+        path: /data/OTEL_RESOURCE_ATTRIBUTES
+        value: deployment.environment=hml
+      - op: replace
+        path: /data/SWAGGER_ENABLED
+        value: 'true'
