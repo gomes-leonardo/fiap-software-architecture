@@ -1,3 +1,5 @@
+import { VehicleRepository } from '@domain/vehicle/vehicle-repository.port';
+import { Vehicle } from '@domain/vehicle/vehicle.entity';
 import { CreateServiceOrderUseCase } from '@application/service-order/create-service-order.use-case';
 import { BudgetLineResolver } from '@application/budget/budget-line-resolver';
 import { ServiceOrderRepository } from '@domain/service-order/service-order-repository.port';
@@ -18,6 +20,7 @@ describe('CreateServiceOrderUseCase', () => {
   let useCase: CreateServiceOrderUseCase;
   let mockSORepo: jest.Mocked<ServiceOrderRepository>;
   let mockClientRepo: jest.Mocked<ClientRepository>;
+  let mockVehicleRepo: jest.Mocked<VehicleRepository>;
   let mockBudgetRepo: jest.Mocked<BudgetRepository>;
   let mockServiceRepo: jest.Mocked<ServiceRepository>;
   let mockPartRepo: jest.Mocked<PartRepository>;
@@ -39,6 +42,9 @@ describe('CreateServiceOrderUseCase', () => {
     mockClientRepo = {
       findById: jest.fn().mockResolvedValue(sampleClient),
     } as unknown as jest.Mocked<ClientRepository>;
+    mockVehicleRepo = {
+      findById: jest.fn().mockResolvedValue(null),
+    } as unknown as jest.Mocked<VehicleRepository>;
     mockBudgetRepo = {
       save: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<BudgetRepository>;
@@ -56,6 +62,7 @@ describe('CreateServiceOrderUseCase', () => {
     useCase = new CreateServiceOrderUseCase(
       mockSORepo,
       mockClientRepo,
+      mockVehicleRepo,
       mockBudgetRepo,
       new BudgetLineResolver(mockServiceRepo, mockPartRepo),
     );
@@ -84,6 +91,16 @@ describe('CreateServiceOrderUseCase', () => {
     });
 
     it('inclui o vehicleId quando informado', async () => {
+      mockVehicleRepo.findById.mockResolvedValue(
+        Vehicle.reconstitute(
+          '33333333-3333-4333-8333-333333333333',
+          'ABC1D23',
+          'Fiat',
+          'Uno',
+          2010,
+          sampleClient.id,
+        ),
+      );
       const result = await useCase.execute({
         clientId: sampleClient.id,
         vehicleId: '33333333-3333-4333-8333-333333333333',
@@ -168,19 +185,78 @@ describe('CreateServiceOrderUseCase', () => {
 
     /**
      * Sem transacao no projeto, a ordem das escritas e o que define o estrago
-     * de uma falha no meio. Orcamento orfao ninguem enxerga; OS em
-     * AGUARDANDO_APROVACAO sem orcamento e um estado quebrado e visivel.
+     * de uma falha no meio. A chave estrangeira exige a OS antes do orcamento,
+     * e a OS so chega a AGUARDANDO_APROVACAO depois que o orcamento existe.
      */
-    it('salva o orcamento antes da OS', async () => {
+    it('grava a OS RECEBIDA, depois o orcamento, e so entao avanca a OS', async () => {
+      const writes: string[] = [];
+      mockSORepo.save.mockImplementation(async (so: ServiceOrder) => {
+        writes.push(`os:${so.status}`);
+      });
+      mockBudgetRepo.save.mockImplementation(async () => {
+        writes.push('budget');
+      });
+
       await useCase.execute({
         clientId: sampleClient.id,
         description: 'Revisão',
         parts: [{ referenceId: PART_ID, quantity: 1 }],
       });
 
-      expect(mockBudgetRepo.save.mock.invocationCallOrder[0]).toBeLessThan(
-        mockSORepo.save.mock.invocationCallOrder[0],
-      );
+      expect(writes).toEqual([
+        `os:${ServiceOrderStatus.RECEBIDA}`,
+        'budget',
+        `os:${ServiceOrderStatus.AGUARDANDO_APROVACAO}`,
+      ]);
+    });
+
+    it('deixa a OS RECEBIDA quando a gravacao do orcamento falha', async () => {
+      mockBudgetRepo.save.mockRejectedValue(new Error('db down'));
+
+      await expect(
+        useCase.execute({
+          clientId: sampleClient.id,
+          description: 'Revisão',
+          parts: [{ referenceId: PART_ID, quantity: 1 }],
+        }),
+      ).rejects.toThrow('db down');
+
+      expect(mockSORepo.save).toHaveBeenCalledTimes(1);
+      expect(savedOrder().status).toBe(ServiceOrderStatus.RECEBIDA);
+    });
+  });
+
+  describe('veiculo', () => {
+    const vehicleOf = (ownerClientId: string) =>
+      new Vehicle({ plate: 'ABC1D23', brand: 'Fiat', model: 'Uno', year: 2010, ownerClientId });
+
+    it('aceita o veiculo do proprio cliente', async () => {
+      const vehicle = vehicleOf(sampleClient.id);
+      mockVehicleRepo.findById.mockResolvedValue(vehicle);
+
+      await useCase.execute({
+        clientId: sampleClient.id,
+        vehicleId: vehicle.id,
+        description: 'Revisão',
+      });
+
+      expect(savedOrder().vehicleId).toBe(vehicle.id);
+    });
+
+    it('recusa veiculo inexistente sem escrever nada', async () => {
+      await expect(
+        useCase.execute({ clientId: sampleClient.id, vehicleId: 'v-x', description: 'Revisão' }),
+      ).rejects.toThrow("Vehicle with id 'v-x' not found");
+      expect(mockSORepo.save).not.toHaveBeenCalled();
+    });
+
+    it('recusa veiculo de outro cliente sem escrever nada', async () => {
+      mockVehicleRepo.findById.mockResolvedValue(vehicleOf('outro-cliente'));
+
+      await expect(
+        useCase.execute({ clientId: sampleClient.id, vehicleId: 'v-1', description: 'Revisão' }),
+      ).rejects.toThrow('does not belong');
+      expect(mockSORepo.save).not.toHaveBeenCalled();
     });
   });
 

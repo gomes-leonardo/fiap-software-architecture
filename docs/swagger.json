@@ -273,6 +273,56 @@
         ]
       }
     },
+    "/clients/{id}/status": {
+      "patch": {
+        "description": "Cliente INATIVO nao obtem token na autenticacao por CPF.",
+        "operationId": "ClientController_changeStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeClientStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cliente não encontrado"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ativar ou inativar cliente",
+        "tags": [
+          "clients"
+        ]
+      }
+    },
     "/service-orders": {
       "post": {
         "description": "Aceita `services` e `parts` opcionais. Informando qualquer um deles, a OS nasce com um orcamento PENDENTE (precos congelados do catalogo) e ja em AGUARDANDO_APROVACAO; o id vem em `createdBudgetId`. Sem itens, o comportamento e o de sempre: OS em RECEBIDA, sem orcamento. Estoque insuficiente nao bloqueia — vira aviso em `stockWarnings`.",
@@ -1787,7 +1837,16 @@
           "phone": {
             "type": "object"
           },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ATIVO",
+              "INATIVO"
+            ],
+            "example": "ATIVO"
+          },
           "vehicleIds": {
+            "description": "Veiculos ativos do cliente",
             "type": "array",
             "items": {
               "type": "string"
@@ -1798,6 +1857,7 @@
           "id",
           "name",
           "cpfCnpj",
+          "status",
           "vehicleIds"
         ]
       },
@@ -1817,6 +1877,22 @@
             "example": "11999998888"
           }
         }
+      },
+      "ChangeClientStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ATIVO",
+              "INATIVO"
+            ],
+            "example": "INATIVO"
+          }
+        },
+        "required": [
+          "status"
+        ]
       },
       "RequestedItemDto": {
         "type": "object",

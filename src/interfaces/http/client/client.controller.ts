@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -17,8 +18,10 @@ import { RegisterClientUseCase } from '@application/client/register-client.use-c
 import { FindClientUseCase } from '@application/client/find-client.use-case';
 import { RegisterClientDto } from '@application/client/dtos/register-client.dto';
 import { UpdateClientDto } from '@application/client/dtos/update-client.dto';
+import { ChangeClientStatusDto } from '@application/client/dtos/change-client-status.dto';
 import { ClientResponseDto } from '@application/client/dtos/client-response.dto';
 import { ClientRepository } from '@domain/client/client-repository.port';
+import { ClientStatus } from '@domain/client/client-status.enum';
 import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard';
 
 @ApiTags('clients')
@@ -78,6 +81,30 @@ export class ClientController {
     if (!client) throw new NotFoundException('Client not found');
 
     client.update(dto);
+    await this.clientRepository.save(client);
+
+    return ClientResponseDto.fromDomain(client);
+  }
+
+  @Patch(':id/status')
+  @ApiOperation({
+    summary: 'Ativar ou inativar cliente',
+    description: 'Cliente INATIVO nao obtem token na autenticacao por CPF.',
+  })
+  @ApiResponse({ status: 200, type: ClientResponseDto })
+  @ApiResponse({ status: 404, description: 'Cliente não encontrado' })
+  async changeStatus(
+    @Param('id') id: string,
+    @Body() dto: ChangeClientStatusDto,
+  ): Promise<ClientResponseDto> {
+    const client = await this.clientRepository.findById(id);
+    if (!client) throw new NotFoundException('Client not found');
+
+    if (dto.status === ClientStatus.ATIVO) {
+      client.activate();
+    } else {
+      client.deactivate();
+    }
     await this.clientRepository.save(client);
 
     return ClientResponseDto.fromDomain(client);

@@ -11,7 +11,12 @@ import { Test } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
 import * as request from 'supertest';
 
-import { setupTestDb, teardownTestDb, truncateAllTables } from '../../helpers/test-db.helper';
+import {
+  seedClient,
+  setupTestDb,
+  teardownTestDb,
+  truncateAllTables,
+} from '../../helpers/test-db.helper';
 import { ServiceOrderOrmEntity } from '@infrastructure/database/typeorm/entities/service-order.orm-entity';
 import { ServiceOrderTypeOrmRepository } from '@infrastructure/database/typeorm/repositories/service-order.typeorm-repository';
 import { ServiceOrderRepository } from '@domain/service-order/service-order-repository.port';
@@ -59,6 +64,7 @@ describe('Webhook status update (HTTP)', () => {
 
   beforeEach(async () => {
     await truncateAllTables(dataSource);
+    await seedClient(dataSource, CLIENT_ID);
   });
 
   async function seedOrder(): Promise<ServiceOrder> {
