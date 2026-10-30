@@ -31,6 +31,9 @@
           },
           "401": {
             "description": "Token ausente ou inválido"
+          },
+          "403": {
+            "description": "Token sem papel de administrador"
           }
         },
         "security": [
@@ -1660,6 +1663,72 @@
           "webhooks"
         ]
       }
+    },
+    "/me/service-orders": {
+      "get": {
+        "operationId": "MeController_serviceOrders",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ServiceOrderResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token sem papel de cliente, ou cliente inativo"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ordens de servico do cliente autenticado",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/vehicles": {
+      "get": {
+        "operationId": "MeController_vehicles",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VehicleResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token sem papel de cliente, ou cliente inativo"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Veiculos do cliente autenticado",
+        "tags": [
+          "me"
+        ]
+      }
     }
   },
   "info": {
@@ -1700,6 +1769,10 @@
     {
       "name": "health",
       "description": "Health check da aplicação e do banco"
+    },
+    {
+      "name": "me",
+      "description": "Dados do cliente autenticado por CPF (token de cliente)"
     },
     {
       "name": "webhooks",

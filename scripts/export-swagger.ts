@@ -44,6 +44,7 @@ function buildSwaggerConfig() {
     .addTag('budgets', 'Gerenciamento de orçamentos')
     .addTag('consult', 'Consulta pública de OS pelo cliente')
     .addTag('health', 'Health check da aplicação e do banco')
+    .addTag('me', 'Dados do cliente autenticado por CPF (token de cliente)')
     .addTag('webhooks', 'Integração com sistemas externos (sem login)')
     .build();
 }
