@@ -1,0 +1,9 @@
+# App sem ambiente: nem namespace, nem numero de replicas, nem a imagem do
+# commit. Cada overlay (overlays/hml, overlays/prd) acrescenta o seu.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - configmap.yaml
+  - deployment.yaml
+  - service.yaml
+  - hpa.yaml

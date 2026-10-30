@@ -11,7 +11,6 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: soat-app
-  namespace: soat
   labels:
     app.kubernetes.io/name: soat-app
     app.kubernetes.io/part-of: soat-tech-challenge

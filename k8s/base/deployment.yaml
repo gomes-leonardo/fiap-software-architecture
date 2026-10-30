@@ -2,16 +2,13 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: soat-app
-  namespace: soat
   labels:
     app.kubernetes.io/name: soat-app
     app.kubernetes.io/component: api
     app.kubernetes.io/part-of: soat-tech-challenge
 spec:
-  # 2 replicas e o piso do HPA (app-hpa.yaml). O HPA passa a mandar em
-  # `replicas` depois do primeiro apply — mudar este numero na mao nao tem
-  # efeito duradouro.
-  replicas: 2
+  # Sem `replicas`: quem manda no numero de pods e o HPA de cada overlay. Um
+  # valor aqui seria reaplicado a cada deploy e brigaria com o autoscaler.
   revisionHistoryLimit: 3
   selector:
     matchLabels:
@@ -29,6 +26,10 @@ spec:
         app.kubernetes.io/name: soat-app
         app.kubernetes.io/component: api
         app.kubernetes.io/part-of: soat-tech-challenge
+      # O otel-gateway raspa o /metrics dos pods com esta anotacao.
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9464'
     spec:
       securityContext:
         # uid 1001 = usuario `nestjs` criado no Dockerfile. runAsNonRoot faz o
@@ -52,18 +53,23 @@ spec:
                     app.kubernetes.io/name: soat-app
       containers:
         - name: app
-          # Imagem construida localmente (`docker build -t soat-tech-challenge:latest .`)
-          # ou pelo pipeline (#10), com a mesma tag do job de build do CI.
-          # IfNotPresent evita que o kubelet tente puxar de um registry publico
-          # uma tag que so existe no daemon local.
-          image: soat-tech-challenge:latest
+          # Nome logico: o pipeline troca pela imagem do commit no GHCR
+          # (ghcr.io/<repo>:sha-<curto>) via `images:` do kustomize. Uma tag por
+          # commit faz o IfNotPresent puxar sempre a versao nova.
+          image: soat-tech-challenge
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: 3000
+            - name: metrics
+              containerPort: 9464
           envFrom:
             - configMapRef:
                 name: soat-app-config
+            - secretRef:
+                name: soat-db
+            - secretRef:
+                name: soat-jwt
             - secretRef:
                 name: soat-app-secret
           resources:
@@ -82,10 +88,9 @@ spec:
             limits:
               cpu: '1'
               memory: 512Mi
-          # O boot do Nest inclui as migrations (migrationsRun quando
-          # NODE_ENV=production). O startupProbe da ate 150s para isso terminar
-          # sem que a liveness comece a contar — e o equivalente ao
-          # `--start-period` do HEALTHCHECK do Dockerfile, so que ajustavel.
+          # O startupProbe da ate 150s para o boot (conexao com o banco, que no
+          # Neon pode estar suspenso e leva alguns segundos para acordar) sem
+          # que a liveness comece a contar.
           startupProbe:
             httpGet:
               path: /health
