@@ -2,9 +2,9 @@ name: CI/CD
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 # Leitura por padrao. Os dois unicos jobs que precisam de mais (publish grava
 # no GHCR) sobem o escopo localmente.
