@@ -58,16 +58,17 @@ export class CreateServiceOrderUseCase {
     }
 
     const budget = new Budget({ serviceOrderId: serviceOrder.id, lines: resolvedLines });
-    this.advanceToAwaitingApproval(serviceOrder);
-
-    // Orcamento primeiro, OS depois. Nao ha transacao no projeto, entao a ordem
-    // e o que define o estrago de uma falha no meio: se a segunda escrita
-    // falhar, sobra um orcamento que ninguem referencia — invisivel. Na ordem
-    // inversa sobraria uma OS em AGUARDANDO_APROVACAO sem orcamento nenhum
-    // para aprovar, que e um estado quebrado e visivel.
     const warnings = await this.lineResolver.stockWarnings(resolvedLines);
 
+    // Tres escritas, sem transacao no projeto, entao a ordem define o estrago
+    // de uma falha no meio. A chave estrangeira budgets.service_order_id exige
+    // a OS gravada antes do orcamento. A OS nasce RECEBIDA e so avanca para
+    // AGUARDANDO_APROVACAO depois que o orcamento existe: se a segunda ou a
+    // terceira escrita falhar, sobra uma OS RECEBIDA, estado valido e visivel,
+    // e nunca uma OS aguardando aprovacao sem orcamento para aprovar.
+    await this.serviceOrderRepository.save(serviceOrder);
     await this.budgetRepository.save(budget);
+    this.advanceToAwaitingApproval(serviceOrder);
     await this.serviceOrderRepository.save(serviceOrder);
 
     return CreateServiceOrderResponseDto.from(serviceOrder, budget.id, warnings);

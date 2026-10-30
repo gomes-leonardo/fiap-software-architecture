@@ -363,7 +363,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "[\n  {\n    \"id\": \"string\",\n    \"name\": \"string\",\n    \"cpfCnpj\": \"string\",\n    \"email\": {},\n    \"phone\": {},\n    \"vehicleIds\": [\n      \"string\"\n    ]\n  }\n]",
+              "body": "[\n  {\n    \"id\": \"string\",\n    \"name\": \"string\",\n    \"cpfCnpj\": \"string\",\n    \"email\": {},\n    \"phone\": {},\n    \"status\": \"ATIVO\",\n    \"vehicleIds\": [\n      \"string\"\n    ]\n  }\n]",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -435,7 +435,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"status\": \"ATIVO\",\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
               "_postman_previewlanguage": "json"
             },
             {
@@ -528,7 +528,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"status\": \"ATIVO\",\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
               "_postman_previewlanguage": "json"
             },
             {
@@ -642,7 +642,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"status\": \"ATIVO\",\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
               "_postman_previewlanguage": "json"
             },
             {
@@ -760,6 +760,140 @@
                       "value": "00000000-0000-0000-0000-000000000000"
                     }
                   ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Ativar ou inativar cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clients/:id/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            },
+            "description": "Cliente INATIVO nao obtem token na autenticacao por CPF.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"INATIVO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/clients/:id/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "clients",
+                    ":id",
+                    "status"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "description": "Cliente INATIVO nao obtem token na autenticacao por CPF.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"INATIVO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"status\": \"ATIVO\",\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Cliente não encontrado",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/clients/:id/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "clients",
+                    ":id",
+                    "status"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "description": "Cliente INATIVO nao obtem token na autenticacao por CPF.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"INATIVO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 }
               },
               "status": "Not Found",

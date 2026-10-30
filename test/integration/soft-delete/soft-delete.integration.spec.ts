@@ -9,7 +9,13 @@ import { Test } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
 import * as request from 'supertest';
 
-import { setupTestDb, teardownTestDb, truncateAllTables } from '../../helpers/test-db.helper';
+import {
+  seedClient,
+  seedServiceOrder,
+  setupTestDb,
+  teardownTestDb,
+  truncateAllTables,
+} from '../../helpers/test-db.helper';
 import { ClientOrmEntity } from '@infrastructure/database/typeorm/entities/client.orm-entity';
 import { VehicleOrmEntity } from '@infrastructure/database/typeorm/entities/vehicle.orm-entity';
 import { PartOrmEntity } from '@infrastructure/database/typeorm/entities/part.orm-entity';
@@ -136,6 +142,7 @@ describe('Soft delete', () => {
 
   describe('vehicle', () => {
     it('hides the vehicle from every query and frees the plate', async () => {
+      await seedClient(dataSource, CLIENT_ID);
       const vehicle = new Vehicle({
         plate: 'ABC1D23',
         brand: 'Fiat',
@@ -208,6 +215,7 @@ describe('Soft delete', () => {
 
   describe('service order', () => {
     it('drops out of the listings, including the prioritized one', async () => {
+      await seedClient(dataSource, CLIENT_ID);
       const kept = new ServiceOrder({ clientId: CLIENT_ID, description: 'Revisão' });
       const removed = new ServiceOrder({ clientId: CLIENT_ID, description: 'Barulho no motor' });
       await serviceOrders.save(kept);
@@ -228,6 +236,7 @@ describe('Soft delete', () => {
   describe('budget', () => {
     it('drops out of the service order history and of the latest version lookup', async () => {
       const serviceOrderId = '33333333-3333-4333-8333-333333333333';
+      await seedServiceOrder(dataSource, serviceOrderId, CLIENT_ID);
       const lines = [
         {
           type: 'SERVICE' as BudgetLineType,

@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Client } from '@domain/client/client.entity';
+import { ClientStatus } from '@domain/client/client-status.enum';
 
 export class ClientResponseDto {
   @ApiProperty()
@@ -17,7 +18,10 @@ export class ClientResponseDto {
   @ApiPropertyOptional()
   phone?: string | null;
 
-  @ApiProperty({ type: [String] })
+  @ApiProperty({ enum: ClientStatus, example: ClientStatus.ATIVO })
+  status!: ClientStatus;
+
+  @ApiProperty({ type: [String], description: 'Veiculos ativos do cliente' })
   vehicleIds!: string[];
 
   static fromDomain(client: Client): ClientResponseDto {
@@ -27,6 +31,7 @@ export class ClientResponseDto {
     dto.cpfCnpj = client.cpfCnpj.formatted;
     dto.email = client.email;
     dto.phone = client.phone;
+    dto.status = client.status;
     dto.vehicleIds = [...client.vehicleIds];
     return dto;
   }

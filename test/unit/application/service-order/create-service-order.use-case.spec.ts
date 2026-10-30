@@ -168,19 +168,44 @@ describe('CreateServiceOrderUseCase', () => {
 
     /**
      * Sem transacao no projeto, a ordem das escritas e o que define o estrago
-     * de uma falha no meio. Orcamento orfao ninguem enxerga; OS em
-     * AGUARDANDO_APROVACAO sem orcamento e um estado quebrado e visivel.
+     * de uma falha no meio. A chave estrangeira exige a OS antes do orcamento,
+     * e a OS so chega a AGUARDANDO_APROVACAO depois que o orcamento existe.
      */
-    it('salva o orcamento antes da OS', async () => {
+    it('grava a OS RECEBIDA, depois o orcamento, e so entao avanca a OS', async () => {
+      const writes: string[] = [];
+      mockSORepo.save.mockImplementation(async (so: ServiceOrder) => {
+        writes.push(`os:${so.status}`);
+      });
+      mockBudgetRepo.save.mockImplementation(async () => {
+        writes.push('budget');
+      });
+
       await useCase.execute({
         clientId: sampleClient.id,
         description: 'Revisão',
         parts: [{ referenceId: PART_ID, quantity: 1 }],
       });
 
-      expect(mockBudgetRepo.save.mock.invocationCallOrder[0]).toBeLessThan(
-        mockSORepo.save.mock.invocationCallOrder[0],
-      );
+      expect(writes).toEqual([
+        `os:${ServiceOrderStatus.RECEBIDA}`,
+        'budget',
+        `os:${ServiceOrderStatus.AGUARDANDO_APROVACAO}`,
+      ]);
+    });
+
+    it('deixa a OS RECEBIDA quando a gravacao do orcamento falha', async () => {
+      mockBudgetRepo.save.mockRejectedValue(new Error('db down'));
+
+      await expect(
+        useCase.execute({
+          clientId: sampleClient.id,
+          description: 'Revisão',
+          parts: [{ referenceId: PART_ID, quantity: 1 }],
+        }),
+      ).rejects.toThrow('db down');
+
+      expect(mockSORepo.save).toHaveBeenCalledTimes(1);
+      expect(savedOrder().status).toBe(ServiceOrderStatus.RECEBIDA);
     });
   });
 

@@ -12,12 +12,14 @@ export function getTypeOrmConfig(): TypeOrmModuleOptions {
     password: process.env.DB_PASS || 'postgres',
     database: process.env.DB_NAME || 'soat_repair_shop',
     autoLoadEntities: true,
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: true } : false,
     // Em dev/test usamos synchronize para agilidade. Em producao o schema e
-    // criado/migrado pelas migrations (rodadas automaticamente no boot), nunca
-    // por synchronize.
+    // criado/migrado pelas migrations, nunca por synchronize. No Kubernetes
+    // elas rodam num Job antes do rollout (DB_MIGRATIONS_ON_BOOT=false), para
+    // que varias replicas subindo juntas nao disputem o lock das migrations.
     synchronize: !isProduction,
     migrations: [join(__dirname, '..', 'migrations', '*.{js,ts}')],
-    migrationsRun: isProduction,
+    migrationsRun: isProduction && process.env.DB_MIGRATIONS_ON_BOOT !== 'false',
     logging: false,
   };
 }
