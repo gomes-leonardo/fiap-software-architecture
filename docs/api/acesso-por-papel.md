@@ -25,7 +25,7 @@ uma requisição que contorne o gateway, de dentro do cluster, continua passando
 | `POST /auth/login` | ✅ | ✅ | ✅ |
 | `POST /auth/register` | 401 | **403** | ✅ |
 | `GET /health` | ✅ | ✅ | ✅ |
-| `GET /consult/:clientId?cpfCnpj=` | ✅ | ✅ | ✅ |
+| `GET /consult/:clientId?cpf=` | ✅ | ✅ | ✅ |
 | `POST /webhooks/*` | segredo do webhook | segredo do webhook | segredo do webhook |
 | `GET /me/service-orders` | 401 | ✅ só as próprias | 403 |
 | `GET /me/vehicles` | 401 | ✅ só os próprios | 403 |
