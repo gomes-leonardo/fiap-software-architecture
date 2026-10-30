@@ -7,13 +7,13 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash, timingSafeEqual } from 'crypto';
-
-const BEARER_PREFIX = 'Bearer ';
-
 import {
   recordIntegrationError,
   routeTemplate,
 } from '@infrastructure/observability/integration-errors';
+
+const BEARER_PREFIX = 'Bearer ';
+
 /**
  * Autentica sistemas externos que nao tem login: eles apresentam um segredo
  * pre-compartilhado (`WEBHOOK_SECRET`) em vez de um JWT.

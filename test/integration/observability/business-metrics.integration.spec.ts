@@ -89,6 +89,12 @@ describe('Metricas de negocio de OS', () => {
       ],
       true,
     );
+    // Linha criada por SQL, sem historico: conta como parada pelo updated_at.
+    await dataSource.query(
+      `INSERT INTO "service_orders" ("id", "client_id", "description", "status", "created_at", "updated_at")
+       VALUES ($1, $2, 'OS migrada', 'AGUARDANDO_APROVACAO', '2026-10-20T10:00:00', '2026-10-20T10:00:00')`,
+      [randomUUID(), CLIENT],
+    );
   }, 60000);
 
   afterAll(async () => {
@@ -118,17 +124,17 @@ describe('Metricas de negocio de OS', () => {
 
   it('calcula o tempo medio das passagens encerradas na janela', async () => {
     expect(await query.averageStatusDuration(7, NOW)).toEqual([
-      { status: 'AGUARDANDO_APROVACAO', seconds: 14 * 3600 },
-      { status: 'EM_DIAGNOSTICO', seconds: 3 * 3600 },
-      { status: 'EM_EXECUCAO', seconds: 3 * 3600 },
-      { status: 'FINALIZADA', seconds: 24 * 3600 },
-      { status: 'RECEBIDA', seconds: 45 * 60 },
+      { status: 'AGUARDANDO_APROVACAO', seconds: 14 * 3600, samples: 1 },
+      { status: 'EM_DIAGNOSTICO', seconds: 3 * 3600, samples: 2 },
+      { status: 'EM_EXECUCAO', seconds: 3 * 3600, samples: 1 },
+      { status: 'FINALIZADA', seconds: 24 * 3600, samples: 1 },
+      { status: 'RECEBIDA', seconds: 45 * 60, samples: 2 },
     ]);
   });
 
   it('conta OS paradas ha mais de 2h nos status que esperam alguem', async () => {
     expect(await query.stalled(2, NOW)).toEqual([
-      { status: 'AGUARDANDO_APROVACAO', count: 0 },
+      { status: 'AGUARDANDO_APROVACAO', count: 1 },
       { status: 'EM_DIAGNOSTICO', count: 1 },
     ]);
   });

@@ -35,13 +35,14 @@ export class DomainExceptionFilter implements ExceptionFilter {
 
 /**
  * O alerta de transicao recusada agrupa por OS, entao o log precisa dizer qual.
- * A OS chega como `:id` nas rotas de service-orders, como `:serviceOrderId`
- * nas de orcamento, ou no corpo do webhook.
+ * A OS chega como `:id` nas rotas de service-orders (inclusive o webhook de
+ * status do parceiro), como `:serviceOrderId` nas de orcamento, ou no corpo.
  */
 function serviceOrderIdOf(request: Request): string | undefined {
   const params = (request.params ?? {}) as Record<string, string | undefined>;
   const body = (request.body ?? {}) as Record<string, unknown>;
   if (params.serviceOrderId) return params.serviceOrderId;
-  if (params.id && routeTemplate(request).startsWith('/service-orders')) return params.id;
+  const route = routeTemplate(request);
+  if (params.id && /^(\/webhooks)?\/service-orders\//.test(route)) return params.id;
   return typeof body.serviceOrderId === 'string' ? body.serviceOrderId : undefined;
 }

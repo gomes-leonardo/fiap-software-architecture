@@ -13,6 +13,9 @@ export function getTypeOrmConfig(): TypeOrmModuleOptions {
     database: process.env.DB_NAME || 'soat_repair_shop',
     autoLoadEntities: true,
     ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: true } : false,
+    // As colunas sao `timestamp` sem fuso preenchidas por now(): a sessao em
+    // UTC garante que o valor gravado seja UTC em qualquer servidor.
+    extra: { options: '-c timezone=UTC' },
     // Em dev/test usamos synchronize para agilidade. Em producao o schema e
     // criado/migrado pelas migrations, nunca por synchronize. No Kubernetes
     // elas rodam num Job antes do rollout (DB_MIGRATIONS_ON_BOOT=false): o

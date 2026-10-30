@@ -10,6 +10,7 @@ export interface DailyCount {
 export interface StatusDuration {
   status: string;
   seconds: number;
+  samples: number;
 }
 
 export interface StalledCount {
@@ -25,8 +26,8 @@ export const STALLED_STATUSES = ['AGUARDANDO_APROVACAO', 'EM_DIAGNOSTICO'];
  * oficina cabe numa varredura, e conferir o painel contra o banco (criterio da
  * issue #62) fica uma questao de rodar a mesma consulta.
  *
- * `created_at` e `timestamp` sem fuso gravado em UTC; o dia de negocio e o de
- * Sao Paulo.
+ * `created_at` e `timestamp` sem fuso, gravado em UTC (a conexao fixa
+ * `timezone=UTC`, ver typeorm.config); o dia de negocio e o de Sao Paulo.
  */
 @Injectable()
 export class ServiceOrderMetricsQuery {
@@ -65,8 +66,9 @@ export class ServiceOrderMetricsQuery {
     windowDays: number,
     now: Date = new Date(),
   ): Promise<StatusDuration[]> {
-    const rows: Array<{ status: string; seconds: string }> = await this.dataSource.query(
-      `
+    const rows: Array<{ status: string; seconds: string; samples: number }> =
+      await this.dataSource.query(
+        `
       WITH transitions AS (
         SELECT so.id,
                e->>'toStatus' AS status,
@@ -78,16 +80,22 @@ export class ServiceOrderMetricsQuery {
              jsonb_array_elements(so.status_history) WITH ORDINALITY AS h(e, ord)
         WHERE so.deleted_at IS NULL
       )
-      SELECT status, avg(extract(epoch FROM left_at - entered_at)) AS seconds
+      SELECT status,
+             avg(extract(epoch FROM left_at - entered_at)) AS seconds,
+             count(*)::int AS samples
       FROM transitions
       WHERE left_at IS NOT NULL
         AND left_at > $1::timestamptz - make_interval(days => $2::int)
       GROUP BY status
       ORDER BY status
       `,
-      [now.toISOString(), windowDays],
-    );
-    return rows.map((row) => ({ status: row.status, seconds: Number(row.seconds) }));
+        [now.toISOString(), windowDays],
+      );
+    return rows.map((row) => ({
+      status: row.status,
+      seconds: Number(row.seconds),
+      samples: row.samples,
+    }));
   }
 
   /** OS paradas: no status ha mais de `thresholdHours` horas, sem transicao. */
@@ -99,9 +107,9 @@ export class ServiceOrderMetricsQuery {
       LEFT JOIN service_orders so
         ON so.status = s.status
        AND so.deleted_at IS NULL
-       AND (
-         SELECT max((e->>'changedAt')::timestamptz)
-         FROM jsonb_array_elements(so.status_history) e
+       AND COALESCE(
+         (SELECT max((e->>'changedAt')::timestamptz) FROM jsonb_array_elements(so.status_history) e),
+         so.updated_at AT TIME ZONE 'UTC'
        ) < $1::timestamptz - make_interval(hours => $2::int)
       GROUP BY s.status
       ORDER BY s.status
