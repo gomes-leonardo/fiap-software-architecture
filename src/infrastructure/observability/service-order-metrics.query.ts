@@ -26,8 +26,11 @@ export const STALLED_STATUSES = ['AGUARDANDO_APROVACAO', 'EM_DIAGNOSTICO'];
  * oficina cabe numa varredura, e conferir o painel contra o banco (criterio da
  * issue #62) fica uma questao de rodar a mesma consulta.
  *
- * `created_at` e `timestamp` sem fuso, gravado em UTC (a conexao fixa
- * `timezone=UTC`, ver typeorm.config); o dia de negocio e o de Sao Paulo.
+ * `created_at` e `timestamp` sem fuso preenchido por now(), entao vale o fuso
+ * do servidor, que e UTC em todos os bancos do projeto (Postgres local com
+ * TZ=UTC, Neon por padrao). Nao da para fixar pela conexao: o pooler do Neon
+ * (PgBouncer em modo transacao) recusa o parametro `options` no startup. O
+ * dia de negocio e o de Sao Paulo.
  */
 @Injectable()
 export class ServiceOrderMetricsQuery {
