@@ -10,6 +10,10 @@ import { createHash, timingSafeEqual } from 'crypto';
 
 const BEARER_PREFIX = 'Bearer ';
 
+import {
+  recordIntegrationError,
+  routeTemplate,
+} from '@infrastructure/observability/integration-errors';
 /**
  * Autentica sistemas externos que nao tem login: eles apresentam um segredo
  * pre-compartilhado (`WEBHOOK_SECRET`) em vez de um JWT.
@@ -47,6 +51,7 @@ export class WebhookAuthGuard implements CanActivate {
     const presented = this.extractToken(request);
 
     if (!presented || !this.matchesSecret(presented, secret)) {
+      recordIntegrationError('webhook_unauthorized', routeTemplate(request));
       throw new UnauthorizedException('Invalid webhook credentials');
     }
 

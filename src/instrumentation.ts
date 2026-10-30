@@ -35,7 +35,8 @@ if (process.env.OTEL_CONSOLE === '1') {
 }
 
 const sdk = new NodeSDK({
-  serviceName: 'soat-app',
+  // hml e prd mandam para o mesmo backend; o nome separa os dois.
+  serviceName: process.env.OTEL_SERVICE_NAME || 'soat-app',
   spanProcessors: processors,
   metricReaders: [new PrometheusExporter({ host: metricsHost, port: metricsPort })],
   instrumentations: [
