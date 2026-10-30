@@ -27,5 +27,8 @@ patches:
         path: /data/OTEL_SERVICE_NAME
         value: soat-app-prd
       - op: replace
+        path: /data/OTEL_RESOURCE_ATTRIBUTES
+        value: deployment.environment=prd
+      - op: replace
         path: /data/SWAGGER_ENABLED
         value: 'false'

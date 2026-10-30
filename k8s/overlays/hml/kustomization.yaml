@@ -27,5 +27,8 @@ patches:
         path: /data/OTEL_SERVICE_NAME
         value: soat-app-hml
       - op: replace
+        path: /data/OTEL_RESOURCE_ATTRIBUTES
+        value: deployment.environment=hml
+      - op: replace
         path: /data/SWAGGER_ENABLED
         value: 'true'

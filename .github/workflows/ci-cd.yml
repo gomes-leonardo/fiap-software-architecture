@@ -331,7 +331,14 @@ jobs:
               missing=1
             fi
           done
-          kubectl config use-context kind-soat
+          # Kubeconfig so do job, preso ao contexto kind-soat: o runner e o Mac
+          # do dono, e um `use-context` dele no meio do deploy mandaria o apply
+          # para outro cluster.
+          kubeconfig="${RUNNER_TEMP}/kubeconfig-soat"
+          kubectl config view --minify --flatten --context kind-soat > "${kubeconfig}"
+          chmod 600 "${kubeconfig}"
+          echo "KUBECONFIG=${kubeconfig}" >> "$GITHUB_ENV"
+          export KUBECONFIG="${kubeconfig}"
           for secret in soat-db soat-jwt; do
             if ! kubectl get secret "${secret}" -n "${NAMESPACE}" >/dev/null 2>&1; then
               echo "::error title=Infra ausente::Secret ${secret} nao existe em ${NAMESPACE}. Rode o pipeline de soat-infra-db / soat-infra-k8s antes."
@@ -398,7 +405,17 @@ jobs:
           kubectl describe job soat-migrate -n "${NAMESPACE}" | tail -20
           exit 1
 
+      # A imagem no ar antes do apply: o rollback so desfaz o que este run trocou.
+      - name: Imagem em execucao
+        id: before
+        run: |
+          image=$(kubectl get deployment soat-app -n "${NAMESPACE}" \
+            -o jsonpath='{.spec.template.spec.containers[?(@.name=="app")].image}' 2>/dev/null || true)
+          echo "image=${image}" >> "$GITHUB_OUTPUT"
+          echo "Antes do deploy: ${image:-<nenhuma>}"
+
       - name: Aplicar a aplicacao
+        id: apply
         run: kubectl apply -k "k8s/.deploy/${ENVIRONMENT}/app"
 
       - name: Aguardar o rollout
@@ -446,19 +463,30 @@ jobs:
           kubectl logs -n "${NAMESPACE}" -l app.kubernetes.io/name=soat-app --tail=100 --all-containers || true
 
       # Depois do diagnostico de proposito: os logs precisam ser os da revisao
-      # quebrada, nao os da restaurada.
+      # quebrada, nao os da restaurada. So roda se este run chegou a aplicar o
+      # Deployment, e so desfaz se a imagem no ar for a deste commit e diferente
+      # da que estava antes. Falha em migration, secret ou configuracao nao
+      # toca na versao que ja servia. O rollback reverte o pod template; o
+      # ConfigMap e o HPA ficam como o apply deixou.
       - name: Rollback automatico
-        if: failure()
+        if: failure() && steps.apply.outcome != 'skipped'
+        env:
+          PREVIOUS_IMAGE: ${{ steps.before.outputs.image }}
         run: |
           set -uo pipefail
-          if ! kubectl get deployment soat-app -n "${NAMESPACE}" >/dev/null 2>&1; then
-            echo "::warning title=Sem rollback::o Deployment soat-app nao existe; nada a reverter."
+          current=$(kubectl get deployment soat-app -n "${NAMESPACE}" \
+            -o jsonpath='{.spec.template.spec.containers[?(@.name=="app")].image}' 2>/dev/null || true)
+          if [ -z "${PREVIOUS_IMAGE}" ]; then
+            echo "::warning title=Sem rollback::primeiro deploy, nao ha versao anterior para restaurar."
             exit 0
           fi
-          revisions=$(kubectl rollout history deployment/soat-app -n "${NAMESPACE}" | grep -c '^[0-9]' || true)
-          if [ "${revisions}" -lt 2 ]; then
-            echo "::warning title=Sem rollback::primeiro deploy, nao ha revisao anterior para restaurar."
+          if [ "${current}" != "${IMAGE}" ] || [ "${current}" = "${PREVIOUS_IMAGE}" ]; then
+            echo "::warning title=Sem rollback::a imagem no ar (${current}) nao foi trocada por este run."
             exit 0
           fi
-          echo "::warning title=Rollback::revertendo soat-app para a revisao anterior."
+          echo "::warning title=Rollback::revertendo soat-app de ${current} para ${PREVIOUS_IMAGE}."
           kubectl rollout undo deployment/soat-app -n "${NAMESPACE}"
+          if ! kubectl rollout status deployment/soat-app -n "${NAMESPACE}" --timeout="${ROLLOUT_TIMEOUT}"; then
+            echo "::error title=Rollback nao convergiu::soat-app nao estabilizou na revisao anterior"
+            exit 1
+          fi

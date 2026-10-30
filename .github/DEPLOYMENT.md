@@ -102,8 +102,10 @@ Packages → `fiap-software-architecture` → Package settings → Change visibi
 5. **Aplicar a aplicação** e esperar o rollout. Depois confere que a imagem em execução é a do
    commit.
 6. **Smoke pelo Kong:** `GET /health` em `127.0.0.1:18080` ou `18081`, o mesmo caminho do usuário.
-7. **Em falha:** coleta pods, eventos e logs. Depois executa `kubectl rollout undo`, se houver
-   revisão anterior.
+7. **Em falha:** coleta pods, eventos e logs. O `kubectl rollout undo` só roda se este run chegou
+   ao apply **e** a imagem no ar for a deste commit, diferente da anterior. Depois espera o rollback
+   convergir. Uma falha antes do apply (configuração, secret, migration) deixa a versão no ar
+   intacta. O undo reverte o pod template; ConfigMap e HPA ficam como o apply deixou.
 
 ## Proteção de branch
 

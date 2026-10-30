@@ -23,7 +23,7 @@ seja reproduzível e revisável.
 | Required conversation resolution | `true` | Nenhum comentário de review fica pendente |
 | Allow force pushes | `false` | Preserva o histórico da `main` |
 | Allow deletions | `false` | Ninguém apaga a `main` |
-| Enforce admins | `false` | O owner mantém uma saída de emergência; suba para `true` se quiser travar todo mundo |
+| Enforce admins | `true` | Ninguém, nem o owner, faz merge sem PR e CI verde |
 
 ### Sobre os nomes dos status checks
 
@@ -54,7 +54,7 @@ cat > /tmp/protection.json <<'EOF'
     "strict": true,
     "contexts": ["Lint", "Typecheck", "Unit Tests", "Integration Tests", "Smoke Tests", "Build Docker Image", "Render dos manifestos"]
   },
-  "enforce_admins": false,
+  "enforce_admins": true,
   "required_pull_request_reviews": {
     "dismiss_stale_reviews": true,
     "require_code_owner_reviews": false,

@@ -34,4 +34,5 @@ data:
 
   # Sobrescritos por ambiente nos overlays.
   OTEL_SERVICE_NAME: 'soat-app'
+  OTEL_RESOURCE_ATTRIBUTES: 'deployment.environment=local'
   SWAGGER_ENABLED: 'false'

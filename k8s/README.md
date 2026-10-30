@@ -49,7 +49,9 @@ Nenhum valor secreto está versionado. O pod lê três Secrets, cada um com um d
 3. Aplica o overlay com a imagem do commit (`ghcr.io/<repo>:sha-<curto>`) e espera o rollout.
    O `maxUnavailable: 0` mantém a capacidade durante a troca.
 4. Faz o smoke de `/health` pelo Kong do ambiente.
-5. Se algum passo falhar, coleta o diagnóstico e reverte o Deployment para a revisão anterior.
+5. Se algum passo falhar, coleta o diagnóstico. Se este deploy chegou a trocar a imagem no ar, reverte
+   o Deployment para a imagem anterior. Falha em migration ou configuração não toca na versão que
+   já servia.
 
 As migrations não rodam no boot (`DB_MIGRATIONS_ON_BOOT=false`). Com várias réplicas subindo
 juntas, todas disputariam o mesmo DDL.
