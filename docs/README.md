@@ -50,7 +50,7 @@ mudado, é bug do gerador, não ruído esperado.
 
 ### Este spec é um snapshot
 
-O `swagger.json` descreve a `main` no momento em que foi gerado — não é
+O `swagger.json` descreve a API no commit em que foi gerado — não é
 atualizado sozinho. Sempre que um endpoint for adicionado, removido ou tiver a
 assinatura alterada, rode `npm run docs:api` e commite os dois arquivos junto
 com a mudança.

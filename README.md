@@ -27,6 +27,13 @@ produção, a custo zero.
 > **Pendente.** O link entra aqui antes da entrega (issue
 > [#65](https://github.com/gomes-leonardo/fiap-software-architecture/issues/65)).
 
+## Deploys ativos
+
+Não há URL pública. Por custo zero, os dois ambientes rodam num cluster Kind no Mac do projeto,
+atrás do Kong: hml em `http://127.0.0.1:18081` e prd em `http://127.0.0.1:18080`
+([RFC-001](docs/rfc/RFC-001-nuvem-e-custo.md)). O vídeo demonstrativo mostra os dois funcionando, e
+cada deploy fica registrado nas [execuções do GitHub Actions](https://github.com/gomes-leonardo/fiap-software-architecture/actions).
+
 ## Repositórios
 
 | Repositório | Papel |
@@ -73,7 +80,7 @@ flowchart LR
     INFRA -->|"TLS, pooler"| DB
     MIG -->|"TLS, host direto"| DB
     INFRA -->|"OTLP traces"| OTEL
-    OTEL -->|"scrape /metrics :9464"| APP
+    OTEL -->|"coleta /metrics :9464"| APP
     CFG -.->|envFrom| APP
     SDB -.->|envFrom| APP
     SJWT -.->|envFrom| APP
@@ -127,7 +134,7 @@ src/
 
 | Camada | Tecnologia |
 | --- | --- |
-| Aplicação | TypeScript, Node.js 20, NestJS 11, TypeORM 0.3, Passport JWT, class-validator |
+| Aplicação | TypeScript, Node.js 20 na imagem (o CI testa em 24), NestJS 11, TypeORM 0.3, Passport JWT, class-validator |
 | Banco | PostgreSQL 16: Neon nos ambientes, `postgres:16-alpine` no desenvolvimento e nos testes |
 | Observabilidade | OpenTelemetry SDK (traces OTLP, métricas Prometheus), logs JSON com `pino` |
 | Testes | Jest, Supertest, Testcontainers |
@@ -424,7 +431,9 @@ Relatório de vulnerabilidades com os outputs brutos de `npm audit`, Trivy e Sem
 - CORS por allowlist (`CORS_ORIGINS`) e Swagger desligado em prd.
 - Webhooks com segredo comparado em tempo constante e falha fechada.
 - Contêiner não-root, com `readOnlyRootFilesystem`, sem capabilities e com `seccomp` padrão.
-- Nenhum segredo versionado: cada Secret tem um dono, e o CI acessa a AWS por OIDC
-  ([ADR-005](docs/adr/ADR-005-segredos-terraform-ssm.md)).
+- Nenhum segredo versionado: cada Secret tem um dono
+  ([ADR-005](docs/adr/ADR-005-segredos-terraform-ssm.md)). O CI desta aplicação usa só o
+  `GITHUB_TOKEN` e os secrets dos Environments `hml` e `prd`. Quem acessa a AWS, por OIDC e sem
+  chave guardada, são os repositórios de infraestrutura e o da Lambda.
 - `npm audit` e Trivy em todo push e pull request. Eles não bloqueiam o pipeline: o relatório fica
   em [SECURITY.md](SECURITY.md).
