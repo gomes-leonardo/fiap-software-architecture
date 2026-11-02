@@ -1,0 +1,1246 @@
+{
+  "info": {
+    "name": "SOAT Fase 3 — Demonstração",
+    "_postman_id": "5f0a3c1e-7d2b-4a1f-9c3e-fa5e3d000003",
+    "description": "Roteiro do vídeo da Fase 3 em requests numerados, na ordem da apresentação. Os bodies já vêm preenchidos e os ids passam de um passo para o outro sozinhos.\n\nAntes de gravar, preencha fora da câmera, em Variables, o Current value de admin_password e webhook_secret. base_url aponta para o Kong de produção.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Bloco 2 · Login por CPF (Kong → Lambda)",
+      "item": [
+        {
+          "name": "2.1 Login do João por CPF → 200 com JWT",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/cpf",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "cpf"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Kong (18080) → Lambda soat-prd-auth-cpf → Neon. Guarda o token em {{token_cliente}} e mostra o payload em Visualization.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"529.982.247-25\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const cryptoJs = require('crypto-js');",
+                  "const decode = (t) => { const p = t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(cryptoJs.enc.Base64.parse(p).toString(cryptoJs.enc.Utf8)); };",
+                  "const t = pm.response.json().access_token;",
+                  "pm.collectionVariables.set('token_cliente', t);",
+                  "const p = decode(t);",
+                  "pm.collectionVariables.set('joao_id', p.sub);",
+                  "const shown = p;",
+                  "pm.visualizer.set('<pre style=\"font-size:18px;line-height:1.5\">{{json}}</pre>', { json: JSON.stringify(shown, null, 2) });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.2 CPF com dígito errado → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/cpf",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "cpf"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Dígito verificador inválido: a Lambda recusa antes de consultar o banco.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"529.982.247-24\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.3 CPF válido sem cadastro → 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/cpf",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "cpf"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "CPF válido que não existe na base: sem token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"123.456.789-09\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bloco 3 · APIs protegidas",
+      "item": [
+        {
+          "name": "3.1 Minhas OS sem token → 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/me/service-orders",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "me",
+                "service-orders"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Quem barra é o Kong (plugin jwt): a requisição nem chega na aplicação."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.2 Minhas OS com o token do João → 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/me/service-orders",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "me",
+                "service-orders"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_cliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Só as OS do próprio João."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const shown = pm.response.json().map(o => ({ id: o.id, status: o.status, descricao: o.description }));",
+                  "pm.visualizer.set('<pre style=\"font-size:18px;line-height:1.5\">{{json}}</pre>', { json: JSON.stringify(shown, null, 2) });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.3 Meus veículos (João) → 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/me/vehicles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "me",
+                "vehicles"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_cliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Guarda o primeiro veículo do João para o bloco 8."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const v = pm.response.json();",
+                  "if (v.length) pm.collectionVariables.set('joao_vehicle_id', v[0].id);",
+                  "const shown = v.map(x => ({ placa: x.plate, modelo: `${x.brand} ${x.model}`, ano: x.year }));",
+                  "pm.visualizer.set('<pre style=\"font-size:18px;line-height:1.5\">{{json}}</pre>', { json: JSON.stringify(shown, null, 2) });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.4 Token de cliente em rota de admin → 403",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/clients",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_cliente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "O Kong aceita a assinatura; quem recusa o papel (role client) é a aplicação. Duas camadas."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bloco 3 · Jornada completa de uma OS",
+      "item": [
+        {
+          "name": "3.5 Login do admin → 200",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Login de funcionário: e-mail e senha, direto na aplicação (não passa pela Lambda). A senha vem da variável {{admin_password}}, preenchida fora da câmera.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const cryptoJs = require('crypto-js');",
+                  "const decode = (t) => { const p = t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(cryptoJs.enc.Base64.parse(p).toString(cryptoJs.enc.Utf8)); };",
+                  "const t = pm.response.json().access_token;",
+                  "pm.collectionVariables.set('token_admin', t);",
+                  "const shown = decode(t);",
+                  "pm.visualizer.set('<pre style=\"font-size:18px;line-height:1.5\">{{json}}</pre>', { json: JSON.stringify(shown, null, 2) });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.6 Cadastrar cliente novo → 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clients",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "O CPF é gerado na hora, sempre válido e diferente, para a jornada rodar quantas vezes precisar.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ana Demonstração\",\n  \"cpfCnpj\": \"{{cpf_demo}}\",\n  \"email\": \"ana.demo@email.com\",\n  \"phone\": \"(11) 98888-0001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const n = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10));",
+                  "const dv = (a) => { const s = a.reduce((acc, v, i) => acc + v * (a.length + 1 - i), 0); const r = (s * 10) % 11; return r === 10 ? 0 : r; };",
+                  "n.push(dv(n)); n.push(dv(n));",
+                  "pm.collectionVariables.set('cpf_demo', n.join(''));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "const c = pm.response.json();",
+                  "pm.collectionVariables.set('client_id', c.id);",
+                  "const shown = { id: c.id, nome: c.name, cpf: c.cpfCnpj, status: c.status };",
+                  "pm.visualizer.set('<pre style=\"font-size:18px;line-height:1.5\">{{json}}</pre>', { json: JSON.stringify(shown, null, 2) });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.7 Cadastrar veículo da cliente → 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/vehicles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "vehicles"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Placa Mercosul gerada na hora.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plate\": \"{{placa_demo}}\",\n  \"brand\": \"Fiat\",\n  \"model\": \"Pulse Drive\",\n  \"year\": 2024,\n  \"ownerClientId\": \"{{client_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const L = 'ABCDEFGHJKLMNPRSTUVWXYZ'; const d = () => Math.floor(Math.random() * 10);",
+                  "pm.collectionVariables.set('placa_demo', `DEM${d()}${L[Math.floor(Math.random() * L.length)]}${d()}${d()}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "const v = pm.response.json();",
+                  "pm.collectionVariables.set('vehicle_id', v.id);",
+                  "const shown = { id: v.id, placa: v.plate, modelo: `${v.brand} ${v.model}` };",
+                  "pm.visualizer.set('<pre style=\"font-size:18px;line-height:1.5\">{{json}}</pre>', { json: JSON.stringify(shown, null, 2) });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.8 Catálogo: escolher um serviço",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/services",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "services"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Guarda o primeiro serviço do catálogo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const s = pm.response.json()[0];",
+                  "pm.collectionVariables.set('service_id', s.id);",
+                  "const shown = { servico: s.name, preco: s.price };",
+                  "pm.visualizer.set('<pre style=\"font-size:18px;line-height:1.5\">{{json}}</pre>', { json: JSON.stringify(shown, null, 2) });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.9 Catálogo: escolher uma peça com estoque",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/parts",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "parts"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Guarda uma peça com estoque alto, para a aprovação dar baixa sem faltar."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const p = pm.response.json().filter(x => x.stockQuantity > 20)[0];",
+                  "pm.collectionVariables.set('part_id', p.id);",
+                  "const shown = { peca: p.name, estoque: p.stockQuantity };",
+                  "pm.visualizer.set('<pre style=\"font-size:18px;line-height:1.5\">{{json}}</pre>', { json: JSON.stringify(shown, null, 2) });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.10 Abrir OS com serviço e peça → 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/service-orders",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "service-orders"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "A OS já nasce com orçamento e vai para AGUARDANDO_APROVACAO.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"{{client_id}}\",\n  \"vehicleId\": \"{{vehicle_id}}\",\n  \"description\": \"Revisão dos freios e troca de pastilhas\",\n  \"services\": [\n    {\n      \"referenceId\": \"{{service_id}}\",\n      \"quantity\": 1\n    }\n  ],\n  \"parts\": [\n    {\n      \"referenceId\": \"{{part_id}}\",\n      \"quantity\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "const o = pm.response.json();",
+                  "pm.collectionVariables.set('os_id', o.id);",
+                  "pm.collectionVariables.set('budget_id', o.createdBudgetId);",
+                  "const shown = { os: o.id, status: o.status, orcamento: o.createdBudgetId };",
+                  "pm.visualizer.set('<pre style=\"font-size:18px;line-height:1.5\">{{json}}</pre>', { json: JSON.stringify(shown, null, 2) });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.11 Webhook com segredo errado → 401",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/webhooks/budgets/{{budget_id}}/approve",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhooks",
+                "budgets",
+                "{{budget_id}}",
+                "approve"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "segredo-errado",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Canal externo sem o segredo certo: recusado. Cada recusa vira métrica e alimenta o alerta do bloco 7."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.12 Cliente aprova o orçamento pelo canal externo → 200",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/webhooks/budgets/{{budget_id}}/approve",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhooks",
+                "budgets",
+                "{{budget_id}}",
+                "approve"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{webhook_secret}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Webhook com o segredo compartilhado (comparado em tempo constante). Dá baixa no estoque."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.13 OS → EM_EXECUCAO",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/service-orders/{{os_id}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "service-orders",
+                "{{os_id}}",
+                "status"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Só é aceito com o orçamento aprovado.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"EM_EXECUCAO\",\n  \"changedBy\": \"admin@oficina.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const shown = { status: pm.response.json().status };",
+                  "pm.visualizer.set('<pre style=\"font-size:18px;line-height:1.5\">{{json}}</pre>', { json: JSON.stringify(shown, null, 2) });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.14 OS → FINALIZADA",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/service-orders/{{os_id}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "service-orders",
+                "{{os_id}}",
+                "status"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"FINALIZADA\",\n  \"changedBy\": \"admin@oficina.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const shown = { status: pm.response.json().status };",
+                  "pm.visualizer.set('<pre style=\"font-size:18px;line-height:1.5\">{{json}}</pre>', { json: JSON.stringify(shown, null, 2) });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.15 OS → ENTREGUE",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/service-orders/{{os_id}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "service-orders",
+                "{{os_id}}",
+                "status"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ENTREGUE\",\n  \"changedBy\": \"admin@oficina.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const shown = { status: pm.response.json().status };",
+                  "pm.visualizer.set('<pre style=\"font-size:18px;line-height:1.5\">{{json}}</pre>', { json: JSON.stringify(shown, null, 2) });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.16 Cliente nova faz login por CPF → 200",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/cpf",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "cpf"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "A cliente que acabou de ser cadastrada já consegue entrar.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"{{cpf_demo}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('token_demo', pm.response.json().access_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.17 Cliente nova vê a OS dela → 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/me/service-orders",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "me",
+                "service-orders"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_demo}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "A OS entregue aparece no histórico dela."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const shown = pm.response.json().map(o => ({ status: o.status, descricao: o.description }));",
+                  "pm.visualizer.set('<pre style=\"font-size:18px;line-height:1.5\">{{json}}</pre>', { json: JSON.stringify(shown, null, 2) });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.18 Admin inativa a cliente → 200",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clients/{{client_id}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                "{{client_id}}",
+                "status"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"INATIVO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const shown = { status: pm.response.json().status };",
+                  "pm.visualizer.set('<pre style=\"font-size:18px;line-height:1.5\">{{json}}</pre>', { json: JSON.stringify(shown, null, 2) });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3.19 Cliente inativa tenta login → 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/cpf",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "cpf"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "Inativa perde o acesso: a Lambda só emite token para cliente ATIVO.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"{{cpf_demo}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bloco 8 · Logs e traces",
+      "item": [
+        {
+          "name": "8.1 Abrir OS do João e pegar o X-Trace-Id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/service-orders",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "service-orders"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token_admin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "A resposta traz o cabeçalho X-Trace-Id. Ele aparece em Visualization, junto com a busca pronta para o New Relic Logs.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"{{joao_id}}\",\n  \"vehicleId\": \"{{joao_vehicle_id}}\",\n  \"description\": \"Troca de óleo e filtro\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "const id = pm.response.headers.get('X-Trace-Id');",
+                  "pm.collectionVariables.set('trace_id', id);",
+                  "console.log('X-Trace-Id', id);",
+                  "const shown = { 'X-Trace-Id': id, 'busca no New Relic Logs': `trace_id:\"${id}\"` };",
+                  "pm.visualizer.set('<pre style=\"font-size:18px;line-height:1.5\">{{json}}</pre>', { json: JSON.stringify(shown, null, 2) });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:18080",
+      "type": "string"
+    },
+    {
+      "key": "admin_email",
+      "value": "admin@oficina.com",
+      "type": "string"
+    },
+    {
+      "key": "admin_password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "webhook_secret",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_cliente",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_admin",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_demo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "joao_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "joao_vehicle_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cpf_demo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "placa_demo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "client_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "vehicle_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "service_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "part_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "os_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "budget_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "trace_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

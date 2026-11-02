@@ -43,10 +43,16 @@ interface PostmanResponse {
   _postman_previewlanguage: string;
 }
 
+interface PostmanEvent {
+  listen: 'test';
+  script: { type: 'text/javascript'; exec: string[] };
+}
+
 interface PostmanItem {
   name: string;
   request: PostmanRequest;
   response: PostmanResponse[];
+  event?: PostmanEvent[];
 }
 
 interface PostmanFolder {
@@ -287,6 +293,29 @@ function buildResponses(
   });
 }
 
+/**
+ * Os dois logins guardam o token em {{token}}, que a collection inteira usa
+ * como Bearer, e mostram o payload decodificado na aba Visualize. Sem isso,
+ * cada chamada protegida depois do login pede copiar e colar o JWT a mao.
+ */
+const LOGIN_PATHS = new Set(['/auth/login', '/auth/cpf']);
+
+const STORE_TOKEN: PostmanEvent = {
+  listen: 'test',
+  script: {
+    type: 'text/javascript',
+    exec: [
+      'const body = pm.response.json();',
+      'if (body.access_token) {',
+      "  pm.collectionVariables.set('token', body.access_token);",
+      "  const part = body.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');",
+      "  const payload = JSON.parse(atob(part + '='.repeat((4 - (part.length % 4)) % 4)));",
+      '  pm.visualizer.set(\'<pre style="font-size:16px">{{json}}</pre>\', { json: JSON.stringify(payload, null, 2) });',
+      '}',
+    ],
+  },
+};
+
 function buildFolders(spec: OpenAPIObject): PostmanFolder[] {
   const byTag = new Map<string, PostmanItem[]>();
 
@@ -301,6 +330,7 @@ function buildFolders(spec: OpenAPIObject): PostmanFolder[] {
         name: operation.summary || `${method.toUpperCase()} ${path}`,
         request,
         response: buildResponses(spec, operation, request),
+        ...(method === 'post' && LOGIN_PATHS.has(path) ? { event: [STORE_TOKEN] } : {}),
       };
       const tag = operation.tags?.[0] ?? 'other';
       const items = byTag.get(tag);
