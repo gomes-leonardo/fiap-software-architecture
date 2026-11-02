@@ -122,7 +122,10 @@ const PARTS = [
   { name: 'Gas refrigerante R134a', sku: 'ARC-R134-01', unitPrice: 128.0, stockQuantity: 3 },
 ];
 
-/** Cada linha vira uma OS parada no status alvo. */
+/**
+ * Cada linha vira uma OS parada no status alvo. O veiculo `i` pertence ao
+ * cliente `i % CLIENTS.length`, e a API recusa OS com veiculo de outro cliente.
+ */
 const ORDERS: {
   client: number;
   vehicle: number;
@@ -212,7 +215,7 @@ const ORDERS: {
     target: 'RECEBIDA',
   },
   {
-    client: 2,
+    client: 0,
     vehicle: 0,
     description: 'Embreagem patinando em subida',
     services: [6],
@@ -220,7 +223,7 @@ const ORDERS: {
     target: 'PAUSADO',
   },
   {
-    client: 3,
+    client: 1,
     vehicle: 1,
     description: 'Troca de bateria e checagem eletrica',
     services: [8],
@@ -228,7 +231,7 @@ const ORDERS: {
     target: 'FINALIZADA',
   },
   {
-    client: 4,
+    client: 2,
     vehicle: 2,
     description: 'Alinhamento apos troca de pneus',
     services: [1],
@@ -236,7 +239,7 @@ const ORDERS: {
     target: 'ENTREGUE',
   },
   {
-    client: 5,
+    client: 3,
     vehicle: 3,
     description: 'Polimento — cliente recusou o orcamento',
     services: [9],
