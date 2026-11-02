@@ -8,6 +8,8 @@ vivo.
 O que dá para deixar escrito está escrito. O que só uma pessoa pode fazer — gravar,
 publicar, submeter — está isolado numa lista no fim.
 
+**Vídeo entregue da Fase 2:** [YouTube](https://www.youtube.com/watch?v=dXYspEFJsoQ)
+
 > **Todos os comandos das seções 3 e 4 foram executados de verdade**, num cluster Kind em
 > macOS arm64, em 2026-08-25. Os números medidos estão registrados. O que não foi
 > executado está marcado como tal na seção 6.
