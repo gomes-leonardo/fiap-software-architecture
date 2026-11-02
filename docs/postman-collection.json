@@ -375,6 +375,23 @@
               "body": "",
               "_postman_previewlanguage": "text"
             }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.access_token) {",
+                  "  pm.collectionVariables.set('token', body.access_token);",
+                  "  const part = body.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');",
+                  "  const payload = JSON.parse(atob(part + '='.repeat((4 - (part.length % 4)) % 4)));",
+                  "  pm.visualizer.set('<pre style=\"font-size:16px\">{{json}}</pre>', { json: JSON.stringify(payload, null, 2) });",
+                  "}"
+                ]
+              }
+            }
           ]
         },
         {
@@ -576,6 +593,23 @@
               "header": [],
               "body": "",
               "_postman_previewlanguage": "text"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.access_token) {",
+                  "  pm.collectionVariables.set('token', body.access_token);",
+                  "  const part = body.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');",
+                  "  const payload = JSON.parse(atob(part + '='.repeat((4 - (part.length % 4)) % 4)));",
+                  "  pm.visualizer.set('<pre style=\"font-size:16px\">{{json}}</pre>', { json: JSON.stringify(payload, null, 2) });",
+                  "}"
+                ]
+              }
             }
           ]
         }
