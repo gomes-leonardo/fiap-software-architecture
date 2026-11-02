@@ -45,7 +45,7 @@ Regras:
   publicação em tópicos `soat-*`.
 - **Sem kubeconfig em secret.** O deploy roda no runner self-hosted da mesma máquina do cluster e
   usa o contexto `kind-soat` local.
-- **State do Terraform é segredo.** Fica no bucket S3 `tfstate-backend-fiap-leo`, criptografado, com
+- **State do Terraform é segredo.** Fica no bucket S3 `soat-tfstate-310626828604`, criptografado, com
   lock por arquivo. O state do cluster Kind fica em disco local do runner (`~/.soat-tfstate/`).
 - **Valor de segredo nunca na linha de comando.** O pipeline passa os valores por arquivo
   temporário, apagado no fim do passo.

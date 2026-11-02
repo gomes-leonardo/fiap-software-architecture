@@ -55,7 +55,7 @@ Kubernetes no **Kind**, no Mac do projeto, e só serviços gerenciados que não 
 | Autenticação e notificação | AWS Lambda com Function URL, SNS, SSM Standard, CloudWatch Logs com retenção de 7 dias | Always Free |
 | Gateway | Kong DB-less dentro do Kind ([RFC-005](RFC-005-api-gateway.md)) | zero |
 | Monitoramento | New Relic, plano gratuito ([RFC-004](RFC-004-observabilidade.md)) | zero |
-| State do Terraform | bucket S3 `tfstate-backend-fiap-leo`, que já existia | frações de centavo |
+| State do Terraform | bucket S3 `soat-tfstate-310626828604`, versionado e sem acesso público | frações de centavo |
 
 O desenho em AWS paga continua versionado, **sem nunca ser aplicado**:
 
