@@ -412,6 +412,7 @@ As três rodam no pipeline antes do build da imagem, com gate de 80% de cobertur
 | --- | --- |
 | Spec OpenAPI versionado | [docs/swagger.json](docs/swagger.json) |
 | Collection do Postman | [docs/postman-collection.json](docs/postman-collection.json) |
+| Collection da demonstração (fluxo do vídeo, na ordem) | [docs/postman-demo-fase3.json](docs/postman-demo-fase3.json) |
 | Swagger UI local | `http://localhost:3000/api-docs` |
 | Swagger UI em hml | `http://127.0.0.1:18081/api-docs` (desligado em prd) |
 

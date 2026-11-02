@@ -27,6 +27,7 @@ CI/CD no GitHub Actions. `develop` faz o deploy em homologação (hml) e `main`,
 |---|---|
 | Swagger (OpenAPI) | https://github.com/gomes-leonardo/fiap-software-architecture/blob/main/docs/swagger.json |
 | Coleção Postman | https://github.com/gomes-leonardo/fiap-software-architecture/blob/main/docs/postman-collection.json |
+| Coleção Postman da demonstração (fluxo do vídeo) | https://github.com/gomes-leonardo/fiap-software-architecture/blob/main/docs/postman-demo-fase3.json |
 | Diagrama de componentes (visão de nuvem) | https://github.com/gomes-leonardo/fiap-software-architecture/blob/main/docs/arquitetura/componentes.md |
 | Diagrama de sequência: autenticação por CPF | https://github.com/gomes-leonardo/fiap-software-architecture/blob/main/docs/arquitetura/sequencia-autenticacao.md |
 | Diagrama de sequência: abertura de OS | https://github.com/gomes-leonardo/fiap-software-architecture/blob/main/docs/arquitetura/sequencia-abertura-os.md |
