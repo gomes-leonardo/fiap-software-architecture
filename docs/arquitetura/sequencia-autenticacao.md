@@ -54,6 +54,8 @@ sequenceDiagram
     end
 ```
 
+[Abrir o diagrama em tamanho grande](img/sequencia-autenticacao-1.svg)
+
 Três decisões que o diagrama mostra:
 
 - **Inexistente, inativo e excluído dão a mesma resposta.** Um 401 idêntico nos três casos não
@@ -111,6 +113,8 @@ sequenceDiagram
     end
 ```
 
+[Abrir o diagrama em tamanho grande](img/sequencia-autenticacao-2.svg)
+
 As duas validações são independentes de propósito. O Kong barra token forjado ou vencido antes de
 gastar a aplicação. A aplicação repete a conferência porque uma chamada de dentro do cluster não
 passa pelo Kong, e porque só ela sabe qual papel cada rota exige. O cliente nunca informa de quem
@@ -144,6 +148,8 @@ sequenceDiagram
     end
     K-->>F: resposta da aplicação
 ```
+
+[Abrir o diagrama em tamanho grande](img/sequencia-autenticacao-3.svg)
 
 Nas chamadas seguintes o plugin `jwt` casa o `iss: soat-app` com o consumer `soat-admins`. O resto
 é igual ao fluxo do cliente, com o `RolesGuard` exigindo `role: admin`. Um token de cliente numa

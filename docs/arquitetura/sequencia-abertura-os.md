@@ -79,6 +79,8 @@ sequenceDiagram
     end
 ```
 
+[Abrir o diagrama em tamanho grande](img/sequencia-abertura-os-1.svg)
+
 As respostas da aplicação voltam pelo Kong até o funcionário. O diagrama encurta essa volta para
 caber.
 
