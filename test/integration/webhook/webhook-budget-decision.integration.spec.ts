@@ -15,7 +15,12 @@ import { Test } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
 import * as request from 'supertest';
 
-import { setupTestDb, teardownTestDb, truncateAllTables } from '../../helpers/test-db.helper';
+import {
+  seedClient,
+  setupTestDb,
+  teardownTestDb,
+  truncateAllTables,
+} from '../../helpers/test-db.helper';
 import { BudgetOrmEntity } from '@infrastructure/database/typeorm/entities/budget.orm-entity';
 import { PartOrmEntity } from '@infrastructure/database/typeorm/entities/part.orm-entity';
 import { ServiceOrderOrmEntity } from '@infrastructure/database/typeorm/entities/service-order.orm-entity';
@@ -79,6 +84,7 @@ describe('Webhook budget decision (HTTP)', () => {
 
   beforeEach(async () => {
     await truncateAllTables(dataSource);
+    await seedClient(dataSource, CLIENT_ID);
   });
 
   /** OS parada em AGUARDANDO_APROVACAO, que e onde a decisao do cliente entra. */

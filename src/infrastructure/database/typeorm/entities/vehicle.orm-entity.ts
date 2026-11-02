@@ -6,9 +6,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { ClientOrmEntity } from './client.orm-entity';
 
 @Entity('vehicles')
+@Index('IDX_vehicles_owner_client_id', ['ownerClientId'])
 @Index('UQ_vehicles_plate', ['plate'], { unique: true, where: '"deleted_at" IS NULL' })
 export class VehicleOrmEntity {
   @PrimaryColumn('uuid')
@@ -28,6 +32,13 @@ export class VehicleOrmEntity {
 
   @Column({ name: 'owner_client_id', type: 'uuid' })
   ownerClientId!: string;
+
+  @ManyToOne(() => ClientOrmEntity, (client) => client.vehicles, { onDelete: 'RESTRICT' })
+  @JoinColumn({
+    name: 'owner_client_id',
+    foreignKeyConstraintName: 'FK_vehicles_owner_client_id',
+  })
+  owner?: ClientOrmEntity;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

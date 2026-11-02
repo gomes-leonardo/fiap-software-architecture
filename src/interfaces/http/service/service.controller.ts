@@ -19,10 +19,14 @@ import { UpdateServiceDto } from '@application/service/dtos/update-service.dto';
 import { ServiceResponseDto } from '@application/service/dtos/service-response.dto';
 import { ServiceRepository } from '@domain/service/service-repository.port';
 import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard';
+import { RolesGuard } from '@infrastructure/auth/roles.guard';
+import { Roles } from '@infrastructure/auth/roles.decorator';
+import { Role } from '@infrastructure/auth/role.enum';
 
 @ApiTags('services')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
 @Controller('services')
 export class ServiceController {
   constructor(

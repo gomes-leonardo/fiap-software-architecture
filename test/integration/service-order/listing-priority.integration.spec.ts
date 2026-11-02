@@ -7,7 +7,13 @@
  */
 import { randomUUID } from 'crypto';
 import { DataSource } from 'typeorm';
-import { setupTestDb, teardownTestDb, truncateAllTables } from '../../helpers/test-db.helper';
+import {
+  seedBudgetFor,
+  seedClient,
+  setupTestDb,
+  teardownTestDb,
+  truncateAllTables,
+} from '../../helpers/test-db.helper';
 import { ServiceOrderOrmEntity } from '@infrastructure/database/typeorm/entities/service-order.orm-entity';
 import { ServiceOrderTypeOrmRepository } from '@infrastructure/database/typeorm/repositories/service-order.typeorm-repository';
 import { ServiceOrder } from '@domain/service-order/service-order.entity';
@@ -65,6 +71,7 @@ describe('ServiceOrder Active Listing Integration', () => {
     createdAt: Date,
   ): Promise<ServiceOrder> {
     const so = buildWithStatus(status, description);
+    await seedBudgetFor(dataSource, so);
     await repository.save(so);
     await dataSource.getRepository(ServiceOrderOrmEntity).update(so.id, { createdAt });
     return so;
@@ -82,6 +89,7 @@ describe('ServiceOrder Active Listing Integration', () => {
 
   beforeEach(async () => {
     await truncateAllTables(dataSource);
+    await seedClient(dataSource, CLIENT);
   });
 
   it('should actually persist the seeded created_at', async () => {

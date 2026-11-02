@@ -2,6 +2,7 @@ import { RegisterVehicleUseCase } from '@application/vehicle/register-vehicle.us
 import { VehicleRepository } from '@domain/vehicle/vehicle-repository.port';
 import { ClientRepository } from '@domain/client/client-repository.port';
 import { Client } from '@domain/client/client.entity';
+import { ClientStatus } from '@domain/client/client-status.enum';
 
 describe('RegisterVehicleUseCase', () => {
   let useCase: RegisterVehicleUseCase;
@@ -32,7 +33,15 @@ describe('RegisterVehicleUseCase', () => {
       findById: jest
         .fn()
         .mockResolvedValue(
-          Client.reconstitute('client-123', 'João', '52998224725', null, null, []),
+          Client.reconstitute(
+            'client-123',
+            'João',
+            '52998224725',
+            null,
+            null,
+            ClientStatus.ATIVO,
+            [],
+          ),
         ),
       findByCpfCnpj: jest.fn(),
       findAll: jest.fn(),
@@ -51,6 +60,7 @@ describe('RegisterVehicleUseCase', () => {
     expect(result.brand).toBe('Toyota');
     expect(result.ownerClientId).toBe('client-123');
     expect(mockVehicleRepo.save).toHaveBeenCalledTimes(1);
+    expect(mockClientRepo.save).not.toHaveBeenCalled();
   });
 
   it('should reject when client does not exist', async () => {

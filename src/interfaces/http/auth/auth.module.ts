@@ -10,6 +10,7 @@ import { JwtStrategy } from '@infrastructure/auth/jwt.strategy';
 import { AdminRepository } from '@domain/admin/admin-repository.port';
 import { AdminTypeOrmRepository } from '@infrastructure/database/typeorm/repositories/admin.typeorm-repository';
 import { AdminOrmEntity } from '@infrastructure/database/typeorm/entities/admin.orm-entity';
+import { InMemoryRateLimitStore, RateLimitGuard, RateLimitStore } from '../guards/rate-limit.guard';
 
 @Module({
   imports: [
@@ -29,6 +30,12 @@ import { AdminOrmEntity } from '@infrastructure/database/typeorm/entities/admin.
       provide: AdminRepository,
       useClass: AdminTypeOrmRepository,
     },
+    {
+      // 10 tentativas de login por minuto por e-mail.
+      provide: RateLimitStore,
+      useFactory: () => new InMemoryRateLimitStore(10, 60_000),
+    },
+    RateLimitGuard,
   ],
   exports: [JwtModule],
 })

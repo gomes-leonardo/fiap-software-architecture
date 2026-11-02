@@ -194,4 +194,40 @@ describe('RateLimitGuard', () => {
       expect(result).toBe(true);
     });
   });
+
+  describe('expurgo', () => {
+    it('remove as janelas expiradas em vez de guardar toda chave para sempre', async () => {
+      for (let i = 0; i < 50; i++) {
+        await store.hit(`client-${i}`);
+      }
+      expect(store.size).toBe(50);
+
+      jest.advanceTimersByTime(WINDOW_MS + 1);
+      await store.hit('client-novo');
+
+      expect(store.size).toBe(1);
+    });
+  });
+
+  describe('login', () => {
+    function loginContext(email: string): ExecutionContext {
+      return {
+        switchToHttp: () => ({
+          getRequest: () => ({ params: {}, body: { email }, ip: '10.0.0.1' }),
+          getResponse: () => ({ setHeader: jest.fn() }),
+        }),
+      } as unknown as ExecutionContext;
+    }
+
+    it('conta por e-mail, mesmo com todas as tentativas vindo do mesmo IP', async () => {
+      for (let i = 0; i < MAX_REQUESTS; i++) {
+        await guard.canActivate(loginContext('alvo@oficina.com'));
+      }
+
+      await expect(guard.canActivate(loginContext('ALVO@oficina.com'))).rejects.toThrow(
+        HttpException,
+      );
+      await expect(guard.canActivate(loginContext('outro@oficina.com'))).resolves.toBe(true);
+    });
+  });
 });

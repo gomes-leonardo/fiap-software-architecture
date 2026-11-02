@@ -5,6 +5,8 @@ import { Client } from '@domain/client/client.entity';
 import { ClientRepository } from '@domain/client/client-repository.port';
 import { ClientOrmEntity } from '../entities/client.orm-entity';
 
+const WITH_VEHICLES = { vehicles: true } as const;
+
 @Injectable()
 export class ClientTypeOrmRepository extends ClientRepository {
   constructor(
@@ -20,19 +22,19 @@ export class ClientTypeOrmRepository extends ClientRepository {
   }
 
   async findById(id: string): Promise<Client | null> {
-    const orm = await this.ormRepo.findOne({ where: { id } });
+    const orm = await this.ormRepo.findOne({ where: { id }, relations: WITH_VEHICLES });
     if (!orm) return null;
     return this.toDomainEntity(orm);
   }
 
   async findByCpfCnpj(cpfCnpj: string): Promise<Client | null> {
-    const orm = await this.ormRepo.findOne({ where: { cpfCnpj } });
+    const orm = await this.ormRepo.findOne({ where: { cpfCnpj }, relations: WITH_VEHICLES });
     if (!orm) return null;
     return this.toDomainEntity(orm);
   }
 
   async findAll(): Promise<Client[]> {
-    const orms = await this.ormRepo.find();
+    const orms = await this.ormRepo.find({ relations: WITH_VEHICLES });
     return orms.map((orm) => this.toDomainEntity(orm));
   }
 
@@ -56,7 +58,7 @@ export class ClientTypeOrmRepository extends ClientRepository {
     orm.cpfCnpj = client.cpfCnpj.value;
     orm.email = client.email;
     orm.phone = client.phone;
-    orm.vehicleIds = [...client.vehicleIds];
+    orm.status = client.status;
     return orm;
   }
 
@@ -67,7 +69,8 @@ export class ClientTypeOrmRepository extends ClientRepository {
       orm.cpfCnpj,
       orm.email,
       orm.phone,
-      orm.vehicleIds || [],
+      orm.status,
+      (orm.vehicles ?? []).map((vehicle) => vehicle.id),
     );
   }
 }

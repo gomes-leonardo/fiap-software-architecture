@@ -6,32 +6,43 @@ describe('Admin Entity', () => {
       const admin = await Admin.create({
         name: '  Vinicius Admin  ',
         email: 'ADMIN@Oficina.com',
-        password: 'secret123',
+        password: 'Secret-Pass-123',
       });
 
       expect(admin.id).toBeDefined();
       expect(admin.name).toBe('Vinicius Admin');
       expect(admin.email).toBe('admin@oficina.com');
-      expect(admin.passwordHash).not.toBe('secret123');
+      expect(admin.passwordHash).not.toBe('Secret-Pass-123');
       expect(admin.passwordHash.length).toBeGreaterThan(0);
     });
 
     it('should reject an empty name', async () => {
       await expect(
-        Admin.create({ name: '   ', email: 'a@b.com', password: 'secret123' }),
+        Admin.create({ name: '   ', email: 'a@b.com', password: 'Secret-Pass-123' }),
       ).rejects.toThrow('name');
     });
 
     it('should reject an empty email', async () => {
       await expect(
-        Admin.create({ name: 'Admin', email: '', password: 'secret123' }),
+        Admin.create({ name: 'Admin', email: '', password: 'Secret-Pass-123' }),
       ).rejects.toThrow('email');
     });
 
-    it('should reject a password shorter than 6 characters', async () => {
+    it.each([
+      ['curta', 'Abc12345678'],
+      ['sem maiuscula', 'abcdefgh1234'],
+      ['sem minuscula', 'ABCDEFGH1234'],
+      ['sem digito', 'Abcdefghijkl'],
+    ])('recusa senha %s', async (_caso, password) => {
+      await expect(Admin.create({ name: 'Admin', email: 'a@b.com', password })).rejects.toThrow(
+        'at least 12 characters',
+      );
+    });
+
+    it('aceita senha com 12 caracteres misturando maiusculas, minusculas e digitos', async () => {
       await expect(
-        Admin.create({ name: 'Admin', email: 'a@b.com', password: '123' }),
-      ).rejects.toThrow('6 characters');
+        Admin.create({ name: 'Admin', email: 'a@b.com', password: 'Abcdefgh1234' }),
+      ).resolves.toBeDefined();
     });
   });
 
@@ -40,10 +51,10 @@ describe('Admin Entity', () => {
       const admin = await Admin.create({
         name: 'Admin',
         email: 'a@b.com',
-        password: 'secret123',
+        password: 'Secret-Pass-123',
       });
 
-      expect(await admin.verifyPassword('secret123')).toBe(true);
+      expect(await admin.verifyPassword('Secret-Pass-123')).toBe(true);
       expect(await admin.verifyPassword('wrong-password')).toBe(false);
     });
   });

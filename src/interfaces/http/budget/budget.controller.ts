@@ -19,10 +19,14 @@ import { CreateBudgetDto } from '@application/budget/dtos/create-budget.dto';
 import { BudgetResponseDto } from '@application/budget/dtos/budget-response.dto';
 import { BudgetRepository } from '@domain/budget/budget-repository.port';
 import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard';
+import { RolesGuard } from '@infrastructure/auth/roles.guard';
+import { Roles } from '@infrastructure/auth/roles.decorator';
+import { Role } from '@infrastructure/auth/role.enum';
 
 @ApiTags('budgets')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
 @Controller('budgets')
 export class BudgetController {
   constructor(

@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  NotFoundException,
-  ForbiddenException,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, NotFoundException, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { FindClientUseCase } from '@application/client/find-client.use-case';
 import { FindServiceOrderUseCase } from '@application/service-order/find-service-order.use-case';
@@ -40,23 +32,21 @@ export class ConsultController {
     description: 'CPF ou CNPJ do cliente (para verificação)',
   })
   @ApiResponse({ status: 200, type: [ServiceOrderResponseDto] })
-  @ApiResponse({ status: 403, description: 'CPF/CNPJ não corresponde ao cliente' })
-  @ApiResponse({ status: 404, description: 'Cliente não encontrado' })
+  @ApiResponse({
+    status: 404,
+    description:
+      'Cliente inexistente ou CPF/CNPJ que não corresponde — mesma resposta nos dois casos',
+  })
   async consultByClient(
     @Param('clientId') clientId: string,
     @Query('cpf') cpf: string,
   ): Promise<ServiceOrderResponseDto[]> {
+    // Cliente inexistente e CPF errado respondem igual: respostas diferentes
+    // confirmariam que um clientId existe sem que se conheca o CPF dele.
     const client = await this.findClient.findById(clientId);
-    if (!client) {
-      throw new NotFoundException('Client not found');
-    }
-
-    // Verify ownership: CPF/CNPJ must match
     const inputDigits = (cpf || '').replace(/\D/g, '');
-    const clientDigits = client.cpfCnpj.replace(/\D/g, '');
-
-    if (inputDigits !== clientDigits) {
-      throw new ForbiddenException('CPF/CNPJ does not match this client');
+    if (!client || inputDigits !== client.cpfCnpj.replace(/\D/g, '')) {
+      throw new NotFoundException('Not found');
     }
 
     return this.findServiceOrder.findByClientId(clientId);

@@ -1,5 +1,6 @@
 import { Entity, DomainException } from '@domain/shared';
 import { CpfCnpj } from './cpf-cnpj.vo';
+import { ClientStatus } from './client-status.enum';
 
 export interface CreateClientProps {
   name: string;
@@ -13,6 +14,7 @@ export class Client extends Entity {
   private _cpfCnpj: CpfCnpj;
   private _email: string | null;
   private _phone: string | null;
+  private _status: ClientStatus;
   private _vehicleIds: string[];
 
   constructor(props: CreateClientProps, id?: string) {
@@ -26,6 +28,7 @@ export class Client extends Entity {
     this._cpfCnpj = CpfCnpj.create(props.cpfCnpj);
     this._email = props.email ?? null;
     this._phone = props.phone ?? null;
+    this._status = ClientStatus.ATIVO;
     this._vehicleIds = [];
   }
 
@@ -45,18 +48,29 @@ export class Client extends Entity {
     return this._phone;
   }
 
+  get status(): ClientStatus {
+    return this._status;
+  }
+
+  get isActive(): boolean {
+    return this._status === ClientStatus.ATIVO;
+  }
+
+  /**
+   * Somente leitura: a fonte da verdade da relacao cliente-veiculo e
+   * `vehicles.owner_client_id`, carregada pelo repositorio.
+   */
   get vehicleIds(): ReadonlyArray<string> {
     return [...this._vehicleIds];
   }
 
-  addVehicle(vehicleId: string): void {
-    if (!vehicleId) {
-      throw DomainException.of('Vehicle ID is required');
-    }
-    if (this._vehicleIds.includes(vehicleId)) {
-      throw DomainException.of('Vehicle already associated with this client');
-    }
-    this._vehicleIds.push(vehicleId);
+  activate(): void {
+    this._status = ClientStatus.ATIVO;
+    this.touch();
+  }
+
+  deactivate(): void {
+    this._status = ClientStatus.INATIVO;
     this.touch();
   }
 
@@ -82,6 +96,7 @@ export class Client extends Entity {
     cpfCnpjValue: string,
     email: string | null,
     phone: string | null,
+    status: ClientStatus,
     vehicleIds: string[],
   ): Client {
     const client = Object.create(Client.prototype) as Client;
@@ -92,6 +107,7 @@ export class Client extends Entity {
     client._cpfCnpj = CpfCnpj.create(cpfCnpjValue);
     client._email = email;
     client._phone = phone;
+    client._status = status;
     client._vehicleIds = vehicleIds;
     return client;
   }

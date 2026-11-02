@@ -35,7 +35,7 @@
   "item": [
     {
       "name": "Auth",
-      "description": "Autenticação de administradores",
+      "description": "Autenticação de administradores e de clientes por CPF",
       "item": [
         {
           "name": "Registrar novo administrador (requer admin autenticado)",
@@ -59,7 +59,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+              "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -90,7 +90,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -131,7 +131,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -167,7 +167,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -177,6 +177,42 @@
               },
               "status": "Unauthorized",
               "code": 401,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "name": "Token sem papel de administrador",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/register",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Vinicius Admin\",\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
               "header": [],
               "body": "",
               "_postman_previewlanguage": "text"
@@ -208,7 +244,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+              "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -242,7 +278,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -286,7 +322,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"admin123\"\n}",
+                  "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -296,6 +332,247 @@
               },
               "status": "Unauthorized",
               "code": 401,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "name": "Tentativas demais para este e-mail",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/login",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "",
+              "code": 429,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Autenticar cliente por CPF (servido pelo API Gateway)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/cpf",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "cpf"
+              ]
+            },
+            "description": "Disponivel apenas pelo Kong (base_url do gateway, ex.: http://localhost:18080). Devolve um token de cliente para as rotas /me. Limite de 10 chamadas por minuto por IP.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"529.982.247-25\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cliente ativo encontrado: token de cliente",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/cpf",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "cpf"
+                  ]
+                },
+                "description": "Disponivel apenas pelo Kong (base_url do gateway, ex.: http://localhost:18080). Devolve um token de cliente para as rotas /me. Limite de 10 chamadas por minuto por IP.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cpf\": \"529.982.247-25\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"access_token\": \"string\",\n  \"token_type\": \"Bearer\",\n  \"expires_in\": 3600\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "CPF invalido",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/cpf",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "cpf"
+                  ]
+                },
+                "description": "Disponivel apenas pelo Kong (base_url do gateway, ex.: http://localhost:18080). Devolve um token de cliente para as rotas /me. Limite de 10 chamadas por minuto por IP.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cpf\": \"529.982.247-25\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "name": "Nenhum cliente ativo com este CPF",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/cpf",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "cpf"
+                  ]
+                },
+                "description": "Disponivel apenas pelo Kong (base_url do gateway, ex.: http://localhost:18080). Devolve um token de cliente para as rotas /me. Limite de 10 chamadas por minuto por IP.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cpf\": \"529.982.247-25\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "name": "Limite de chamadas do gateway excedido",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/cpf",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "cpf"
+                  ]
+                },
+                "description": "Disponivel apenas pelo Kong (base_url do gateway, ex.: http://localhost:18080). Devolve um token de cliente para as rotas /me. Limite de 10 chamadas por minuto por IP.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cpf\": \"529.982.247-25\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "",
+              "code": 429,
               "header": [],
               "body": "",
               "_postman_previewlanguage": "text"
@@ -363,7 +640,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "[\n  {\n    \"id\": \"string\",\n    \"name\": \"string\",\n    \"cpfCnpj\": \"string\",\n    \"email\": {},\n    \"phone\": {},\n    \"vehicleIds\": [\n      \"string\"\n    ]\n  }\n]",
+              "body": "[\n  {\n    \"id\": \"string\",\n    \"name\": \"string\",\n    \"cpfCnpj\": \"string\",\n    \"email\": {},\n    \"phone\": {},\n    \"status\": \"ATIVO\",\n    \"vehicleIds\": [\n      \"string\"\n    ]\n  }\n]",
               "_postman_previewlanguage": "json"
             }
           ]
@@ -435,7 +712,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"status\": \"ATIVO\",\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
               "_postman_previewlanguage": "json"
             },
             {
@@ -528,7 +805,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"status\": \"ATIVO\",\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
               "_postman_previewlanguage": "json"
             },
             {
@@ -642,7 +919,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"status\": \"ATIVO\",\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
               "_postman_previewlanguage": "json"
             },
             {
@@ -760,6 +1037,140 @@
                       "value": "00000000-0000-0000-0000-000000000000"
                     }
                   ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Ativar ou inativar cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clients/:id/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000"
+                }
+              ]
+            },
+            "description": "Cliente INATIVO nao obtem token na autenticacao por CPF.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"INATIVO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/clients/:id/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "clients",
+                    ":id",
+                    "status"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "description": "Cliente INATIVO nao obtem token na autenticacao por CPF.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"INATIVO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"string\",\n  \"name\": \"string\",\n  \"cpfCnpj\": \"string\",\n  \"email\": {},\n  \"phone\": {},\n  \"status\": \"ATIVO\",\n  \"vehicleIds\": [\n    \"string\"\n  ]\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Cliente não encontrado",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/clients/:id/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "clients",
+                    ":id",
+                    "status"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "00000000-0000-0000-0000-000000000000"
+                    }
+                  ]
+                },
+                "description": "Cliente INATIVO nao obtem token na autenticacao por CPF.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"INATIVO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 }
               },
               "status": "Not Found",
@@ -2897,47 +3308,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "name": "CPF/CNPJ não corresponde ao cliente",
-              "originalRequest": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{base_url}}/consult/:clientId?cpf=string",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "consult",
-                    ":clientId"
-                  ],
-                  "variable": [
-                    {
-                      "key": "clientId",
-                      "value": "00000000-0000-0000-0000-000000000000"
-                    }
-                  ],
-                  "query": [
-                    {
-                      "key": "cpf",
-                      "value": "string",
-                      "description": "CPF ou CNPJ do cliente (para verificação)",
-                      "disabled": false
-                    }
-                  ]
-                },
-                "description": "Endpoint público para o cliente acompanhar o status das suas OS. Requer clientId na URL e CPF/CNPJ como query parameter para verificação de identidade.",
-                "auth": {
-                  "type": "noauth"
-                }
-              },
-              "status": "Forbidden",
-              "code": 403,
-              "header": [],
-              "body": "",
-              "_postman_previewlanguage": "text"
-            },
-            {
-              "name": "Cliente não encontrado",
+              "name": "Cliente inexistente ou CPF/CNPJ que não corresponde — mesma resposta nos dois casos",
               "originalRequest": {
                 "method": "GET",
                 "header": [],
@@ -3711,6 +4082,148 @@
               ],
               "body": "{\n  \"status\": \"error\",\n  \"database\": \"disconnected\"\n}",
               "_postman_previewlanguage": "json"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "me",
+      "description": "Dados do cliente autenticado por CPF (token de cliente)",
+      "item": [
+        {
+          "name": "Ordens de servico do cliente autenticado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/me/service-orders",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "me",
+                "service-orders"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/me/service-orders",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "me",
+                    "service-orders"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"string\",\n    \"clientId\": \"string\",\n    \"vehicleId\": {},\n    \"description\": \"string\",\n    \"status\": \"RECEBIDA\",\n    \"budgetId\": {},\n    \"statusHistory\": []\n  }\n]",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Token sem papel de cliente, ou cliente inativo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/me/service-orders",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "me",
+                    "service-orders"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Veiculos do cliente autenticado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/me/vehicles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "me",
+                "vehicles"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "HTTP 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/me/vehicles",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "me",
+                    "vehicles"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"string\",\n    \"plate\": \"string\",\n    \"brand\": \"string\",\n    \"model\": \"string\",\n    \"year\": 0,\n    \"ownerClientId\": \"string\"\n  }\n]",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "Token sem papel de cliente, ou cliente inativo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/me/vehicles",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "me",
+                    "vehicles"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
             }
           ]
         }

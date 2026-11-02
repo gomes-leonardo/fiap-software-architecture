@@ -16,7 +16,7 @@ import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConne
 
 import { setupTestDb, teardownTestDb } from '../helpers/test-db.helper';
 
-const SEEDED_ADMIN = { email: 'admin@oficina.com', password: 'admin123' };
+const SEEDED_ADMIN = { email: 'admin@oficina.com', password: 'Admin@Oficina2026' };
 const NEW_ADMIN = { name: 'Segundo Admin', email: 'segundo@oficina.com', password: 'senha-nova' };
 
 describe('App (e2e)', () => {

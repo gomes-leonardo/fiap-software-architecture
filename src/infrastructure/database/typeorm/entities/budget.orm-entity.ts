@@ -1,12 +1,30 @@
-import { Entity, Column, PrimaryColumn, CreateDateColumn, DeleteDateColumn } from 'typeorm';
+import {
+  Entity,
+  Index,
+  Column,
+  PrimaryColumn,
+  CreateDateColumn,
+  DeleteDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { ServiceOrderOrmEntity } from './service-order.orm-entity';
 
 @Entity('budgets')
+@Index('IDX_budgets_service_order_id', ['serviceOrderId'])
 export class BudgetOrmEntity {
   @PrimaryColumn('uuid')
   id!: string;
 
   @Column({ name: 'service_order_id', type: 'uuid' })
   serviceOrderId!: string;
+
+  @ManyToOne(() => ServiceOrderOrmEntity, { onDelete: 'RESTRICT' })
+  @JoinColumn({
+    name: 'service_order_id',
+    foreignKeyConstraintName: 'FK_budgets_service_order_id',
+  })
+  serviceOrder?: ServiceOrderOrmEntity;
 
   @Column({ type: 'jsonb' })
   lines!: Array<{

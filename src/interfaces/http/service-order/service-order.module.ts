@@ -14,6 +14,7 @@ import { BudgetRepository } from '@domain/budget/budget-repository.port';
 import { BudgetTypeOrmRepository } from '@infrastructure/database/typeorm/repositories/budget.typeorm-repository';
 import { BudgetLineResolver } from '@application/budget/budget-line-resolver';
 import { ClientModule } from '../client/client.module';
+import { VehicleModule } from '../vehicle/vehicle.module';
 import { PartModule } from '../part/part.module';
 import { ServiceModule } from '../service/service.module';
 
@@ -21,6 +22,7 @@ import { ServiceModule } from '../service/service.module';
   imports: [
     TypeOrmModule.forFeature([ServiceOrderOrmEntity, BudgetOrmEntity]),
     ClientModule,
+    VehicleModule,
     PartModule,
     ServiceModule,
   ],

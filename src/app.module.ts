@@ -13,7 +13,9 @@ import { BudgetModule } from '@interfaces/http/budget/budget.module';
 import { ConsultModule } from '@interfaces/http/consult/consult.module';
 import { HealthModule } from '@interfaces/http/health/health.module';
 import { WebhookModule } from '@interfaces/http/webhook/webhook.module';
-import { DomainExceptionFilter } from '@interfaces/http/filters/domain-exception.filter';
+import { MeModule } from '@interfaces/http/me/me.module';
+import { GlobalExceptionFilter } from '@interfaces/http/filters/global-exception.filter';
+import { ObservabilityModule } from '@infrastructure/observability/observability.module';
 
 @Module({
   imports: [
@@ -29,11 +31,13 @@ import { DomainExceptionFilter } from '@interfaces/http/filters/domain-exception
     ConsultModule,
     HealthModule,
     WebhookModule,
+    MeModule,
+    ObservabilityModule,
   ],
   providers: [
     {
       provide: APP_FILTER,
-      useClass: DomainExceptionFilter,
+      useClass: GlobalExceptionFilter,
     },
   ],
 })

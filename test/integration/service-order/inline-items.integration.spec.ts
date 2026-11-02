@@ -9,6 +9,8 @@
  * que aconteceu.
  */
 import { DataSource } from 'typeorm';
+import { VehicleTypeOrmRepository } from '@infrastructure/database/typeorm/repositories/vehicle.typeorm-repository';
+import { VehicleOrmEntity } from '@infrastructure/database/typeorm/entities/vehicle.orm-entity';
 import { setupTestDb, teardownTestDb, truncateAllTables } from '../../helpers/test-db.helper';
 
 import { ClientOrmEntity } from '@infrastructure/database/typeorm/entities/client.orm-entity';
@@ -55,7 +57,13 @@ describe('Service order with inline items (integration)', () => {
     const budgetRepo = new BudgetTypeOrmRepository(dataSource.getRepository(BudgetOrmEntity));
     const resolver = new BudgetLineResolver(serviceRepo, partRepo);
 
-    createServiceOrder = new CreateServiceOrderUseCase(soRepo, clientRepo, budgetRepo, resolver);
+    createServiceOrder = new CreateServiceOrderUseCase(
+      soRepo,
+      clientRepo,
+      new VehicleTypeOrmRepository(dataSource.getRepository(VehicleOrmEntity)),
+      budgetRepo,
+      resolver,
+    );
     approveBudget = new ApproveBudgetUseCase(budgetRepo, soRepo, partRepo);
   }, 60000);
 

@@ -17,19 +17,19 @@ seja reproduzível e revisável.
 
 | Regra | Valor | Motivo |
 |-------|-------|--------|
-| Required status checks | `Lint`, `Typecheck`, `Unit Tests`, `Integration Tests`, `Smoke Tests`, `Build Docker Image` | Impede merge sem CI verde |
+| Required status checks | `Lint`, `Typecheck`, `Unit Tests`, `Integration Tests`, `Smoke Tests`, `Build Docker Image`, `Render dos manifestos` | Impede merge sem CI verde |
 | Require branches to be up to date (`strict`) | `true` | Evita merge semântico quebrado: a branch precisa estar rebaseada na `main` antes do merge |
-| Required pull request reviews | 1 aprovação, `dismiss_stale_reviews: true` | Fecha o push direto na `main`; aprovação some se novos commits chegarem |
+| Required pull request reviews | 0 aprovações, PR obrigatório | Fecha o push direto na `main`. Com `enforce_admins` e um dono só, exigir aprovação travaria todo merge: o GitHub não deixa o autor aprovar o próprio PR |
 | Required conversation resolution | `true` | Nenhum comentário de review fica pendente |
 | Allow force pushes | `false` | Preserva o histórico da `main` |
 | Allow deletions | `false` | Ninguém apaga a `main` |
-| Enforce admins | `false` | O owner mantém uma saída de emergência; suba para `true` se quiser travar todo mundo |
+| Enforce admins | `true` | Ninguém, nem o owner, faz merge sem PR e CI verde |
 
 ### Sobre os nomes dos status checks
 
 O GitHub casa os required status checks pelo **nome de exibição do job** (o campo `name:`
 em `.github/workflows/ci-cd.yml`), não pelo id do job. Por isso a lista é
-`Lint` / `Typecheck` / `Unit Tests` / `Integration Tests` / `Smoke Tests` / `Build Docker Image`,
+`Lint` / `Typecheck` / `Unit Tests` / `Integration Tests` / `Smoke Tests` / `Build Docker Image` / `Render dos manifestos`,
 e não `lint` / `typecheck` / `test-unit` / `test-integration` / `test-smoke` / `build`.
 
 **Se algum `name:` do `ci-cd.yml` mudar, esta lista precisa mudar junto** — um check exigido
@@ -52,13 +52,13 @@ cat > /tmp/protection.json <<'EOF'
 {
   "required_status_checks": {
     "strict": true,
-    "contexts": ["Lint", "Typecheck", "Unit Tests", "Integration Tests", "Smoke Tests", "Build Docker Image"]
+    "contexts": ["Lint", "Typecheck", "Unit Tests", "Integration Tests", "Smoke Tests", "Build Docker Image", "Render dos manifestos"]
   },
-  "enforce_admins": false,
+  "enforce_admins": true,
   "required_pull_request_reviews": {
     "dismiss_stale_reviews": true,
     "require_code_owner_reviews": false,
-    "required_approving_review_count": 1
+    "required_approving_review_count": 0
   },
   "restrictions": null,
   "allow_force_pushes": false,
@@ -87,9 +87,9 @@ gh api repos/gomes-leonardo/fiap-software-architecture/branches/main/protection 
 **Settings → Branches → Add branch protection rule**
 
 1. Branch name pattern: `main`
-2. ☑ Require a pull request before merging → Required approvals: **1** → ☑ Dismiss stale pull request approvals when new commits are pushed
+2. ☑ Require a pull request before merging → Required approvals: **0**
 3. ☑ Require status checks to pass before merging → ☑ Require branches to be up to date before merging
-   → buscar e marcar: `Lint`, `Typecheck`, `Unit Tests`, `Integration Tests`, `Smoke Tests`, `Build Docker Image`
+   → buscar e marcar: `Lint`, `Typecheck`, `Unit Tests`, `Integration Tests`, `Smoke Tests`, `Build Docker Image`, `Render dos manifestos`
 4. ☑ Require conversation resolution before merging
 5. Deixar **desmarcados**: Allow force pushes, Allow deletions
 

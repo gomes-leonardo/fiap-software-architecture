@@ -149,3 +149,51 @@ export async function truncateAllTables(ds: DataSource): Promise<void> {
 export function getTestDataSource(): DataSource {
   return dataSource;
 }
+
+/**
+ * As chaves estrangeiras exigem que o cliente referenciado exista. Testes que
+ * so precisam de "algum cliente" com um id fixo semeiam a linha por aqui, sem
+ * passar pelo dominio.
+ */
+export async function seedClient(ds: DataSource, id: string): Promise<void> {
+  const cpf = String(Math.floor(Math.random() * 1e11)).padStart(11, '0');
+  await ds.query(`INSERT INTO "clients" ("id", "name", "cpf_cnpj") VALUES ($1, 'Cliente', $2)`, [
+    id,
+    cpf,
+  ]);
+}
+
+export async function seedServiceOrder(
+  ds: DataSource,
+  id: string,
+  clientId: string,
+): Promise<void> {
+  await seedClient(ds, clientId);
+  await ds.query(
+    `INSERT INTO "service_orders" ("id", "client_id", "description", "status")
+     VALUES ($1, $2, 'OS semeada', 'RECEBIDA')`,
+    [id, clientId],
+  );
+}
+
+/**
+ * OS e orcamento apontam um para o outro. Para gravar uma OS que ja carrega
+ * `budgetId`, a linha da OS precisa existir antes do orcamento, e o orcamento
+ * antes de a OS apontar para ele. O `save()` seguinte atualiza a linha.
+ */
+export async function seedBudgetFor(
+  ds: DataSource,
+  order: { id: string; clientId: string; budgetId: string | null },
+): Promise<void> {
+  if (!order.budgetId) return;
+  await ds.query(
+    `INSERT INTO "service_orders" ("id", "client_id", "description", "status")
+     VALUES ($1, $2, 'OS semeada', 'RECEBIDA') ON CONFLICT ("id") DO NOTHING`,
+    [order.id, order.clientId],
+  );
+  await ds.query(
+    `INSERT INTO "budgets" ("id", "service_order_id", "lines", "status", "version", "total", "frozen_at")
+     VALUES ($1, $2, '[]', 'APPROVED', 1, 0, now())`,
+    [order.budgetId, order.id],
+  );
+}

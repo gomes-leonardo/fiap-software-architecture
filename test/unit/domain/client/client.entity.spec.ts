@@ -1,4 +1,5 @@
 import { Client } from '@domain/client/client.entity';
+import { ClientStatus } from '@domain/client/client-status.enum';
 
 describe('Client Entity', () => {
   const validProps = {
@@ -42,22 +43,20 @@ describe('Client Entity', () => {
     expect(client.name).toBe('João');
   });
 
-  describe('addVehicle', () => {
-    it('should add a vehicle id', () => {
+  describe('status', () => {
+    it('should start ATIVO', () => {
       const client = new Client(validProps);
-      client.addVehicle('vehicle-1');
-      expect(client.vehicleIds).toEqual(['vehicle-1']);
+      expect(client.status).toBe(ClientStatus.ATIVO);
+      expect(client.isActive).toBe(true);
     });
 
-    it('should throw when adding a duplicate vehicle', () => {
+    it('should deactivate and activate again', () => {
       const client = new Client(validProps);
-      client.addVehicle('vehicle-1');
-      expect(() => client.addVehicle('vehicle-1')).toThrow('Vehicle already associated');
-    });
-
-    it('should throw when adding empty vehicle id', () => {
-      const client = new Client(validProps);
-      expect(() => client.addVehicle('')).toThrow('Vehicle ID is required');
+      client.deactivate();
+      expect(client.status).toBe(ClientStatus.INATIVO);
+      expect(client.isActive).toBe(false);
+      client.activate();
+      expect(client.status).toBe(ClientStatus.ATIVO);
     });
   });
 
@@ -89,11 +88,13 @@ describe('Client Entity', () => {
         '52998224725',
         'joao@email.com',
         '(11) 99999-0000',
+        ClientStatus.INATIVO,
         ['v1', 'v2'],
       );
       expect(client.id).toBe('existing-id');
       expect(client.name).toBe('João');
       expect(client.cpfCnpj.value).toBe('52998224725');
+      expect(client.status).toBe(ClientStatus.INATIVO);
       expect(client.vehicleIds).toEqual(['v1', 'v2']);
     });
   });

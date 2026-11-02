@@ -1,33 +1,65 @@
 /**
- * Integration Test — Public Consult Endpoint
+ * Consulta publica de OS, pelo HTTP e contra Postgres real.
  *
- * Verifies that the public consult logic enforces clientId + CPF/CNPJ ownership.
- * Tests at the repository/use-case level (no HTTP server needed).
+ * O ponto central e a resposta de recusa: cliente inexistente e CPF que nao
+ * corresponde precisam ser indistinguiveis, senao a diferenca confirma que um
+ * clientId existe sem que se conheca o CPF dele.
  */
+import { INestApplication } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
+import * as request from 'supertest';
 import { setupTestDb, teardownTestDb, truncateAllTables } from '../../helpers/test-db.helper';
 import { ClientOrmEntity } from '@infrastructure/database/typeorm/entities/client.orm-entity';
 import { ServiceOrderOrmEntity } from '@infrastructure/database/typeorm/entities/service-order.orm-entity';
 import { ClientTypeOrmRepository } from '@infrastructure/database/typeorm/repositories/client.typeorm-repository';
 import { ServiceOrderTypeOrmRepository } from '@infrastructure/database/typeorm/repositories/service-order.typeorm-repository';
+import { ClientRepository } from '@domain/client/client-repository.port';
+import { ServiceOrderRepository } from '@domain/service-order/service-order-repository.port';
 import { Client } from '@domain/client/client.entity';
 import { ServiceOrder } from '@domain/service-order/service-order.entity';
+import { FindClientUseCase } from '@application/client/find-client.use-case';
+import { FindServiceOrderUseCase } from '@application/service-order/find-service-order.use-case';
+import { ConsultController } from '@interfaces/http/consult/consult.controller';
+import {
+  InMemoryRateLimitStore,
+  RateLimitGuard,
+  RateLimitStore,
+} from '@interfaces/http/guards/rate-limit.guard';
 
-describe('Public Consult Endpoint Integration', () => {
+const CPF_A = '529.982.247-25';
+const CPF_B = '111.444.777-35';
+const UNKNOWN_CLIENT = '00000000-0000-4000-8000-000000000000';
+
+describe('Consulta publica de OS (HTTP)', () => {
   let dataSource: DataSource;
-  let clientRepo: ClientTypeOrmRepository;
-  let soRepo: ServiceOrderTypeOrmRepository;
-
-  const CPF_A = '52998224725'; // valid CPF
-  const CPF_B = '11144477735'; // valid CPF
+  let app: INestApplication;
+  let clients: ClientTypeOrmRepository;
+  let orders: ServiceOrderTypeOrmRepository;
 
   beforeAll(async () => {
     dataSource = await setupTestDb();
-    clientRepo = new ClientTypeOrmRepository(dataSource.getRepository(ClientOrmEntity));
-    soRepo = new ServiceOrderTypeOrmRepository(dataSource.getRepository(ServiceOrderOrmEntity));
+    clients = new ClientTypeOrmRepository(dataSource.getRepository(ClientOrmEntity));
+    orders = new ServiceOrderTypeOrmRepository(dataSource.getRepository(ServiceOrderOrmEntity));
+
+    const moduleRef = await Test.createTestingModule({
+      controllers: [ConsultController],
+      providers: [
+        FindClientUseCase,
+        FindServiceOrderUseCase,
+        RateLimitGuard,
+        { provide: RateLimitStore, useValue: new InMemoryRateLimitStore(1000, 60_000) },
+        { provide: ClientRepository, useValue: clients },
+        { provide: ServiceOrderRepository, useValue: orders },
+      ],
+    }).compile();
+
+    app = moduleRef.createNestApplication();
+    await app.init();
   }, 60000);
 
   afterAll(async () => {
+    await app.close();
     await teardownTestDb();
   });
 
@@ -35,53 +67,39 @@ describe('Public Consult Endpoint Integration', () => {
     await truncateAllTables(dataSource);
   });
 
-  it('should return OS for the correct client when CPF matches', async () => {
-    // Arrange — seed client-A + OS-A
-    const clientA = new Client({ name: 'Cliente A', cpfCnpj: CPF_A });
-    await clientRepo.save(clientA);
+  async function seedClientWithOrder(
+    cpf: string,
+  ): Promise<{ client: Client; order: ServiceOrder }> {
+    const client = new Client({ name: 'Cliente', cpfCnpj: cpf });
+    await clients.save(client);
+    const order = new ServiceOrder({ clientId: client.id, description: 'Revisão' });
+    await orders.save(order);
+    return { client, order };
+  }
 
-    const osA = new ServiceOrder({ clientId: clientA.id, description: 'OS do cliente A' });
-    await soRepo.save(osA);
+  it('devolve as OS do cliente quando o CPF corresponde', async () => {
+    const { client, order } = await seedClientWithOrder(CPF_A);
 
-    // Act — simulate consult: find client, verify CPF, fetch OS
-    const foundClient = await clientRepo.findById(clientA.id);
-    expect(foundClient).not.toBeNull();
+    const response = await request(app.getHttpServer())
+      .get(`/consult/${client.id}`)
+      .query({ cpf: CPF_A })
+      .expect(200);
 
-    const inputDigits = CPF_A.replace(/\D/g, '');
-    const clientDigits = foundClient!.cpfCnpj.value.replace(/\D/g, '');
-    expect(inputDigits).toBe(clientDigits); // CPF matches
-
-    const orders = await soRepo.findByClientId(clientA.id);
-
-    // Assert — response contains OS-A
-    expect(orders).toHaveLength(1);
-    expect(orders[0].id).toBe(osA.id);
-    expect(orders[0].description).toBe('OS do cliente A');
+    expect(response.body.map((so: { id: string }) => so.id)).toEqual([order.id]);
   });
 
-  it('should return 403 when CPF does not match the client', async () => {
-    // Arrange — seed client-A (CPF-A) and client-B (CPF-B)
-    const clientA = new Client({ name: 'Cliente A', cpfCnpj: CPF_A });
-    const clientB = new Client({ name: 'Cliente B', cpfCnpj: CPF_B });
-    await clientRepo.save(clientA);
-    await clientRepo.save(clientB);
+  it('responde igual para CPF errado e para cliente inexistente', async () => {
+    const { client } = await seedClientWithOrder(CPF_A);
 
-    // Act — try to consult client-A using CPF-B
-    const foundClient = await clientRepo.findById(clientA.id);
-    expect(foundClient).not.toBeNull();
+    const wrongCpf = await request(app.getHttpServer())
+      .get(`/consult/${client.id}`)
+      .query({ cpf: CPF_B });
+    const unknownClient = await request(app.getHttpServer())
+      .get(`/consult/${UNKNOWN_CLIENT}`)
+      .query({ cpf: CPF_B });
 
-    const inputDigits = CPF_B.replace(/\D/g, '');
-    const clientDigits = foundClient!.cpfCnpj.value.replace(/\D/g, '');
-
-    // Assert — CPF does NOT match → would be 403 Forbidden
-    expect(inputDigits).not.toBe(clientDigits);
-  });
-
-  it('should return 404 when client does not exist', async () => {
-    // Act — try to find a non-existent client
-    const foundClient = await clientRepo.findById('00000000-0000-0000-0000-000000000000');
-
-    // Assert — client not found → would be 404
-    expect(foundClient).toBeNull();
+    expect(wrongCpf.status).toBe(404);
+    expect(unknownClient.status).toBe(404);
+    expect(wrongCpf.body).toEqual(unknownClient.body);
   });
 });

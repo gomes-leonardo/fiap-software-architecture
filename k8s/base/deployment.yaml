@@ -1,0 +1,142 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soat-app
+  labels:
+    app.kubernetes.io/name: soat-app
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: soat-tech-challenge
+spec:
+  # Sem `replicas`: quem manda no numero de pods e o HPA de cada overlay. Um
+  # valor aqui seria reaplicado a cada deploy e brigaria com o autoscaler.
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: soat-app
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # maxUnavailable 0: a API nunca fica com menos replicas prontas do que o
+      # desejado durante um deploy. Custa um pod extra de recurso no rollout.
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: soat-app
+        app.kubernetes.io/component: api
+        app.kubernetes.io/part-of: soat-tech-challenge
+      # O otel-gateway raspa o /metrics dos pods com esta anotacao.
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9464'
+    spec:
+      securityContext:
+        # uid 1001 = usuario `nestjs` criado no Dockerfile. runAsNonRoot faz o
+        # kubelet recusar o pod se a imagem for trocada por uma que roda como
+        # root — a garantia deixa de depender so do Dockerfile.
+        runAsUser: 1001
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          # `preferred`, nao `required`: em cluster de node unico (kind,
+          # minikube) a regra obrigatoria deixaria a segunda replica Pending
+          # para sempre. Em cluster multi-node o scheduler espalha.
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: soat-app
+      containers:
+        - name: app
+          # Nome logico: o pipeline troca pela imagem do commit no GHCR
+          # (ghcr.io/<repo>:sha-<curto>) via `images:` do kustomize. Uma tag por
+          # commit faz o IfNotPresent puxar sempre a versao nova.
+          image: soat-tech-challenge
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+            - name: metrics
+              containerPort: 9464
+          envFrom:
+            - configMapRef:
+                name: soat-app-config
+            - secretRef:
+                name: soat-db
+            - secretRef:
+                name: soat-jwt
+            - secretRef:
+                name: soat-app-secret
+          resources:
+            # Espelha o docker-compose (reserva 0.25 CPU/256Mi, teto 1 CPU/512Mi),
+            # que e o unico numero ja exercitado com esta app. 256Mi cobre o
+            # heap de um processo Node com o Nest carregado e o pool do TypeORM;
+            # o teto de 512Mi da folga para picos sem virar OOMKill silencioso.
+            #
+            # A request de CPU nao e opcional aqui: o HPA calcula utilizacao
+            # como uso/request. Sem `requests.cpu` a metrica fica <unknown> e o
+            # autoscaling nunca dispara. Com 250m, o alvo de 70% significa
+            # escalar quando a media passar de ~175m por pod.
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: '1'
+              memory: 512Mi
+          # O startupProbe da ate 150s para o boot (conexao com o banco, que no
+          # Neon pode estar suspenso e leva alguns segundos para acordar) sem
+          # que a liveness comece a contar.
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+          # GET /health faz um `SELECT 1` e responde 503 se o banco nao
+          # responder. Na readiness isso e exatamente o comportamento desejado:
+          # pod sem banco sai do Service e para de receber trafego.
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+            successThreshold: 1
+          # Mesma rota na liveness, mas com tolerancia de ~2 minutos
+          # (6 x 20s). O trade-off e consciente: como /health depende do banco,
+          # uma queda prolongada do Postgres reinicia os pods do app, o que nao
+          # conserta nada. A janela larga evita restart em blip de rede; se o
+          # banco cair de verdade, a readiness ja tirou todo mundo do
+          # balanceamento antes. A alternativa — liveness em tcpSocket, sem
+          # tocar no banco — foi descartada por nao detectar event loop travado.
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ['ALL']
+            # A app so le do disco (dist/ e node_modules). O unico caminho
+            # gravavel e /tmp, montado como emptyDir abaixo.
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      # O tini encaminha o SIGTERM e o Nest fecha servidor HTTP e pool do
+      # TypeORM (enableShutdownHooks em main.ts). 30s cobre o dreno das
+      # requisicoes em voo.
+      terminationGracePeriodSeconds: 30

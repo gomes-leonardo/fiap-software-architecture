@@ -6,7 +6,13 @@
  */
 import { randomUUID } from 'crypto';
 import { DataSource } from 'typeorm';
-import { setupTestDb, teardownTestDb, truncateAllTables } from '../../helpers/test-db.helper';
+import {
+  seedBudgetFor,
+  seedClient,
+  setupTestDb,
+  teardownTestDb,
+  truncateAllTables,
+} from '../../helpers/test-db.helper';
 import { ServiceOrderOrmEntity } from '@infrastructure/database/typeorm/entities/service-order.orm-entity';
 import { ServiceOrderTypeOrmRepository } from '@infrastructure/database/typeorm/repositories/service-order.typeorm-repository';
 import { ServiceOrder } from '@domain/service-order/service-order.entity';
@@ -32,6 +38,8 @@ describe('ServiceOrder Create & Transition Integration', () => {
 
   beforeEach(async () => {
     await truncateAllTables(dataSource);
+    await seedClient(dataSource, CLIENT_A);
+    await seedClient(dataSource, CLIENT_B);
   });
 
   it('should persist a new service order with initial status', async () => {
@@ -61,6 +69,7 @@ describe('ServiceOrder Create & Transition Integration', () => {
     so.setBudget(fakeBudgetId);
     so.changeStatus(ServiceOrderStatus.EM_EXECUCAO, 'admin-1');
 
+    await seedBudgetFor(dataSource, so);
     await repository.save(so);
     const found = await repository.findById(so.id);
 

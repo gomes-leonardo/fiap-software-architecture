@@ -1,16 +1,20 @@
 import { DataSource } from 'typeorm';
+import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { config } from 'dotenv';
+import { getTypeOrmConfig } from './typeorm.config';
+import { ENTITIES } from '../entities';
 
 config();
 
+/**
+ * DataSource da CLI do TypeORM (`npm run migration:*`). Parte da mesma
+ * configuracao da aplicacao, para herdar SSL e credenciais, e aponta para o
+ * host direto quando DB_MIGRATION_HOST existe, como o Job de migration.
+ */
 export default new DataSource({
-  type: 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
-  username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASS || 'postgres',
-  database: process.env.DB_NAME || 'soat_repair_shop',
-  entities: ['src/infrastructure/database/typeorm/entities/*.ts'],
-  migrations: ['src/infrastructure/database/typeorm/migrations/*.ts'],
+  ...(getTypeOrmConfig() as PostgresConnectionOptions),
+  host: process.env.DB_MIGRATION_HOST || process.env.DB_HOST || 'localhost',
+  entities: ENTITIES,
   synchronize: false,
+  migrationsRun: false,
 });

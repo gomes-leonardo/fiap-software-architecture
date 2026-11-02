@@ -1,0 +1,34 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Um job por fluxo de execucao, e so um ativo por vez.
+#
+# Os dois enderecos abaixo podem apontar para o MESMO processo: no Docker
+# Desktop o `host.docker.internal` alcanca uma porta do host mesmo publicada
+# apenas em loopback, entao `host.docker.internal:9464` chega de volta no
+# container do app. Medido: os dois targets `up`, o mesmo contador com o mesmo
+# valor nos dois, e `sum(rate(...))` sem escopo de `instance` dando exatamente
+# o dobro. Publicar a 9464 so em 127.0.0.1 resolve a exposicao na rede, e nao
+# resolve isto.
+#
+# Dai o job do fluxo local nascer comentado: quem escolhe e o operador, e so um
+# dos dois descreve a realidade em cada momento.
+scrape_configs:
+  # Fluxo `docker compose up -d`: o app roda em container, na soat-network.
+  - job_name: soat-app-compose
+    static_configs:
+      - targets:
+          - app:9464
+
+  # Fluxo `npm run start:dev`: o app roda na maquina e o Prometheus precisa sair
+  # do container para alcanca-lo. Descomente este bloco E comente o de cima.
+  # - job_name: soat-app-host
+  #   static_configs:
+  #     - targets:
+  #         - host.docker.internal:9464
+
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - localhost:9090

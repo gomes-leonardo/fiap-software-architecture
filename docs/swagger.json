@@ -31,6 +31,9 @@
           },
           "401": {
             "description": "Token ausente ou inválido"
+          },
+          "403": {
+            "description": "Token sem papel de administrador"
           }
         },
         "security": [
@@ -71,6 +74,9 @@
           },
           "401": {
             "description": "Credenciais inválidas"
+          },
+          "429": {
+            "description": "Tentativas demais para este e-mail"
           }
         },
         "summary": "Autenticar administrador",
@@ -268,6 +274,56 @@
           }
         ],
         "summary": "Remover cliente",
+        "tags": [
+          "clients"
+        ]
+      }
+    },
+    "/clients/{id}/status": {
+      "patch": {
+        "description": "Cliente INATIVO nao obtem token na autenticacao por CPF.",
+        "operationId": "ClientController_changeStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeClientStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cliente não encontrado"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ativar ou inativar cliente",
         "tags": [
           "clients"
         ]
@@ -546,6 +602,217 @@
         "summary": "Remover ordem de serviço",
         "tags": [
           "service-orders"
+        ]
+      }
+    },
+    "/vehicles": {
+      "post": {
+        "operationId": "VehicleController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterVehicleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Registrar novo veículo",
+        "tags": [
+          "vehicles"
+        ]
+      },
+      "get": {
+        "operationId": "VehicleController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VehicleResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar todos os veículos",
+        "tags": [
+          "vehicles"
+        ]
+      }
+    },
+    "/vehicles/{id}": {
+      "get": {
+        "operationId": "VehicleController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buscar veículo por ID",
+        "tags": [
+          "vehicles"
+        ]
+      },
+      "put": {
+        "operationId": "VehicleController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVehicleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Atualizar veículo",
+        "tags": [
+          "vehicles"
+        ]
+      },
+      "delete": {
+        "operationId": "VehicleController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remover veículo",
+        "tags": [
+          "vehicles"
+        ]
+      }
+    },
+    "/vehicles/client/{clientId}": {
+      "get": {
+        "operationId": "VehicleController_findByClient",
+        "parameters": [
+          {
+            "name": "clientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VehicleResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buscar veículos por cliente",
+        "tags": [
+          "vehicles"
         ]
       }
     },
@@ -929,217 +1196,6 @@
         ]
       }
     },
-    "/vehicles": {
-      "post": {
-        "operationId": "VehicleController_register",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterVehicleDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VehicleResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Registrar novo veículo",
-        "tags": [
-          "vehicles"
-        ]
-      },
-      "get": {
-        "operationId": "VehicleController_findAll",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/VehicleResponseDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Listar todos os veículos",
-        "tags": [
-          "vehicles"
-        ]
-      }
-    },
-    "/vehicles/{id}": {
-      "get": {
-        "operationId": "VehicleController_findById",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VehicleResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Buscar veículo por ID",
-        "tags": [
-          "vehicles"
-        ]
-      },
-      "put": {
-        "operationId": "VehicleController_update",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateVehicleDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VehicleResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Atualizar veículo",
-        "tags": [
-          "vehicles"
-        ]
-      },
-      "delete": {
-        "operationId": "VehicleController_remove",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Remover veículo",
-        "tags": [
-          "vehicles"
-        ]
-      }
-    },
-    "/vehicles/client/{clientId}": {
-      "get": {
-        "operationId": "VehicleController_findByClient",
-        "parameters": [
-          {
-            "name": "clientId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/VehicleResponseDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Buscar veículos por cliente",
-        "tags": [
-          "vehicles"
-        ]
-      }
-    },
     "/budgets": {
       "post": {
         "operationId": "BudgetController_create",
@@ -1388,11 +1444,8 @@
               }
             }
           },
-          "403": {
-            "description": "CPF/CNPJ não corresponde ao cliente"
-          },
           "404": {
-            "description": "Cliente não encontrado"
+            "description": "Cliente inexistente ou CPF/CNPJ que não corresponde — mesma resposta nos dois casos"
           }
         },
         "summary": "Consulta pública de ordens de serviço do cliente",
@@ -1610,6 +1663,135 @@
           "webhooks"
         ]
       }
+    },
+    "/me/service-orders": {
+      "get": {
+        "operationId": "MeController_serviceOrders",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ServiceOrderResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token sem papel de cliente, ou cliente inativo"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ordens de servico do cliente autenticado",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/vehicles": {
+      "get": {
+        "operationId": "MeController_vehicles",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VehicleResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token sem papel de cliente, ou cliente inativo"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Veiculos do cliente autenticado",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/auth/cpf": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Autenticar cliente por CPF (servido pelo API Gateway)",
+        "description": "Disponivel apenas pelo Kong (base_url do gateway, ex.: http://localhost:18080). Devolve um token de cliente para as rotas /me. Limite de 10 chamadas por minuto por IP.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "cpf"
+                ],
+                "properties": {
+                  "cpf": {
+                    "type": "string",
+                    "example": "529.982.247-25",
+                    "description": "Com ou sem mascara"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cliente ativo encontrado: token de cliente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    },
+                    "token_type": {
+                      "type": "string",
+                      "example": "Bearer"
+                    },
+                    "expires_in": {
+                      "type": "number",
+                      "example": 3600
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "CPF invalido"
+          },
+          "401": {
+            "description": "Nenhum cliente ativo com este CPF"
+          },
+          "429": {
+            "description": "Limite de chamadas do gateway excedido"
+          }
+        }
+      }
     }
   },
   "info": {
@@ -1621,7 +1803,7 @@
   "tags": [
     {
       "name": "auth",
-      "description": "Autenticação de administradores"
+      "description": "Autenticação de administradores e de clientes por CPF"
     },
     {
       "name": "clients",
@@ -1650,6 +1832,10 @@
     {
       "name": "health",
       "description": "Health check da aplicação e do banco"
+    },
+    {
+      "name": "me",
+      "description": "Dados do cliente autenticado por CPF (token de cliente)"
     },
     {
       "name": "webhooks",
@@ -1681,8 +1867,8 @@
           },
           "password": {
             "type": "string",
-            "example": "admin123",
-            "description": "Senha (mínimo 6 caracteres)"
+            "example": "Admin@Oficina2026",
+            "description": "Senha: mínimo 12 caracteres, com maiúsculas, minúsculas e dígitos"
           }
         },
         "required": [
@@ -1720,7 +1906,7 @@
           },
           "password": {
             "type": "string",
-            "example": "admin123",
+            "example": "Admin@Oficina2026",
             "description": "Senha do administrador"
           }
         },
@@ -1787,7 +1973,16 @@
           "phone": {
             "type": "object"
           },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ATIVO",
+              "INATIVO"
+            ],
+            "example": "ATIVO"
+          },
           "vehicleIds": {
+            "description": "Veiculos ativos do cliente",
             "type": "array",
             "items": {
               "type": "string"
@@ -1798,6 +1993,7 @@
           "id",
           "name",
           "cpfCnpj",
+          "status",
           "vehicleIds"
         ]
       },
@@ -1817,6 +2013,22 @@
             "example": "11999998888"
           }
         }
+      },
+      "ChangeClientStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ATIVO",
+              "INATIVO"
+            ],
+            "example": "INATIVO"
+          }
+        },
+        "required": [
+          "status"
+        ]
       },
       "RequestedItemDto": {
         "type": "object",
@@ -2001,6 +2213,86 @@
           "statusHistory"
         ]
       },
+      "RegisterVehicleDto": {
+        "type": "object",
+        "properties": {
+          "plate": {
+            "type": "string",
+            "example": "ABC-1234"
+          },
+          "brand": {
+            "type": "string",
+            "example": "Toyota"
+          },
+          "model": {
+            "type": "string",
+            "example": "Corolla"
+          },
+          "year": {
+            "type": "number",
+            "example": 2022
+          },
+          "ownerClientId": {
+            "type": "string",
+            "example": "uuid-do-cliente"
+          }
+        },
+        "required": [
+          "plate",
+          "brand",
+          "model",
+          "year",
+          "ownerClientId"
+        ]
+      },
+      "VehicleResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "year": {
+            "type": "number"
+          },
+          "ownerClientId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "plate",
+          "brand",
+          "model",
+          "year",
+          "ownerClientId"
+        ]
+      },
+      "UpdateVehicleDto": {
+        "type": "object",
+        "properties": {
+          "brand": {
+            "type": "string",
+            "example": "Honda"
+          },
+          "model": {
+            "type": "string",
+            "example": "Civic"
+          },
+          "year": {
+            "type": "number",
+            "example": 2023
+          }
+        }
+      },
       "RegisterPartDto": {
         "type": "object",
         "properties": {
@@ -2128,86 +2420,6 @@
           "estimatedMinutes": {
             "type": "number",
             "example": 45
-          }
-        }
-      },
-      "RegisterVehicleDto": {
-        "type": "object",
-        "properties": {
-          "plate": {
-            "type": "string",
-            "example": "ABC-1234"
-          },
-          "brand": {
-            "type": "string",
-            "example": "Toyota"
-          },
-          "model": {
-            "type": "string",
-            "example": "Corolla"
-          },
-          "year": {
-            "type": "number",
-            "example": 2022
-          },
-          "ownerClientId": {
-            "type": "string",
-            "example": "uuid-do-cliente"
-          }
-        },
-        "required": [
-          "plate",
-          "brand",
-          "model",
-          "year",
-          "ownerClientId"
-        ]
-      },
-      "VehicleResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "plate": {
-            "type": "string"
-          },
-          "brand": {
-            "type": "string"
-          },
-          "model": {
-            "type": "string"
-          },
-          "year": {
-            "type": "number"
-          },
-          "ownerClientId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "plate",
-          "brand",
-          "model",
-          "year",
-          "ownerClientId"
-        ]
-      },
-      "UpdateVehicleDto": {
-        "type": "object",
-        "properties": {
-          "brand": {
-            "type": "string",
-            "example": "Honda"
-          },
-          "model": {
-            "type": "string",
-            "example": "Civic"
-          },
-          "year": {
-            "type": "number",
-            "example": 2023
           }
         }
       },

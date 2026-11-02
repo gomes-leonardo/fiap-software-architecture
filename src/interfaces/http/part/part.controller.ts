@@ -20,10 +20,14 @@ import { UpdatePartDto } from '@application/part/dtos/update-part.dto';
 import { PartResponseDto } from '@application/part/dtos/part-response.dto';
 import { PartRepository } from '@domain/part/part-repository.port';
 import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard';
+import { RolesGuard } from '@infrastructure/auth/roles.guard';
+import { Roles } from '@infrastructure/auth/roles.decorator';
+import { Role } from '@infrastructure/auth/role.enum';
 
 @ApiTags('parts')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
 @Controller('parts')
 export class PartController {
   constructor(

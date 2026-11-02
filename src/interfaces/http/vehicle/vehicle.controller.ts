@@ -18,10 +18,14 @@ import { UpdateVehicleDto } from '@application/vehicle/dtos/update-vehicle.dto';
 import { VehicleResponseDto } from '@application/vehicle/dtos/vehicle-response.dto';
 import { VehicleRepository } from '@domain/vehicle/vehicle-repository.port';
 import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard';
+import { RolesGuard } from '@infrastructure/auth/roles.guard';
+import { Roles } from '@infrastructure/auth/roles.decorator';
+import { Role } from '@infrastructure/auth/role.enum';
 
 @ApiTags('vehicles')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
 @Controller('vehicles')
 export class VehicleController {
   constructor(

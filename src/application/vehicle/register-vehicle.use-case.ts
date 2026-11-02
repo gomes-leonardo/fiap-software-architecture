@@ -43,9 +43,6 @@ export class RegisterVehicleUseCase {
 
     await this.vehicleRepository.save(vehicle);
 
-    client.addVehicle(vehicle.id);
-    await this.clientRepository.save(client);
-
     return VehicleResponseDto.fromDomain(vehicle);
   }
 }

@@ -49,3 +49,4 @@ terraform.rc
 # Gerado localmente: os hashes ficam presos ao registry (HashiCorp x OpenTofu)
 # de quem rodou o init, e um lock do registry errado quebra o init do outro.
 .terraform.lock.hcl
+k8s/.deploy/

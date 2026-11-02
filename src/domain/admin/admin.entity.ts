@@ -9,6 +9,27 @@ export interface CreateAdminProps {
 
 const SALT_ROUNDS = 10;
 
+export const PASSWORD_POLICY_MESSAGE =
+  'Password must have at least 12 characters, with upper case, lower case and digits';
+
+/**
+ * A senha protege uma conta que le CPF e dados de todos os clientes. 12
+ * caracteres misturando maiusculas, minusculas e digitos tira a conta do
+ * alcance de dicionario e forca bruta curta; o rate limit do login cuida do
+ * resto. Vale so para senhas novas: hashes ja gravados nao sao reavaliados.
+ */
+function assertPasswordPolicy(password: string | undefined): void {
+  const strong =
+    !!password &&
+    password.length >= 12 &&
+    /[a-z]/.test(password) &&
+    /[A-Z]/.test(password) &&
+    /\d/.test(password);
+  if (!strong) {
+    throw DomainException.of(PASSWORD_POLICY_MESSAGE);
+  }
+}
+
 export class Admin extends Entity {
   private _name: string;
   private _email: string;
@@ -44,9 +65,7 @@ export class Admin extends Entity {
     if (!props.email || props.email.trim().length === 0) {
       throw DomainException.of('Admin email is required');
     }
-    if (!props.password || props.password.length < 6) {
-      throw DomainException.of('Password must be at least 6 characters');
-    }
+    assertPasswordPolicy(props.password);
 
     const hash = await bcrypt.hash(props.password, SALT_ROUNDS);
     return new Admin(props.name.trim(), props.email.trim().toLowerCase(), hash);
