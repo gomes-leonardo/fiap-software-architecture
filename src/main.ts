@@ -10,6 +10,7 @@ import { httpLogger, logger } from '@infrastructure/logging/logger';
 import { PinoNestLogger } from '@infrastructure/logging/nest-logger';
 import { traceIdHeader } from '@infrastructure/logging/trace-id.middleware';
 import { corsOrigins, isSwaggerEnabled } from '@infrastructure/http/bootstrap-options';
+import { addCpfAuthRoute } from '@interfaces/http/auth/cpf-auth.swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -54,7 +55,7 @@ function setupSwagger(app: INestApplication): void {
     )
     .setVersion('1.0')
     .addBearerAuth()
-    .addTag('auth', 'Autenticação de administradores')
+    .addTag('auth', 'Autenticação de administradores e de clientes por CPF')
     .addTag('clients', 'Gerenciamento de clientes')
     .addTag('vehicles', 'Gerenciamento de veículos')
     .addTag('parts', 'Gerenciamento de peças e estoque')
@@ -66,7 +67,7 @@ function setupSwagger(app: INestApplication): void {
     .addTag('webhooks', 'Integração com sistemas externos (sem login)')
     .build();
 
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  const document = addCpfAuthRoute(SwaggerModule.createDocument(app, swaggerConfig));
   SwaggerModule.setup('api-docs', app, document);
   logger.info({ path: '/api-docs' }, 'swagger ready');
 }
