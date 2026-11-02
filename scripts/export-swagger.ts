@@ -5,6 +5,7 @@ import { Test } from '@nestjs/testing';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { getTypeOrmConfig } from '@infrastructure/database/typeorm/config/typeorm.config';
+import { addCpfAuthRoute } from '@interfaces/http/auth/cpf-auth.swagger';
 
 const OUTPUT_PATH = join(__dirname, '..', 'docs', 'swagger.json');
 
@@ -36,7 +37,7 @@ function buildSwaggerConfig() {
     )
     .setVersion('1.0')
     .addBearerAuth()
-    .addTag('auth', 'Autenticação de administradores')
+    .addTag('auth', 'Autenticação de administradores e de clientes por CPF')
     .addTag('clients', 'Gerenciamento de clientes')
     .addTag('vehicles', 'Gerenciamento de veículos')
     .addTag('parts', 'Gerenciamento de peças e estoque')
@@ -68,7 +69,7 @@ async function createDocument(): Promise<OpenAPIObject> {
 
   const app = moduleRef.createNestApplication();
   try {
-    return SwaggerModule.createDocument(app, buildSwaggerConfig());
+    return addCpfAuthRoute(SwaggerModule.createDocument(app, buildSwaggerConfig()));
   } finally {
     await app.close();
   }

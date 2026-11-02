@@ -35,7 +35,7 @@
   "item": [
     {
       "name": "Auth",
-      "description": "Autenticação de administradores",
+      "description": "Autenticação de administradores e de clientes por CPF",
       "item": [
         {
           "name": "Registrar novo administrador (requer admin autenticado)",
@@ -362,6 +362,208 @@
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"email\": \"admin@oficina.com\",\n  \"password\": \"Admin@Oficina2026\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "",
+              "code": 429,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            }
+          ]
+        },
+        {
+          "name": "Autenticar cliente por CPF (servido pelo API Gateway)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/cpf",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "cpf"
+              ]
+            },
+            "description": "Disponivel apenas pelo Kong (base_url do gateway, ex.: http://localhost:18080). Devolve um token de cliente para as rotas /me. Limite de 10 chamadas por minuto por IP.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"529.982.247-25\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cliente ativo encontrado: token de cliente",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/cpf",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "cpf"
+                  ]
+                },
+                "description": "Disponivel apenas pelo Kong (base_url do gateway, ex.: http://localhost:18080). Devolve um token de cliente para as rotas /me. Limite de 10 chamadas por minuto por IP.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cpf\": \"529.982.247-25\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"access_token\": \"string\",\n  \"token_type\": \"Bearer\",\n  \"expires_in\": 3600\n}",
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "name": "CPF invalido",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/cpf",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "cpf"
+                  ]
+                },
+                "description": "Disponivel apenas pelo Kong (base_url do gateway, ex.: http://localhost:18080). Devolve um token de cliente para as rotas /me. Limite de 10 chamadas por minuto por IP.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cpf\": \"529.982.247-25\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "name": "Nenhum cliente ativo com este CPF",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/cpf",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "cpf"
+                  ]
+                },
+                "description": "Disponivel apenas pelo Kong (base_url do gateway, ex.: http://localhost:18080). Devolve um token de cliente para as rotas /me. Limite de 10 chamadas por minuto por IP.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cpf\": \"529.982.247-25\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [],
+              "body": "",
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "name": "Limite de chamadas do gateway excedido",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/auth/cpf",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "cpf"
+                  ]
+                },
+                "description": "Disponivel apenas pelo Kong (base_url do gateway, ex.: http://localhost:18080). Devolve um token de cliente para as rotas /me. Limite de 10 chamadas por minuto por IP.",
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cpf\": \"529.982.247-25\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
