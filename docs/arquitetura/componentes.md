@@ -17,7 +17,7 @@ O sistema se espalha por quatro repositórios:
 ## Arquitetura alvo
 
 ```mermaid
-flowchart LR
+flowchart TB
     CLI(["Cliente final<br/>token por CPF"])
     ADM(["Funcionário da oficina<br/>token de admin"])
     PARC(["Sistema parceiro<br/>webhooks com segredo"])
@@ -53,7 +53,7 @@ flowchart LR
         NOTIF["Lambda soat-env-notifier<br/>Function URL"]
         SNS["SNS soat-env-alerts"]
         SSM[("SSM Parameter Store<br/>/soat/env/...")]
-        S3[("S3 tfstate-backend-fiap-leo<br/>state do Terraform")]
+        S3[("S3 soat-tfstate-310626828604<br/>state do Terraform")]
     end
 
     subgraph NEON["Neon, aws-sa-east-1, plano gratuito"]
@@ -100,6 +100,8 @@ flowchart LR
     KIND -.->|"pull da imagem"| GHCR
     RUN -->|"OIDC gha-soat-deployer"| AWS
 ```
+
+[Abrir o diagrama em tamanho grande](img/componentes-1.svg)
 
 Linha contínua é o caminho de produção (`soat-prd`). Linha tracejada é homologação ou ação
 de apoio. Os dois ambientes têm a mesma forma: o que muda é a porta do host, o tamanho do HPA e o
@@ -169,6 +171,8 @@ flowchart LR
         GW -->|"métricas"| P["endpoint :8889"]
     end
 ```
+
+[Abrir o diagrama em tamanho grande](img/componentes-2.svg)
 
 O Postgres local vive dentro do cluster: recriar o Kind apaga os dados dele. É o preço do
 equivalente local, e um dos motivos para o Neon ser o alvo.
